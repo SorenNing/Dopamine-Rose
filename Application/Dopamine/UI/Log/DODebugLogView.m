@@ -35,7 +35,8 @@
             [self.textView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor],
         ]];        
         
-        self.backgroundColor = [DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance panelColor] : [UIColor colorWithWhite:0.0 alpha:0.7];
+        self.backgroundColor = UIColor.clearColor;
+        [DOGlobalAppearance applyLiquidGlassToView:self];
     }
     return self;
 }

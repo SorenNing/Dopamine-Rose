@@ -2,8 +2,6 @@
 //  DOThemeManager.m
 //  Dopamine
 //
-//  Created by tomt000 on 14/02/2024.
-//
 
 #import "DOThemeManager.h"
 #import "DOPreferenceManager.h"
@@ -24,74 +22,63 @@
 {
     self = [super init];
     if (self) {
-        self.themes = [[NSMutableArray alloc] init];
-        
+        NSMutableArray *loadedThemes = [NSMutableArray array];
         NSString *path = [[NSBundle mainBundle] pathForResource:@"Themes" ofType:@"plist"];
-        NSArray *themes = [NSArray arrayWithContentsOfFile:path];
-
-        for (NSDictionary *theme in themes) {
-            DOTheme *newTheme = [[DOTheme alloc] initWithDictionary:theme];
-            [((NSMutableArray *)self.themes) addObject:newTheme];
+        for (NSDictionary *themeDictionary in [NSArray arrayWithContentsOfFile:path] ?: @[]) {
+            [loadedThemes addObject:[[DOTheme alloc] initWithDictionary:themeDictionary]];
         }
+        self.themes = loadedThemes;
 
         DOPreferenceManager *preferences = [DOPreferenceManager sharedManager];
-        if (![preferences boolPreferenceValueForKey:@"dustyRoseUIInitialized" fallback:NO]) {
-            NSString *savedTheme = [preferences preferenceValueForKey:@"theme"];
-            if (!savedTheme || [savedTheme isEqualToString:@"default"]) {
-                [preferences setPreferenceValue:@"dusty-rose" forKey:@"theme"];
-            }
-            [preferences setPreferenceValue:@YES forKey:@"dustyRoseUIInitialized"];
+        NSString *savedTheme = [preferences preferenceValueForKey:@"theme"];
+        NSArray *validKeys = [self getAvailableThemeKeys];
+        if (![savedTheme isKindOfClass:NSString.class] || ![validKeys containsObject:savedTheme]) {
+            // The redesigned app opens on Glaze; existing old theme values are
+            // migrated rather than leaving a partially styled legacy screen.
+            [preferences setPreferenceValue:@"glaze" forKey:@"theme"];
         }
+        // Retain the marker for old installations, but it no longer controls
+        // whether the redesign is installed.
+        [preferences setPreferenceValue:@YES forKey:@"liquidGlassUIInitialized"];
     }
     return self;
 }
 
-- (NSArray*)getAvailableThemeKeys
+- (NSArray *)getAvailableThemeKeys
 {
-    NSMutableArray *keys = [[NSMutableArray alloc] init];
-    for (DOTheme *theme in _themes) {
-        [keys addObject:theme.key];
-    }
+    NSMutableArray *keys = [NSMutableArray array];
+    for (DOTheme *theme in self.themes) [keys addObject:theme.key];
     return keys;
 }
 
-- (NSArray*)getAvailableThemeNames
+- (NSArray *)getAvailableThemeNames
 {
-    NSMutableArray *names = [[NSMutableArray alloc] init];
-    for (DOTheme *theme in _themes) {
-        [names addObject:theme.name];
-    }
+    NSMutableArray *names = [NSMutableArray array];
+    for (DOTheme *theme in self.themes) [names addObject:theme.name];
     return names;
 }
 
-- (DOTheme*)getThemeForKey:(NSString*)key
+- (DOTheme *)getThemeForKey:(NSString *)key
 {
-    for (DOTheme *theme in _themes) {
-        if ([theme.key isEqualToString:key]) {
-            return theme;
-        }
+    for (DOTheme *theme in self.themes) {
+        if ([theme.key isEqualToString:key]) return theme;
     }
     return nil;
 }
 
-- (DOTheme*)enabledTheme
+- (DOTheme *)enabledTheme
 {
-    id value = [[DOPreferenceManager sharedManager] preferenceValueForKey:@"theme"];
-    if (!value)
-        return [self getThemeForKey:@"dusty-rose"] ?: self.themes.firstObject;
-    return [self getThemeForKey:value] ?: ([self getThemeForKey:@"dusty-rose"] ?: self.themes.firstObject);
+    NSString *value = [[DOPreferenceManager sharedManager] preferenceValueForKey:@"theme"];
+    DOTheme *theme = [self getThemeForKey:value];
+    return theme ?: [self getThemeForKey:@"glaze"] ?: self.themes.firstObject;
 }
 
-
-+ (UIColor*)menuColorWithAlpha:(float)alpha
++ (UIColor *)menuColorWithAlpha:(float)alpha
 {
-    DOTheme *theme = [[DOThemeManager sharedInstance] enabledTheme];
-    
-    UIColor *color = theme.actionMenuColor;
-    CGFloat red, green, blue, currentAlpha;
-    [color getRed:&red green:&green blue:&blue alpha:&currentAlpha];
-    return [UIColor colorWithRed:red green:green blue:blue alpha:currentAlpha * alpha];
+    UIColor *color = [self.sharedInstance enabledTheme].glassColor;
+    CGFloat red = 0, green = 0, blue = 0, colorAlpha = 1;
+    [color getRed:&red green:&green blue:&blue alpha:&colorAlpha];
+    return [color colorWithAlphaComponent:MIN(1.0, colorAlpha * alpha)];
 }
-
 
 @end

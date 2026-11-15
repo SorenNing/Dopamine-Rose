@@ -50,9 +50,9 @@
 -(void)setupStack
 {
     if ([DOGlobalAppearance isRoseStyle]) {
-        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-        self.view.backgroundColor = [UIColor colorWithRed:240/255.0 green:218/255.0 blue:222/255.0 alpha:1];
-        UIImageView *background = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Background_DustyRose"]];
+        self.overrideUserInterfaceStyle = [DOGlobalAppearance interfaceStyle];
+        self.view.backgroundColor = [DOGlobalAppearance panelColor];
+        UIImageView *background = [[UIImageView alloc] initWithImage:[DOGlobalAppearance backgroundImage]];
         background.contentMode = UIViewContentModeScaleToFill;
         background.translatesAutoresizingMaskIntoConstraints = NO;
         [self.view addSubview:background];
@@ -65,11 +65,12 @@
         UIView *frame = [[UIView alloc] init];
         frame.translatesAutoresizingMaskIntoConstraints = NO;
         frame.userInteractionEnabled = NO;
-        frame.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.7].CGColor;
+        frame.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
         frame.layer.borderWidth = 1;
         frame.layer.cornerRadius = 28;
         [self.view addSubview:frame];
         self.roseFrame = frame;
+        [DOGlobalAppearance applyLiquidGlassToView:frame];
         [NSLayoutConstraint activateConstraints:@[
             [frame.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
             [frame.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-8],
@@ -633,7 +634,7 @@
 
 - (UIStatusBarStyle)preferredStatusBarStyle
 {
-    return [DOGlobalAppearance isRoseStyle] ? UIStatusBarStyleDarkContent : UIStatusBarStyleLightContent;
+    return [DOGlobalAppearance interfaceStyle] == UIUserInterfaceStyleDark ? UIStatusBarStyleLightContent : UIStatusBarStyleDarkContent;
 }
 
 - (BOOL)prefersStatusBarHidden

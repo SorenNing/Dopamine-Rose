@@ -60,7 +60,7 @@
     if (bottomSeparator)
     {
         _separator = [[UIView alloc] init];
-        _separator.backgroundColor = [DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance separatorColor] : [UIColor colorWithWhite:0.6 alpha:0.3];
+        _separator.backgroundColor = [DOGlobalAppearance separatorColor];
         _separator.translatesAutoresizingMaskIntoConstraints = NO;
         _separator.layer.cornerRadius = 0.5;
         _separator.layer.masksToBounds = YES;

@@ -32,14 +32,14 @@
         button.layer.masksToBounds = YES;
         button.layer.cornerCurve = kCACornerCurveContinuous;
         button.layer.borderWidth = 1;
-        button.layer.borderColor = [DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance separatorColor].CGColor : [[DOGlobalAppearance primaryTextColor] colorWithAlphaComponent:0.15].CGColor;
-        if ([DOGlobalAppearance isRoseStyle]) {
-            button.tintColor = [DOGlobalAppearance accentColor];
-            button.backgroundColor = [[DOGlobalAppearance accentColor] colorWithAlphaComponent:0.06];
-            UIButtonConfiguration *configuration = button.configuration;
-            configuration.baseForegroundColor = [DOGlobalAppearance accentColor];
-            button.configuration = configuration;
-        }
+        button.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
+        button.tintColor = [DOGlobalAppearance accentColor];
+        button.backgroundColor = UIColor.clearColor;
+        [DOGlobalAppearance applyLiquidGlassToView:button];
+        UIButtonConfiguration *configuration = button.configuration;
+        configuration.baseForegroundColor = [DOGlobalAppearance accentColor];
+        configuration.background.backgroundColor = [DOGlobalAppearance tileColor];
+        button.configuration = configuration;
 
         [self.contentView addSubview:button];
 

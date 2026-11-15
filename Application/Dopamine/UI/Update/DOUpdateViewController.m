@@ -226,7 +226,7 @@
 
 - (UIStatusBarStyle)preferredStatusBarStyle
 {
-    return [DOGlobalAppearance isRoseStyle] ? UIStatusBarStyleDarkContent : UIStatusBarStyleLightContent;
+    return [DOGlobalAppearance interfaceStyle] == UIUserInterfaceStyleDark ? UIStatusBarStyleLightContent : UIStatusBarStyleDarkContent;
 }
 
 

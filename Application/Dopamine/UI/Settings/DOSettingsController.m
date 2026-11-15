@@ -37,14 +37,17 @@
 - (void)viewWillAppear:(BOOL)arg1
 {
     [super viewWillAppear:arg1];
-    if (_lastKnownTheme != [[DOThemeManager sharedInstance] enabledTheme].key)
+    NSString *enabledThemeKey = [[DOThemeManager sharedInstance] enabledTheme].key;
+    if (![_lastKnownTheme isEqualToString:enabledThemeKey])
     {
         [DOSceneDelegate relaunch];
         NSString *icon = [[DOThemeManager sharedInstance] enabledTheme].icon;
-        [[UIApplication sharedApplication] setAlternateIconName:icon completionHandler:^(NSError * _Nullable error) {
-            if (error)
-                NSLog(@"Error changing app icon: %@", error);
-        }];
+        if (icon.length > 0) {
+            [[UIApplication sharedApplication] setAlternateIconName:icon completionHandler:^(NSError * _Nullable error) {
+                if (error)
+                    NSLog(@"Error changing app icon: %@", error);
+            }];
+        }
 
         if ([DOEnvironmentManager sharedManager].isJailbroken) {
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
@@ -64,7 +67,7 @@
             for (UITextField *textField in alert.textFields) {
                 textField.textColor = [DOGlobalAppearance primaryTextColor];
                 textField.tintColor = [DOGlobalAppearance accentColor];
-                textField.keyboardAppearance = UIKeyboardAppearanceLight;
+                textField.keyboardAppearance = [DOGlobalAppearance interfaceStyle] == UIUserInterfaceStyleDark ? UIKeyboardAppearanceDark : UIKeyboardAppearanceLight;
                 if (textField.placeholder.length > 0) {
                     textField.attributedPlaceholder = [[NSAttributedString alloc] initWithString:textField.placeholder attributes:@{NSForegroundColorAttributeName:[DOGlobalAppearance secondaryTextColor]}];
                 }
@@ -411,7 +414,7 @@
         themeSpecifier.detailControllerClass = [DOPSListItemsController class];
         [themeSpecifier setProperty:@YES forKey:@"enabled"];
         [themeSpecifier setProperty:@"theme" forKey:@"key"];
-        [themeSpecifier setProperty:[[self themeIdentifiers] firstObject] forKey:@"default"];
+        [themeSpecifier setProperty:@"glaze" forKey:@"default"];
         [themeSpecifier setProperty:@"themeIdentifiers" forKey:@"valuesDataSource"];
         [themeSpecifier setProperty:@"themeNames" forKey:@"titlesDataSource"];
         [specifiers addObject:themeSpecifier];

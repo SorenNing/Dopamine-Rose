@@ -26,6 +26,10 @@
 -(id)initWithIcon:(UIImage *)icon title:(NSString *)title {
     self = [super init];
     if (self) {
+        self.backgroundColor = UIColor.clearColor;
+        [DOGlobalAppearance applyLiquidGlassToView:self];
+        self.layer.cornerRadius = 18;
+        self.layer.cornerCurve = kCACornerCurveContinuous;
         self.hapticGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];
         
         self.iconView = [[UIImageView alloc] initWithImage:icon];

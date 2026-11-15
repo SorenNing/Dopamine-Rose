@@ -1,65 +1,213 @@
 //
-//  GlobalAppearance.m
+//  DOGlobalAppearance.m
 //  Dopamine
-//
-//  Created by Lars Fröder on 10.10.23.
 //
 
 #import "DOGlobalAppearance.h"
 #import <CoreGraphics/CoreGraphics.h>
 #import "DOThemeManager.h"
+#import "DOTheme.h"
+
+static NSInteger const kDOLiquidGlassEffectTag = 0xD027;
+static NSInteger const kDOLiquidGlassBackgroundTag = 0xD028;
+
+@interface DOGlobalAppearance ()
++ (DOTheme *)theme;
+@end
+
+static UIVisualEffectView *DOFindGlassEffect(UIView *view)
+{
+    for (UIView *subview in view.subviews) {
+        if (subview.tag == kDOLiquidGlassEffectTag && [subview isKindOfClass:UIVisualEffectView.class])
+            return (UIVisualEffectView *)subview;
+    }
+    return nil;
+}
+
+static void DOInstallGlassBackdrop(UIView *view)
+{
+    if (!view) return;
+    DOTheme *theme = [DOThemeManager.sharedInstance enabledTheme];
+    UIImageView *background = (UIImageView *)[view viewWithTag:kDOLiquidGlassBackgroundTag];
+    if (!background) {
+        background = [[UIImageView alloc] init];
+        background.tag = kDOLiquidGlassBackgroundTag;
+        background.translatesAutoresizingMaskIntoConstraints = NO;
+        background.contentMode = UIViewContentModeScaleAspectFill;
+        background.userInteractionEnabled = NO;
+        [view insertSubview:background atIndex:0];
+        [NSLayoutConstraint activateConstraints:@[
+            [background.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
+            [background.trailingAnchor constraintEqualToAnchor:view.trailingAnchor],
+            [background.topAnchor constraintEqualToAnchor:view.topAnchor],
+            [background.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
+        ]];
+    }
+    background.image = theme.image;
+    background.alpha = theme.darkTheme ? 0.94 : 0.86;
+
+    UIVisualEffectView *effect = DOFindGlassEffect(view);
+    if (!effect) {
+        UIBlurEffectStyle style = theme.darkTheme ? UIBlurEffectStyleSystemChromeMaterialDark : UIBlurEffectStyleSystemChromeMaterialLight;
+        effect = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:style]];
+        effect.tag = kDOLiquidGlassEffectTag;
+        effect.translatesAutoresizingMaskIntoConstraints = NO;
+        effect.userInteractionEnabled = NO;
+        [view insertSubview:effect aboveSubview:background];
+        [NSLayoutConstraint activateConstraints:@[
+            [effect.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
+            [effect.trailingAnchor constraintEqualToAnchor:view.trailingAnchor],
+            [effect.topAnchor constraintEqualToAnchor:view.topAnchor],
+            [effect.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
+        ]];
+    }
+    effect.backgroundColor = theme.glassColor;
+    effect.alpha = 0.42;
+}
 
 @implementation DOGlobalAppearance
+
++ (DOTheme *)theme
+{
+    return [DOThemeManager.sharedInstance enabledTheme];
+}
+
++ (BOOL)isLiquidGlassStyle
+{
+    return [self theme].liquidGlass;
+}
+
++ (BOOL)isRoseStyle
+{
+    // Source-compatible name retained for the upstream UI units. All three
+    // redesigned themes use the same complete Liquid Glass layout.
+    return [self isLiquidGlassStyle];
+}
+
++ (UIUserInterfaceStyle)interfaceStyle
+{
+    return [self theme].darkTheme ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
+}
+
++ (UIImage *)backgroundImage
+{
+    return [self theme].image;
+}
 
 + (UIColor *)windowColorWithAlpha:(float)alpha
 {
     return [[self panelColor] colorWithAlphaComponent:alpha];
 }
 
-+ (BOOL)isRoseStyle
-{
-    return [[[DOThemeManager sharedInstance] enabledTheme].key isEqualToString:@"dusty-rose"];
-}
-
-+ (UIUserInterfaceStyle)interfaceStyle
-{
-    return [self isRoseStyle] ? UIUserInterfaceStyleLight : UIUserInterfaceStyleDark;
-}
-
 + (UIColor *)primaryTextColor
 {
-    return [self isRoseStyle] ? [UIColor colorWithRed:59/255.0 green:37/255.0 blue:48/255.0 alpha:1] : UIColor.whiteColor;
+    return [self theme].primaryTextColor;
 }
 
 + (UIColor *)secondaryTextColor
 {
-    return [self isRoseStyle] ? [UIColor colorWithRed:126/255.0 green:91/255.0 blue:104/255.0 alpha:1] : [UIColor colorWithWhite:1 alpha:0.6];
+    return [self theme].secondaryTextColor;
 }
 
 + (UIColor *)accentColor
 {
-    return [self isRoseStyle] ? [UIColor colorWithRed:139/255.0 green:44/255.0 blue:78/255.0 alpha:1] : UIColor.whiteColor;
+    return [self theme].accentColor;
 }
 
 + (UIColor *)separatorColor
 {
-    return [self isRoseStyle] ? [UIColor colorWithRed:169/255.0 green:130/255.0 blue:146/255.0 alpha:0.35] : [UIColor colorWithWhite:1 alpha:0.1];
+    return [self theme].separatorColor;
 }
 
 + (UIColor *)panelColor
 {
-    return [self isRoseStyle] ? [UIColor colorWithRed:248/255.0 green:237/255.0 blue:241/255.0 alpha:1] : [[DOThemeManager sharedInstance] enabledTheme].windowColor;
+    return [self theme].windowColor;
+}
+
++ (UIColor *)glassColor
+{
+    return [self theme].glassColor;
+}
+
++ (UIColor *)tileColor
+{
+    return [self theme].tileColor;
+}
+
++ (UIColor *)selectedColor
+{
+    return [self theme].selectedColor;
+}
+
++ (UIColor *)glassHighlightColor
+{
+    return [self theme].glassHighlightColor;
 }
 
 + (UIColor *)buttonTextColor
 {
-    return UIColor.whiteColor;
+    return [self theme].darkTheme ? UIColor.whiteColor : [self primaryTextColor];
+}
+
++ (void)applyLiquidGlassToView:(UIView *)view
+{
+    if (!view) return;
+    DOTheme *theme = [self theme];
+    UIVisualEffectView *effect = DOFindGlassEffect(view);
+    if (!effect) {
+        UIBlurEffectStyle style = theme.darkTheme ? UIBlurEffectStyleSystemMaterialDark : UIBlurEffectStyleSystemMaterialLight;
+        effect = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:style]];
+        effect.tag = kDOLiquidGlassEffectTag;
+        effect.translatesAutoresizingMaskIntoConstraints = NO;
+        effect.userInteractionEnabled = NO;
+        UIView *background = [view viewWithTag:kDOLiquidGlassBackgroundTag];
+        NSUInteger insertIndex = 0;
+        if (background) {
+            NSUInteger backgroundIndex = [view.subviews indexOfObject:background];
+            if (backgroundIndex != NSNotFound) insertIndex = MIN(backgroundIndex + 1, view.subviews.count);
+        }
+        [view insertSubview:effect atIndex:insertIndex];
+        [NSLayoutConstraint activateConstraints:@[
+            [effect.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
+            [effect.trailingAnchor constraintEqualToAnchor:view.trailingAnchor],
+            [effect.topAnchor constraintEqualToAnchor:view.topAnchor],
+            [effect.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
+        ]];
+    }
+    effect.backgroundColor = theme.glassColor;
+    effect.alpha = 0.92;
+    effect.layer.cornerRadius = view.layer.cornerRadius > 0 ? view.layer.cornerRadius : 22;
+    effect.layer.cornerCurve = kCACornerCurveContinuous;
+    effect.layer.masksToBounds = YES;
+    view.backgroundColor = UIColor.clearColor;
+    view.layer.cornerRadius = effect.layer.cornerRadius;
+    view.layer.cornerCurve = kCACornerCurveContinuous;
+    view.layer.borderWidth = 0.5;
+    view.layer.borderColor = theme.glassHighlightColor.CGColor;
+    view.layer.shadowColor = [UIColor blackColor].CGColor;
+    view.layer.shadowOpacity = theme.glassShadowOpacity;
+    view.layer.shadowRadius = theme.glassShadowRadius;
+    view.layer.shadowOffset = CGSizeMake(0, 8);
+    view.layer.masksToBounds = NO;
+}
+
++ (void)styleViewController:(UIViewController *)viewController
+{
+    if (!viewController.isViewLoaded) return;
+    viewController.overrideUserInterfaceStyle = [self interfaceStyle];
+    viewController.view.tintColor = [self accentColor];
+    viewController.view.backgroundColor = UIColor.clearColor;
+    DOInstallGlassBackdrop(viewController.view);
 }
 
 + (void)styleTableCell:(UITableViewCell *)cell
 {
+    if (!cell) return;
     cell.backgroundColor = UIColor.clearColor;
-    if (![self isRoseStyle]) return;
+    cell.contentView.backgroundColor = UIColor.clearColor;
+    [self applyLiquidGlassToView:cell.contentView];
+    cell.contentView.layer.cornerRadius = 14;
+    cell.contentView.layer.cornerCurve = kCACornerCurveContinuous;
     cell.tintColor = [self accentColor];
     cell.textLabel.textColor = cell.userInteractionEnabled ? [self primaryTextColor] : [self secondaryTextColor];
     cell.detailTextLabel.textColor = [self secondaryTextColor];
@@ -69,15 +217,15 @@
         toggle.thumbTintColor = [self buttonTextColor];
     }
     UIView *selected = [[UIView alloc] init];
-    selected.backgroundColor = [[self accentColor] colorWithAlphaComponent:0.08];
-    selected.layer.cornerRadius = 12;
+    selected.backgroundColor = [self selectedColor];
+    selected.layer.cornerRadius = 14;
+    selected.layer.cornerCurve = kCACornerCurveContinuous;
     cell.selectedBackgroundView = selected;
 }
 
-
 + (UIImageSymbolConfiguration *)smallIconImageConfiguration
 {
-    return [UIImageSymbolConfiguration configurationWithPointSize: 14 weight:UIImageSymbolWeightMedium];
+    return [UIImageSymbolConfiguration configurationWithPointSize:14 weight:UIImageSymbolWeightMedium];
 }
 
 + (UIButtonConfiguration *)defaultButtonConfiguration
@@ -85,100 +233,56 @@
     UIButtonConfiguration *configuration = [UIButtonConfiguration plainButtonConfiguration];
     configuration.imagePadding = 10;
     configuration.baseForegroundColor = [self primaryTextColor];
-    if ([self isRoseStyle]) {
-        configuration.titleTextAttributesTransformer = ^NSDictionary<NSAttributedStringKey,id> *(NSDictionary<NSAttributedStringKey,id> *attributes) {
-            NSMutableDictionary *result = attributes.mutableCopy;
-            result[NSFontAttributeName] = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
-            return result;
-        };
-        return configuration;
-    }
-    configuration.titleLineBreakMode = NSLineBreakByClipping;
-
-    // IN DARK MODE, APPLE JUST ADDS WHITE WHEN A BUTTON IS HIGHLIGHTED WHEN IT'S SET UP VIA UIButtonConfiguration
-    // UNFORTUNATELY THEY FORGOT ABOUT THE POSSIBILITY ABOUT THERE BEING A WHITE BUTTON, SO THOSE JUST DON'T SHOW ANY HIGHLIGHT COLOR
-    // HACKY WORKAROUND TO FIX FIX THIS MESS; SCREW APPLE
-    configuration.titleTextAttributesTransformer = ^NSDictionary<NSAttributedStringKey,id> * _Nonnull(NSDictionary<NSAttributedStringKey,id> * _Nonnull textAttributes) {
-        // Something makes me think the person that developed this API never actually used it...
-        // OR ELSE WHERE IS MY BUTTON REFERENCE TO KNOW WHAT STATE I'M EVEN DEALING WITH???
-        // THIS IS A SUPER HACKY WAY OF DETERMINING WHETHER THE BUTTON IS HIGHLIGHTED OR NOT
-        // WHEN IT'S HIGHLIGHTED THE COLOR WILL BE IN UIExtendedSRGBColorSpace
-        // WHEN NOT HIGHLIGHTED IT WILL BE IN UIExtendedGrayColorSpace
-        // WHEN NOT IN DARK MODE IT WILL ALREADY BE WHAT WE WANT, JUST SKIP
-        NSMutableDictionary<NSAttributedStringKey,id> *textAttributesM = textAttributes.mutableCopy;
-        UIColor *foregroundColor = textAttributes[NSForegroundColorAttributeName];
-        CGFloat alpha, white;
-        [foregroundColor getWhite:&white alpha:&alpha];
-        if ((int)white == 1 && (int)alpha == 1) {
-            CGColorSpaceRef colorSpace = CGColorGetColorSpace(foregroundColor.CGColor);
-            CGColorSpaceModel model = CGColorSpaceGetModel(colorSpace);
-            if (model == kCGColorSpaceModelRGB) {
-                textAttributesM[NSForegroundColorAttributeName] = [[UIColor whiteColor] colorWithAlphaComponent:0.75];
-            }
-        }
-        // textAttributesM[NSFontAttributeName] = [UIFont systemFontOfSize:16 weight:UIFontWeightMedium];
-        return textAttributesM;
+    configuration.background.backgroundColor = [self tileColor];
+    configuration.background.cornerRadius = 18;
+    configuration.titleTextAttributesTransformer = ^NSDictionary<NSAttributedStringKey,id> *(NSDictionary<NSAttributedStringKey,id> *attributes) {
+        NSMutableDictionary *result = attributes.mutableCopy;
+        result[NSFontAttributeName] = [UIFont systemFontOfSize:15 weight:UIFontWeightMedium];
+        result[NSForegroundColorAttributeName] = [self primaryTextColor];
+        return result;
     };
-    configuration.imageColorTransformer = ^UIColor * _Nonnull(UIColor * _Nonnull color) {
-        // Something makes me think the person that developed this API never actually used it...
-        // OR ELSE WHERE IS MY BUTTON REFERENCE TO KNOW WHAT STATE I'M EVEN DEALING WITH???
-        // THIS IS A SUPER HACKY WAY OF DETERMINING WHETHER THE BUTTON IS HIGHLIGHTED OR NOT
-        // WHEN IT'S HIGHLIGHTED THE COLOR WILL BE IN UIExtendedSRGBColorSpace
-        // WHEN NOT HIGHLIGHTED IT WILL BE IN UIExtendedGrayColorSpace
-        // WHEN NOT IN DARK MODE IT WILL ALREADY BE WHAT WE WANT, JUST SKIP
-        CGFloat alpha, white;
-        [color getWhite:&white alpha:&alpha];
-        if ((int)white == 1 && (int)alpha == 1) {
-            CGColorSpaceRef colorSpace = CGColorGetColorSpace(color.CGColor);
-            CGColorSpaceModel model = CGColorSpaceGetModel(colorSpace);
-            if (model == kCGColorSpaceModelRGB) {
-                return [color colorWithAlphaComponent:0.75];
-            }
-        }
-        return color;
+    configuration.imageColorTransformer = ^UIColor *(UIColor *color) {
+        return [self accentColor];
     };
-    
     return configuration;
 }
 
 + (UIButtonConfiguration *)defaultButtonConfigurationWithImagePadding:(CGFloat)imagePadding
 {
-    UIButtonConfiguration *configuration = [DOGlobalAppearance defaultButtonConfiguration];
+    UIButtonConfiguration *configuration = [self defaultButtonConfiguration];
     configuration.imagePadding = imagePadding;
     return configuration;
 }
 
-#pragma mark - Attributed Strings
-
-+ (NSAttributedString*)mainSubtitleString:(NSString*)string
++ (NSAttributedString *)mainSubtitleString:(NSString *)string
 {
     return [[NSAttributedString alloc] initWithString:string attributes:@{
-        NSFontAttributeName: [UIFont systemFontOfSize:14 weight:UIFontWeightMedium],
-        NSForegroundColorAttributeName: [self primaryTextColor],
+        NSFontAttributeName:[UIFont systemFontOfSize:14 weight:UIFontWeightMedium],
+        NSForegroundColorAttributeName:[self primaryTextColor]
     }];
 }
 
-+ (NSAttributedString*)secondarySubtitleString:(NSString*)string
++ (NSAttributedString *)secondarySubtitleString:(NSString *)string
 {
     return [[NSAttributedString alloc] initWithString:string attributes:@{
-        NSFontAttributeName: [UIFont systemFontOfSize:14 weight:UIFontWeightRegular],
-        NSForegroundColorAttributeName: [self secondaryTextColor],
+        NSFontAttributeName:[UIFont systemFontOfSize:14 weight:UIFontWeightRegular],
+        NSForegroundColorAttributeName:[self secondaryTextColor]
     }];
 }
 
 + (BOOL)isHomeButtonDevice
 {
-   return [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone && [[UIApplication sharedApplication] keyWindow].safeAreaInsets.bottom == 0;
+    return [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone && [UIApplication.sharedApplication.keyWindow safeAreaInsets].bottom == 0;
 }
 
 + (BOOL)isRTL
 {
-    return [UIApplication sharedApplication].userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
+    return UIApplication.sharedApplication.userInterfaceLayoutDirection == UIUserInterfaceLayoutDirectionRightToLeft;
 }
 
 + (BOOL)isSmallDevice
 {
-    UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *window = UIApplication.sharedApplication.keyWindow;
     return window.frame.size.height < SE_PHONE_SIZE_CONST + 50;
 }
 

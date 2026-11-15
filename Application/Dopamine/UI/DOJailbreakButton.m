@@ -17,17 +17,18 @@
 {
     if (self = [super init])
     {
-        self.backgroundColor = [DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance panelColor] : [DOThemeManager menuColorWithAlpha:1.0];
-        self.layer.cornerRadius = 14;
-        self.layer.masksToBounds = YES;
+        self.backgroundColor = UIColor.clearColor;
+        self.layer.cornerRadius = 22;
+        self.layer.masksToBounds = NO;
         self.layer.cornerCurve = kCACornerCurveContinuous;
+        [DOGlobalAppearance applyLiquidGlassToView:self];
         self.translatesAutoresizingMaskIntoConstraints = NO;
 
         self.button = [DOActionMenuButton buttonWithAction:actions chevron:NO];
         if ([DOGlobalAppearance isRoseStyle]) {
             UIButtonConfiguration *configuration = self.button.configuration;
             configuration.baseForegroundColor = [DOGlobalAppearance buttonTextColor];
-            configuration.background.backgroundColor = [DOGlobalAppearance accentColor];
+            configuration.background.backgroundColor = [DOGlobalAppearance tileColor];
             configuration.background.cornerRadius = 18;
             self.button.configuration = configuration;
             self.layer.cornerRadius = 18;

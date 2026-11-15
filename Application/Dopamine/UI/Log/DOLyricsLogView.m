@@ -16,6 +16,8 @@
 - (id)init
 {
     if (self = [super init]) {
+        self.backgroundColor = UIColor.clearColor;
+        [DOGlobalAppearance applyLiquidGlassToView:self];
         self.stackView = [[UIStackView alloc] init];
         self.stackView.axis = UILayoutConstraintAxisVertical;
         self.stackView.spacing = 0;

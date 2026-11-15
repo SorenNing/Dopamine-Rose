@@ -121,8 +121,9 @@
     UIButtonConfiguration *configuration = self.continueAction.configuration;
     configuration.baseForegroundColor = [DOGlobalAppearance buttonTextColor];
     self.continueAction.configuration = configuration;
-    self.continueAction.backgroundColor = [DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance accentColor] : [UIColor colorWithWhite:1.0 alpha:selected.count > 0 ? 0.2 : 0.1];
-    self.continueAction.alpha = [DOGlobalAppearance isRoseStyle] && selected.count == 0 ? 0.45 : 1.0;
+    self.continueAction.backgroundColor = UIColor.clearColor;
+    [DOGlobalAppearance applyLiquidGlassToView:self.continueAction];
+    self.continueAction.alpha = selected.count == 0 ? 0.45 : 1.0;
 }
 
 @end

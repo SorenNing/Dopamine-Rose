@@ -69,7 +69,7 @@
     self.license.font = [UIFont systemFontOfSize:14];
     self.license.textColor = [DOGlobalAppearance primaryTextColor];
     self.license.tintColor = [DOGlobalAppearance accentColor];
-    self.license.indicatorStyle = [DOGlobalAppearance isRoseStyle] ? UIScrollViewIndicatorStyleBlack : UIScrollViewIndicatorStyleWhite;
+    self.license.indicatorStyle = [DOGlobalAppearance interfaceStyle] == UIUserInterfaceStyleDark ? UIScrollViewIndicatorStyleWhite : UIScrollViewIndicatorStyleBlack;
     self.license.backgroundColor = [UIColor clearColor];
     self.selectedLicense = 0;
 
@@ -155,15 +155,14 @@
     {
         UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
         [button setTitle:license[@"name"] forState:UIControlStateNormal];
-        [button setTitleColor:[DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance primaryTextColor] : [UIColor blackColor] forState:UIControlStateNormal];
+        [button setTitleColor:[DOGlobalAppearance primaryTextColor] forState:UIControlStateNormal];
         button.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
-        button.backgroundColor = [DOGlobalAppearance isRoseStyle] ? [[DOGlobalAppearance accentColor] colorWithAlphaComponent:0.08] : [DOGlobalAppearance buttonTextColor];
-        if ([DOGlobalAppearance isRoseStyle]) {
-            button.tintColor = [DOGlobalAppearance accentColor];
-            button.layer.borderWidth = 1;
-            button.layer.borderColor = [DOGlobalAppearance separatorColor].CGColor;
-        }
+        button.backgroundColor = UIColor.clearColor;
+        button.tintColor = [DOGlobalAppearance accentColor];
+        button.layer.borderWidth = 1;
+        button.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
         button.layer.cornerRadius = 8;
+        [DOGlobalAppearance applyLiquidGlassToView:button];
         button.layer.cornerCurve = kCACornerCurveContinuous;
         button.translatesAutoresizingMaskIntoConstraints = NO;
         [button addTarget:self action:@selector(licenseButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
@@ -202,7 +201,7 @@
     _selectedLicense = selectedLicense;
     self.license.text = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:[DOLicenseViewController licenses][_selectedLicense][@"file"] ofType:@"md"] encoding:NSUTF8StringEncoding error:nil];
     [self.scrollView.subviews enumerateObjectsUsingBlock:^(UIView *view, NSUInteger idx, BOOL *stop) {
-        if ([DOGlobalAppearance isRoseStyle] && [view isKindOfClass:UIButton.class]) {
+        if ([view isKindOfClass:UIButton.class]) {
             UIButton *button = (UIButton *)view;
             BOOL selected = idx == (NSUInteger)self.selectedLicense;
             button.alpha = 1;

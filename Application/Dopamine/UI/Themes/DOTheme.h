@@ -2,7 +2,7 @@
 //  DOTheme.h
 //  Dopamine
 //
-//  Created by tomt000 on 14/02/2024.
+//  Liquid Glass theme model for the full application UI.
 //
 
 #import <Foundation/Foundation.h>
@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface DOTheme : NSObject
 
 @property (nonatomic, retain) NSString *name;
-@property (nonatomic, retain) NSString *icon;
+@property (nonatomic, retain, nullable) NSString *icon;
 @property (nonatomic, retain) NSString *key;
 @property (nonatomic, retain) UIColor *actionMenuColor;
 @property (nonatomic, retain) UIColor *windowColor;
@@ -21,11 +21,23 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) float blur;
 @property (nonatomic, assign) BOOL titleShadow;
 
-- (id)initWithDictionary: (NSDictionary *)dictionary;
+@property (nonatomic, retain) UIColor *primaryTextColor;
+@property (nonatomic, retain) UIColor *secondaryTextColor;
+@property (nonatomic, retain) UIColor *accentColor;
+@property (nonatomic, retain) UIColor *separatorColor;
+@property (nonatomic, retain) UIColor *glassColor;
+@property (nonatomic, retain) UIColor *tileColor;
+@property (nonatomic, retain) UIColor *selectedColor;
+@property (nonatomic, retain) UIColor *glassHighlightColor;
+@property (nonatomic, assign) BOOL darkTheme;
+@property (nonatomic, assign) BOOL liquidGlass;
+@property (nonatomic, assign) CGFloat glassBlurRadius;
+@property (nonatomic, assign) CGFloat glassShadowOpacity;
+@property (nonatomic, assign) CGFloat glassShadowRadius;
 
+- (id)initWithDictionary:(NSDictionary *)dictionary;
 - (UIImage *)generateBootLogo;
 
 @end
-
 
 NS_ASSUME_NONNULL_END

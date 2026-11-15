@@ -34,15 +34,16 @@
     [self setDelegate:self];
     [self setOverrideUserInterfaceStyle:[DOGlobalAppearance interfaceStyle]];
     self.view.tintColor = [DOGlobalAppearance accentColor];
+    self.view.backgroundColor = UIColor.clearColor;
 }
 
 - (void)setupBackground
 {
     DOTheme *theme = [[DOThemeManager sharedInstance] enabledTheme];
     
-    self.view.backgroundColor = [DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance panelColor] : UIColor.blackColor;
+    self.view.backgroundColor = [DOGlobalAppearance panelColor];
     self.backgroundImageView = [[UIImageView alloc] init];
-    self.backgroundImageView.image = [theme image];
+    self.backgroundImageView.image = [DOGlobalAppearance backgroundImage];
     self.backgroundImageView.contentMode = UIViewContentModeScaleAspectFill;
     self.backgroundImageView.translatesAutoresizingMaskIntoConstraints = NO;
     self.backgroundImageView.userInteractionEnabled = NO;
@@ -97,6 +98,7 @@
 
 - (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated
 {
+    [DOGlobalAppearance styleViewController:viewController];
     [self setBackgroundDimmed:![viewController isKindOfClass:[DOMainViewController class]]];
     [self.backAction setIgnoreFrame:[self _frameForViewController:viewController]];
     [self setNeedsStatusBarAppearanceUpdate];

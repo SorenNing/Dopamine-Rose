@@ -18,10 +18,11 @@
     {
         [self setDelegate:delegate];
         [self setActions:actions];
-        self.backgroundColor = [DOGlobalAppearance isRoseStyle] ? UIColor.clearColor : [DOThemeManager menuColorWithAlpha:1.0];
-        self.layer.cornerRadius = 14;
-        self.layer.masksToBounds = YES;
+        self.backgroundColor = UIColor.clearColor;
+        self.layer.cornerRadius = 18;
+        self.layer.masksToBounds = NO;
         self.layer.cornerCurve = kCACornerCurveContinuous;
+        [DOGlobalAppearance applyLiquidGlassToView:self];
     }
     return self;
 }
