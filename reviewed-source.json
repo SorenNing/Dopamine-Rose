@@ -423,7 +423,7 @@
     "Application/Frameworks/Preferences.framework/Headers/PSTableCell.h": "4b9548f4e3e7bb3e0f6d0a418ce273d0ca55f4c9425b75e63275a4ee44dfd0c1",
     "Application/Frameworks/Preferences.framework/Headers/PSViewController.h": "60a519b258167635e375cf0c84f882eca3be3c7c03a90f1317f39768f4dcd5db",
     "Application/Frameworks/Preferences.framework/Preferences.tbd": "003583cb796ce78978a33ed5b3a28de27d963773aaf3b5d3691413e1bf7e0132",
-    "Application/Makefile": "12fca48d62c7b21da5629ee08739fd31c69d5a9dca81be04ce676af68c679d67",
+    "Application/Makefile": "55d111fc2672fedd02258c8051b9bc67e6af6a5dfc9282f4dc229c9174a1bd41",
     "BaseBin/.gitignore": "bdd5208e364ffe960749ce3541561d14a0565c864ce7677f5ebf6c6297e7f086",
     "BaseBin/MachOMerger/.gitignore": "bba9700a716605bdede2499e3ae7e778c671cea580beaed7c53464d443e94762",
     "BaseBin/MachOMerger/MachOMerger.entitlements": "754c828785718dec66c61bfc8e74d7bb8a1139976d21b05aa49b7118681eb12b",
@@ -693,6 +693,7 @@
     "jbupdate.sh": "d28e232f737ceecded06f6760927430869359224215f6373768dbdc3bf604f79",
     "sign_and_install.sh": "149efb138403fe42168a7ed6a19eb2b3bf8813cb24889fdb8dffecd68748f4a7",
     "sort_localizations.sh": "0b1d316acb782aff644953ad6b7e521231d68c2f36dd48e32f5e79b53d0f05c7",
+    "tools/sign_app.py": "052d7ced85f4d9544755f8b57637812282c108228a4e78e08283b1ed25e1ca05",
     "tools/verify_source.py": "38739a3e5f7bc253f7561f592c9772edb02205858e765990c61f32c1e6fea2af",
     "tools/verify_tipa.py": "54290fdd9f1cb77ddbc518892810d28a1fee115ae39cf99bc218f6ea760447a5"
   },
