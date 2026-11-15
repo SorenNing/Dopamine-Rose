@@ -32,6 +32,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)isJailbrokenWithOtherJailbreak;
 - (BOOL)isBootstrapped;
 - (NSString *)jailbrokenVersion;
+- (NSString *)jailbrokenVersionRootHide;
 - (NSString *)systemVersion;
 
 - (BOOL)isSupported;
@@ -54,6 +55,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)rebootUserspace;
 - (void)rebuildIconCache;
 - (void)refreshJailbreakApps;
+- (NSString *)injectionModeDescription;
+- (NSString *)sileoURLScheme;
 - (void)reboot;
 - (void)changeMobilePassword:(NSString *)newPassword;
 - (NSError*)updateEnvironment;
@@ -64,11 +67,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)isIDownloadEnabled;
 - (void)setIDownloadEnabled:(BOOL)enabled needsUnsandbox:(BOOL)needsUnsandbox;
 - (void)setIDownloadLoaded:(BOOL)loaded needsUnsandbox:(BOOL)needsUnsandbox;
+/*
 - (BOOL)isFakelibMounted;
 - (int)setFakelibMounted:(BOOL)mounted;
 - (int)setPrivatePrebootProtected:(BOOL)protected;
 - (BOOL)isJailbreakHidden;
 - (void)setJailbreakHidden:(BOOL)hidden;
+*/
 
 - (BOOL)isPACBypassRequired;
 - (BOOL)isPPLBypassRequired;
@@ -78,8 +83,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSError *)deleteBootstrap;
 - (NSError *)reinstallPackageManagers;
 - (NSError *)updateBootLogo;
-- (void)mountDictionary:(NSDictionary *)dictionary writeToFile:(NSString *)path;
-- (void)fakeMount:(NSString *)path unmount:(BOOL)unmount shouldDeleteMntFiles:(BOOL)shouldDeleteMntFiles;
 @end
 
 NS_ASSUME_NONNULL_END

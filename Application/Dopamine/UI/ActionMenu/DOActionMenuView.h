@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface DOActionMenuView : UIView
 
 @property (atomic) UIStackView *buttonsView;
-@property (atomic, weak) id<DOActionMenuDelegate> delegate;
+@property (atomic) id<DOActionMenuDelegate> delegate;
 @property (nonatomic) NSArray *actions;
 
 - (instancetype)initWithActions:(NSArray<UIAction*> *)actions delegate:(id<DOActionMenuDelegate>)delegate;

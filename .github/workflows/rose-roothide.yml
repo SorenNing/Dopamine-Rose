@@ -1,0 +1,166 @@
+name: Build Dopamine Rose RootHide
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  THEOS: ${{ github.workspace }}/theos
+  THEOS_SDK_VERSION: '16.5'
+  BUILD_CACHE_VERSION: 'v1'
+  HOMEBREW_NO_AUTO_UPDATE: '1'
+  HOMEBREW_NO_INSTALL_CLEANUP: '1'
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Select Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Verify source and RootHide version
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REPOSITORY" != 'SorenNing/Dopamine-Rose' || "$GITHUB_REF" != 'refs/heads/main' ]]; then
+            echo '::error::Run only after syncing SorenNing/Dopamine-Rose main.' >&2
+            exit 1
+          fi
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          test "$(cat BaseBin/_external/basebin/.version)" = '3.0.13'
+          test "$(cat BaseBin/_external/basebin/.version-roothide)" = '30'
+          test -s Application/Dopamine/Resources/bootstrap_1900.tar.zst
+          test -s Application/Dopamine/Resources/roothideapp.deb
+
+      - name: Prepare cache keys
+        id: cache-info
+        run: |
+          echo "macos=$(sw_vers -productVersion)" >> "$GITHUB_OUTPUT"
+          echo "month=$(date -u +'%Y-%m')" >> "$GITHUB_OUTPUT"
+          mkdir -p .ci-cache
+
+      - name: Install Homebrew dependencies
+        run: |
+          for formula in make libarchive openssl@3 zstd; do
+            if ! brew list --versions "$formula" >/dev/null 2>&1; then
+              brew install "$formula"
+            fi
+          done
+          echo "$(brew --prefix make)/libexec/gnubin" >> "$GITHUB_PATH"
+
+      - name: Restore Procursus environment
+        id: procursus-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .ci-cache/procursus.tar.zst
+          key: procursus-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-info.outputs.macos }}-${{ env.BUILD_CACHE_VERSION }}-${{ steps.cache-info.outputs.month }}
+
+      - name: Extract Procursus environment
+        if: steps.procursus-cache.outputs.cache-hit == 'true'
+        run: |
+          sudo mkdir -p /opt
+          zstd -dc .ci-cache/procursus.tar.zst | sudo tar -xpf - -C /opt
+
+      - name: Install Procursus
+        if: steps.procursus-cache.outputs.cache-hit != 'true'
+        uses: dhinakg/procursus-action@main
+        with:
+          cache: 'false'
+          packages: ldid findutils sed coreutils make xz-utils dpkg zstd
+
+      - name: Configure Procursus paths
+        run: |
+          for procursus_path in games sbin bin local/sbin local/bin; do
+            echo "/opt/procursus/$procursus_path" >> "$GITHUB_PATH"
+          done
+          echo "CPATH=/opt/procursus/include${CPATH:+:$CPATH}" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=/opt/procursus/lib${LIBRARY_PATH:+:$LIBRARY_PATH}" >> "$GITHUB_ENV"
+
+      - name: Archive Procursus environment
+        if: steps.procursus-cache.outputs.cache-hit != 'true'
+        run: sudo tar -cpf - -C /opt procursus | zstd -T0 -3 -o .ci-cache/procursus.tar.zst
+
+      - name: Save Procursus environment
+        if: steps.procursus-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .ci-cache/procursus.tar.zst
+          key: ${{ steps.procursus-cache.outputs.cache-primary-key }}
+
+      - name: Restore RootHide Theos and SDK
+        id: theos-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: theos
+          key: roothide-theos-${{ runner.os }}-${{ runner.arch }}-${{ steps.cache-info.outputs.macos }}-sdk${{ env.THEOS_SDK_VERSION }}-${{ env.BUILD_CACHE_VERSION }}-${{ steps.cache-info.outputs.month }}
+
+      - name: Install RootHide Theos and SDK
+        if: steps.theos-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --recursive --depth 1 --shallow-submodules https://github.com/roothide/theos.git "$THEOS"
+          mkdir -p "$THEOS/sdks"
+          sdk_archive="$RUNNER_TEMP/iPhoneOS${THEOS_SDK_VERSION}.sdk.tar.xz"
+          curl -fL --retry 3 "https://github.com/theos/sdks/releases/latest/download/iPhoneOS${THEOS_SDK_VERSION}.sdk.tar.xz" --output "$sdk_archive"
+          tar -xJf "$sdk_archive" -C "$THEOS/sdks"
+
+      - name: Verify RootHide Theos environment
+        run: |
+          test -f "$THEOS/makefiles/common.mk"
+          test -d "$THEOS/sdks/iPhoneOS${THEOS_SDK_VERSION}.sdk"
+          test -d "$THEOS/vendor/include"
+
+      - name: Save RootHide Theos and SDK
+        if: steps.theos-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: theos
+          key: ${{ steps.theos-cache.outputs.cache-primary-key }}
+
+      - name: Build and install trustcache
+        run: |
+          git clone --depth 1 https://github.com/CRKatri/trustcache.git "$RUNNER_TEMP/trustcache"
+          export CFLAGS="${CFLAGS:-} -I$(brew --prefix openssl@3)/include -arch $(uname -m)"
+          export LDFLAGS="${LDFLAGS:-} -L$(brew --prefix openssl@3)/lib -arch $(uname -m)"
+          gmake -C "$RUNNER_TEMP/trustcache" -j"$(sysctl -n hw.logicalcpu)" OPENSSL=1
+          sudo install -m 755 "$RUNNER_TEMP/trustcache/trustcache" /opt/procursus/bin/trustcache
+
+      - name: Build with original RootHide Makefile
+        run: |
+          BUILD_TIMESTAMP="$(date +%s)" gmake -j"$(sysctl -n hw.physicalcpu)"
+
+      - name: Verify installable RootHide archives
+        run: |
+          set -euo pipefail
+          version="$(cat BaseBin/_external/basebin/.version)-$(cat BaseBin/_external/basebin/.version-roothide)"
+          for archive in "Application/Dopamine-roothide-${version}.ipa" "Application/Dopamine-roothide-${version}.tipa"; do
+            test -s "$archive"
+            unzip -tq "$archive" >/dev/null
+            members="$(unzip -Z1 "$archive")"
+            grep -Fx 'Payload/Dopamine.app/Dopamine.roothide' <<< "$members" >/dev/null
+            grep -Fx 'Payload/Dopamine.app/libroothider.dylib' <<< "$members" >/dev/null
+            info='Payload/Dopamine.app/Info.plist'
+            bundle_id="$(unzip -p "$archive" "$info" | plutil -extract CFBundleIdentifier raw -o - -)"
+            archive_version="$(unzip -p "$archive" "$info" | plutil -extract CFBundleShortVersionString raw -o - -)"
+            if [[ "$bundle_id" != 'cn.zqbb.dopaRH' || "$archive_version" != "$version" ]]; then
+              echo "::error::$archive is not cn.zqbb.dopaRH ($version)." >&2
+              exit 1
+            fi
+          done
+          cmp "Application/Dopamine-roothide-${version}.ipa" "Application/Dopamine-roothide-${version}.tipa"
+
+      - name: Upload IPA and TIPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dopamine-Rose-RootHide-${{ github.sha }}
+          if-no-files-found: error
+          path: |
+            Application/Dopamine-roothide-*.ipa
+            Application/Dopamine-roothide-*.tipa

@@ -5,6 +5,8 @@
 #include <libjailbreak/util.h>
 #include "../crashreporter.h"
 
+#include <libroothider/libroothider.h>
+
 static bool watchdog_domain_allowed(audit_token_t clientToken)
 {
 	xpc_object_t entitlementValue = xpc_copy_entitlement_for_token("com.apple.private.iowatchdog.user-access", &clientToken);
@@ -26,6 +28,10 @@ static int watchdog_intercept_userspace_panic(const char *panicMessage)
 	setenv("WATCHDOG_PANIC_MESSAGE", panicMessage, 1);
 	FILE *touchFile = fopen(JBROOT_PATH("/basebin/.safe_mode"), "w");
 	fclose(touchFile);
+	
+/*************************** roothide specific *******************/
+	setBasebinDependency(false);
+/*************************** roothide specific *******************/
 
 	return 0;
 }
@@ -50,7 +56,7 @@ struct jbserver_domain gWatchdogDomain = {
 		// JBS_WATCHDOG_INTERCEPT_USERSPACE_PANIC
 		{
 			.handler = watchdog_intercept_userspace_panic,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ .name = "panic-message", .type = JBS_TYPE_STRING, .out = false },
 				{ 0 },
 			},
@@ -58,7 +64,7 @@ struct jbserver_domain gWatchdogDomain = {
 		// JBS_WATCHDOG_GET_LAST_USERSPACE_PANIC
 		{
 			.handler = watchdog_get_last_userspace_panic,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ .name = "panic-message", .type = JBS_TYPE_STRING, .out = true },
 				{ 0 },
 			},

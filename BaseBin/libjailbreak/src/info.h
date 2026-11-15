@@ -43,10 +43,18 @@ struct system_info {
 		uint64_t usesPACBypass;
 		char *rootPath;
 		char *appIdentifier;
+
+/************ roothide specfic *********/
+		uint64_t jbrand;
+		uint64_t palera1n;
+		bool dyld_patch_enabled;
+/************ roothide specfic *********/
 	} jailbreakInfo;
 
 	struct {
 		bool markAppsAsDebugged;
+		// 使用原有对齐空隙；旧环境缺少此字段时为 false，修复默认开启。
+		bool trollStoreLiteFixDisabled;
 		double jetsamMultiplier;
 	} jailbreakSettings;
 
@@ -105,6 +113,14 @@ struct system_info {
 		uint64_t libsptm_frame_type_params;
 		uint64_t txm_developer_mode_storage;
 		uint64_t txm_trustcache_root;
+
+
+/************** roothide specfic ***********/
+		uint64_t nchashtbl;
+		uint64_t nchashmask;
+		uint64_t launch_env_logging;
+		uint64_t developer_mode_status;
+/************** roothide specfic ***********/
 	} kernelSymbol;
 
 	struct {
@@ -349,7 +365,13 @@ struct system_info {
 		struct {
 			uint32_t allowsInvalidCode;
 			uint32_t codeRegions;
+			uint32_t mainRegion;
 		} TXMAddressSpace;
+
+		struct {
+			uint32_t codeDirectory;
+			uint32_t trustPair;
+		} TXMCodeSignature;
 
 		struct {
 			uint32_t active;
@@ -408,15 +430,29 @@ extern struct system_info gSystemInfo;
 	iterator(ctx, kernelConstant.TFRO_HARDENED);
 
 #define JAILBREAK_INFO_ITERATE(ctx, iterator) \
+	\
+	iterator(ctx, jailbreakInfo.jbrand); \
+	iterator(ctx, jailbreakInfo.palera1n); \
+	iterator(ctx, jailbreakInfo.dyld_patch_enabled); \
+	\
+	\
 	iterator(ctx, jailbreakInfo.usesPACBypass); \
 	iterator(ctx, jailbreakInfo.rootPath); \
 	iterator(ctx, jailbreakInfo.appIdentifier);
 
 #define JAILBREAK_SETTINGS_ITERATE(ctx, iterator) \
 	iterator(ctx, jailbreakSettings.markAppsAsDebugged); \
+	iterator(ctx, jailbreakSettings.trollStoreLiteFixDisabled); \
 	iterator(ctx, jailbreakSettings.jetsamMultiplier);
 
 #define KERNEL_SYMBOLS_ITERATE(ctx, iterator) \
+	\
+	iterator(ctx, kernelSymbol.nchashtbl); \
+	iterator(ctx, kernelSymbol.nchashmask); \
+	iterator(ctx, kernelSymbol.launch_env_logging); \
+	iterator(ctx, kernelSymbol.developer_mode_status); \
+	\
+	\
 	iterator(ctx, kernelSymbol.perfmon_dev_open); \
 	iterator(ctx, kernelSymbol.vn_kqfilter); \
 	iterator(ctx, kernelSymbol.proc_find); \
@@ -634,6 +670,9 @@ extern struct system_info gSystemInfo;
 	\
 	iterator(ctx, kernelStruct.TXMAddressSpace.allowsInvalidCode); \
 	iterator(ctx, kernelStruct.TXMAddressSpace.codeRegions); \
+	iterator(ctx, kernelStruct.TXMAddressSpace.mainRegion); \
+	iterator(ctx, kernelStruct.TXMCodeSignature.codeDirectory); \
+	iterator(ctx, kernelStruct.TXMCodeSignature.trustPair); \
 	\
 	iterator(ctx, kernelStruct.TXMCodeRegion.active); \
 	iterator(ctx, kernelStruct.TXMCodeRegion.type); \

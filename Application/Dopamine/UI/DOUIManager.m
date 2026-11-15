@@ -12,6 +12,9 @@
 #import "NSString+Version.h"
 #import <pthread.h>
 
+// 关闭远程版本检测；改为 YES 即可恢复原有检测与发布信息请求。
+static const BOOL DOVersionUpdateCheckEnabled = NO;
+
 @implementation DOUIManager
 
 + (instancetype)sharedInstance
@@ -37,15 +40,8 @@
 
 - (BOOL)isUpdateAvailable
 {
-    
-    NSNumber *disableUpdate = [_preferenceManager preferenceValueForKey:@"disableUpdateEnabled"];
-    if ([disableUpdate boolValue] == YES)
-        return NO;
+    if (!DOVersionUpdateCheckEnabled) return NO;
 
-    NSArray *releases = [self getLatestReleases];
-    if (releases.count == 0)
-        return NO;
-    
     NSString *latestVersion = [self getLatestReleaseTag];
     NSString *currentVersion = [self getLaunchedReleaseTag];
     return [latestVersion numericalVersionRepresentation] > [currentVersion numericalVersionRepresentation];
@@ -77,10 +73,12 @@
 
 - (NSArray *)getLatestReleases
 {
+    if (!DOVersionUpdateCheckEnabled) return @[];
+
     static dispatch_once_t onceToken;
     static NSArray *releases;
     dispatch_once(&onceToken, ^{
-        NSURL *url = [NSURL URLWithString:@"https://api.github.com/repos/opa334/Dopamine/releases"];
+        NSURL *url = [NSURL URLWithString:@"https://api.github.com/repos/roothide/Dopamine-roothide/releases"];
         NSData *data = [NSData dataWithContentsOfURL:url];
         if (data) {
             NSError *error;
@@ -100,7 +98,9 @@
     if (![[DOEnvironmentManager sharedManager] jailbrokenVersion])
         return NO;
 
-    NSString *jailbrokenVersion = [[DOEnvironmentManager sharedManager] jailbrokenVersion];
+/********************************************** roothide specfic ***********************************/
+    NSString *jailbrokenVersion = [[DOEnvironmentManager sharedManager] jailbrokenVersionRootHide];
+/********************************************** roothide specfic ***********************************/
     NSString *launchedVersion = [self getLaunchedReleaseTag];
     
     return [launchedVersion numericalVersionRepresentation] > [jailbrokenVersion numericalVersionRepresentation];
@@ -136,7 +136,9 @@
 
 - (NSString*)getLaunchedReleaseTag
 {
-    return [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+/******************************************************** roothide specfic *******************************************************/
+    return [[[[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleShortVersionString"] componentsSeparatedByString:@"-"] lastObject];
+/*********************************************************************************************************************************/
 }
 
 - (NSArray*)availablePackageManagers

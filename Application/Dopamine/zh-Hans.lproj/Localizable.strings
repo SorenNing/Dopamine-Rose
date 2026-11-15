@@ -1,4 +1,4 @@
-"Credits_Made_By" = "作者：opa334, évelyne (ElleKit)";
+"Credits_Made_By" = "项目作者：opa334, évelyne (ElleKit)";
 
 // Log
 "Status_Title_Jailbreaking" = "正在越狱";
@@ -7,7 +7,6 @@
 // Jailbreak Button
 "Button_Jailbreak_Title" = "越狱";
 "Status_Title_Jailbroken" = "已越狱";
-"Rose_Status_Not_Jailbroken" = "尚未越狱";
 "Unsupported" = "不支持";
 
 // Action Menu
@@ -43,7 +42,7 @@
 "Settings_iDownload" = "iDownload (开发者终端)";
 "Settings_Verbose_Logs" = "详细日志";
 "Settings_Apps_JIT" = "允许 App 使用 JIT";
-"Settings_Jetsam_Multiplier" = "Jetsam 倍数";
+"Settings_Jetsam_Multiplier" = "Jetsam 附加内存";
 
 // Settings Buttons
 "Button_Remove_Jailbreak" = "移除越狱";
@@ -60,7 +59,7 @@
 "Section_Actions" = "操作";
 "Section_Customization" = "自定义";
 "Section_Exploits" = "漏洞利用";
-"Jetsam_Description" = "Jetsam 是一个系统守护进程，它会自动终止超过指定内存限制的进程。当安装了大量插件后，某些进程可能在启动时或启动后没多久内存使用超出限制，被 Jetsam 终止，导致进程循环崩溃。你可以选择一个倍数来扩大所有带内存限制进程的限制。如果你的系统在安装了大量插件之后出现频繁崩溃或者各种异常行为，请适当地增加这个倍数。但为了不对系统内存使用产生负面影响，建议选择能够使系统稳定运行的最低倍数。";
+"Jetsam_Description" = "为注入进程增加“进程配置额度 + 此处所选 MB 数”的内存上限。进程缺省额度为 10 MB，SpringBoard 为 1024 MB，xxtouch 为 48 MB，thermalmonitord 为 16 MB。关闭时不修改上限，无限额保持不变。进程额度由 cn.zqbb.jetsam.addend.plist 配置。";
 
 // Settings Alerts
 "Alert_Tweak_Injection_Toggled_Title" = "需要重启用户空间";
@@ -73,7 +72,7 @@
 "Alert_Change_Mobile_Password_Body" = "这将会在你的设备上修改 “mobile” 密码，此密码可用于使用 sudo 命令。如需设置 “root” 密码，请在 shell 中使用命令 “sudo passwd root”。";
 "Password_Placeholder" = "密码";
 "Repeat_Password_Placeholder" = "重复密码";
-"Password_Auth_Required" = "更改您的手机密码需要身份验证。";
+/*Password_Auth_Required*/
 "Button_Change" = "修改";
 "Button_Cancel" = "取消";
 "Button_Continue" = "继续";
@@ -126,16 +125,29 @@
 "Select_Package_Managers_Install_Message" = "如果你不确定选择哪一个比较好，请选择 Sileo";
 "Continue" = "继续";
 
-// mount 
-"Input_Mmount_Title" = "新增挂载";
-"Input_Unmount_Title" = "管理挂载";
-"Input_Mount_Title" = "输入原始路径";
-"Error_Mount_Body" = "目标文件夹不存在";
-"Select_Mount_Title" = "选择需要操作的路径";
-"Button_Delete_Path_Only" = "仅删除路径";
-"Button_Delete" = "取消挂载";
-"Button_View" = "Filza查看";
-"Button_Mount" = "确定";
+"Injection_Mode_Waiting" = "等待越狱";
 
-"System_Uptime_Format" = "已运行: %d天 %d时 %d分 %d秒";
-"Settings_Disable_Update" = "禁用更新检测";
+"Injection_Mode_Whitelist" = "白名单";
+
+"Injection_Mode_Blacklist" = "黑名单";
+
+"Sileo_Open_Failed" = "无法打开 Sileo，请先安装 Sileo 并刷新软件源。";
+
+"Jetsam_Disabled" = "关闭";
+
+"Install Whitelist App" = "安装白名单应用";
+
+"Install Mount App" = "安装挂载应用";
+
+"If you encounter any issues, please reproduce them using the official version before reporting." = "如有问题，请使用官方版本复现后再报告。";
+
+// 主页系统信息
+"System version: %@" = "系统版本：%@";
+"System boot time: %@" = "开机时长：%@";
+"Unknown" = "未知";
+
+"Uptime_Format" = "%llu天 %02llu:%02llu:%02llu";
+"Build version: %@" = "编译版本：%@";
+"Build time: %@" = "编译时间：%@";
+
+"Rose_Status_Not_Jailbroken" = "尚未越狱";

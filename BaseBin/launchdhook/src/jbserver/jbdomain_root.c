@@ -6,6 +6,12 @@
 #include <libjailbreak/primitives.h>
 #include <libjailbreak/util.h>
 
+
+#include <libroothider/libroothider.h>
+
+extern int roothide_unsupport_request();
+
+
 static bool root_domain_allowed(audit_token_t clientToken)
 {
 	return (audit_token_to_euid(clientToken) == 0);
@@ -81,11 +87,13 @@ static int root_trustcache_info(xpc_object_t *infoOut)
 	return 0;
 }
 
+/*
 static int root_trustcache_add_cdhash(uint8_t *cdhashData, size_t cdhashLen)
 {
 	if (cdhashLen != CS_CDHASH_LEN) return -1;
 	return jb_trustcache_add_cdhashes((cdhash_t *)cdhashData, 1);
 }
+*/
 
 static int root_trustcache_clear(void)
 {
@@ -99,7 +107,7 @@ struct jbserver_domain gRootDomain = {
 		// JBS_ROOT_GET_PHYSRW
 		{
 			.handler = root_get_physrw,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ .name = "caller-token", .type = JBS_TYPE_CALLER_TOKEN, .out = false },
 				{ .name = "single-pte", .type = JBS_TYPE_BOOL, .out = false },
 				{ .name = "single-pte-asid-ptr", .type = JBS_TYPE_UINT64, .out = true },
@@ -109,7 +117,7 @@ struct jbserver_domain gRootDomain = {
 		// JBS_ROOT_SIGN_THREAD
 		{
 			.handler = root_sign_thread,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ .name = "caller-token", .type = JBS_TYPE_CALLER_TOKEN, .out = false },
 				{ .name = "thread-port", .type = JBS_TYPE_UINT64, .out = false },
 				{ 0 },
@@ -118,7 +126,7 @@ struct jbserver_domain gRootDomain = {
 		// JBS_ROOT_GET_SYSINFO
 		{
 			.handler = root_get_sysinfo,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ .name = "sysinfo", .type = JBS_TYPE_DICTIONARY, .out = true },
 				{ 0 },
 			},
@@ -126,7 +134,7 @@ struct jbserver_domain gRootDomain = {
 		// JBS_ROOT_STEAL_UCRED
 		{
 			.handler = root_steal_ucred,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ .name = "caller-token", .type = JBS_TYPE_CALLER_TOKEN, .out = false },
 				{ .name = "ucred", .type = JBS_TYPE_UINT64, .out = false },
 				{ .name = "org-ucred", .type = JBS_TYPE_UINT64, .out = true },
@@ -136,7 +144,7 @@ struct jbserver_domain gRootDomain = {
 		// JBS_ROOT_SET_MAC_LABEL
 		{
 			.handler = root_set_mac_label,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ .name = "caller-token", .type = JBS_TYPE_CALLER_TOKEN, .out = false },
 				{ .name = "slot", .type = JBS_TYPE_UINT64, .out = false },
 				{ .name = "label", .type = JBS_TYPE_UINT64, .out = false },
@@ -147,15 +155,15 @@ struct jbserver_domain gRootDomain = {
 		// JBS_ROOT_TRUSTCACHE_INFO
 		{
 			.handler = root_trustcache_info,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ .name = "tc-info", .type = JBS_TYPE_ARRAY, .out = true },
 				{ 0 },
 			},
 		},
 		// JBS_ROOT_ADD_CDHASH
 		{
-			.handler = root_trustcache_add_cdhash,
-			.args = (jbserver_arg[]){
+			.handler = roothide_unsupport_request,
+			.args = {
 				{ .name = "cdhash", .type = JBS_TYPE_DATA, .out = false },
 				{ 0 },
 			},
@@ -163,7 +171,7 @@ struct jbserver_domain gRootDomain = {
 		// JBS_ROOT_TRUSTCACHE_CLEAR
 		{
 			.handler = root_trustcache_clear,
-			.args = (jbserver_arg[]){
+			.args = {
 				{ 0 },
 			},
 		},

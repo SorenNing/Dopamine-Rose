@@ -15,98 +15,141 @@
 #import "DOLogCrashViewController.h"
 #import <pthread.h>
 #import <sys/sysctl.h>
+#import <mach/mach_time.h>
 #import <libjailbreak/libjailbreak.h>
-#import "DOThemeManager.h"
-#import <QuartzCore/QuartzCore.h>
-#import <time.h>
 
 @interface DOMainViewController ()
 
 @property DOJailbreakButton *jailbreakBtn;
+@property UIStackView *mainStack;
+@property UIView *contentView;
+@property UILabel *appBuildInfoLabel;
+@property UILabel *appBuildTimeLabel;
+@property UILabel *systemVersionLabel;
+@property UILabel *systemUptimeLabel;
+@property NSTimer *uptimeTimer;
+@property(nonatomic) BOOL informationVisible;
 @property NSArray<NSLayoutConstraint *> *jailbreakButtonConstraints;
 @property DOActionMenuButton *updateButton;
 @property(nonatomic) BOOL hideStatusBar;
 @property(nonatomic) BOOL hideHomeIndicator;
 @property (nonatomic, strong) UIScrollView *roseScrollView;
-@property (nonatomic, strong) UIView *roseBackdrop;
 @property (nonatomic, strong) UIView *roseFrame;
-@property (nonatomic, strong) UIStackView *roseStack;
 @property (nonatomic, strong) UILabel *roseStateLabel;
-@property (nonatomic, strong) UILabel *roseSupportLabel;
-@property (nonatomic, strong) UILabel *roseUptimeLabel;
-@property (nonatomic, strong) DOActionMenuView *roseActionMenu;
-@property (nonatomic, strong) NSTimer *roseUptimeTimer;
-
-- (void)setupRoseStack;
-- (void)refreshRoseState;
-- (void)updateRoseUptime;
-- (UILabel *)roseLabelWithText:(NSString *)text size:(CGFloat)size color:(UIColor *)color;
-- (UIView *)roseSpacer:(CGFloat)height;
 
 @end
 
 @implementation DOMainViewController
 
-#include "DOMainRoseLayout.inc"
-
 - (void)viewDidLoad {
     [super viewDidLoad];
-    if ([DOGlobalAppearance isRoseStyle]) [self setupRoseStack];
-    else [self setupStack];
+    [self setupStack];
 }
 
+// 组合主页信息列、操作菜单与越狱按钮。
 -(void)setupStack
 {
-    UIStackView *stackView = [[UIStackView alloc] init];
+    if ([DOGlobalAppearance isRoseStyle]) {
+        self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
+        self.view.backgroundColor = [UIColor colorWithRed:240/255.0 green:218/255.0 blue:222/255.0 alpha:1];
+        UIImageView *background = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Background_DustyRose"]];
+        background.contentMode = UIViewContentModeScaleToFill;
+        background.translatesAutoresizingMaskIntoConstraints = NO;
+        [self.view addSubview:background];
+        [NSLayoutConstraint activateConstraints:@[
+            [background.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
+            [background.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+            [background.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+            [background.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+        ]];
+        UIView *frame = [[UIView alloc] init];
+        frame.translatesAutoresizingMaskIntoConstraints = NO;
+        frame.userInteractionEnabled = NO;
+        frame.layer.borderColor = [UIColor colorWithWhite:1 alpha:0.7].CGColor;
+        frame.layer.borderWidth = 1;
+        frame.layer.cornerRadius = 28;
+        [self.view addSubview:frame];
+        self.roseFrame = frame;
+        [NSLayoutConstraint activateConstraints:@[
+            [frame.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
+            [frame.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-8],
+            [frame.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+            [frame.widthAnchor constraintLessThanOrEqualToConstant:UI_IPAD_MAX_WIDTH + 48]
+        ]];
+        NSLayoutConstraint *frameWidth = [frame.widthAnchor constraintEqualToAnchor:self.view.widthAnchor constant:-28];
+        frameWidth.priority = UILayoutPriorityDefaultHigh;
+        frameWidth.active = YES;
+        UIScrollView *scroll = [[UIScrollView alloc] init];
+        scroll.translatesAutoresizingMaskIntoConstraints = NO;
+        scroll.showsVerticalScrollIndicator = NO;
+        [self.view addSubview:scroll];
+        self.roseScrollView = scroll;
+        [NSLayoutConstraint activateConstraints:@[
+            [scroll.leadingAnchor constraintEqualToAnchor:frame.leadingAnchor constant:26],
+            [scroll.trailingAnchor constraintEqualToAnchor:frame.trailingAnchor constant:-26],
+            [scroll.topAnchor constraintEqualToAnchor:frame.topAnchor constant:18],
+            [scroll.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-84]
+        ]];
+    }
+    self.contentView = [[UIView alloc] initWithFrame:self.view.bounds];
+    if (self.roseScrollView) [self.roseScrollView addSubview:self.contentView];
+    else [self.view addSubview:self.contentView];
+    UIStackView *stackView = self.mainStack = [[UIStackView alloc] init];
     [stackView setAxis:UILayoutConstraintAxisVertical];
     [stackView setAlignment:UIStackViewAlignmentTrailing];
     [stackView setDistribution:UIStackViewDistributionEqualSpacing];
+    stackView.spacing = 16;
+    if (self.roseScrollView) {
+        stackView.alignment = UIStackViewAlignmentFill;
+        stackView.distribution = UIStackViewDistributionFill;
+    }
     [stackView setTranslatesAutoresizingMaskIntoConstraints:NO];
 
-    [self.view addSubview:stackView];
-
-
-    int statusBarHeight = fmax(15, [[UIApplication sharedApplication] keyWindow].safeAreaInsets.top - 20);
-
-    [NSLayoutConstraint activateConstraints:@[
-        [stackView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor constant:statusBarHeight],//-35
-        [stackView.heightAnchor constraintEqualToAnchor:self.view.heightAnchor multiplier:[DOGlobalAppearance isHomeButtonDevice] ? 0.78 : 0.73]
-    ]];
-
-    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
-    {
-        NSLayoutConstraint *relativeWidthConstraint = [stackView.widthAnchor constraintEqualToAnchor:self.view.widthAnchor multiplier:0.8];
-        relativeWidthConstraint.priority = UILayoutPriorityDefaultHigh;
-        NSLayoutConstraint *maxWidthConstraint = [stackView.widthAnchor constraintLessThanOrEqualToConstant:UI_IPAD_MAX_WIDTH];
-        maxWidthConstraint.priority = UILayoutPriorityRequired;
-
+    if (self.roseScrollView) {
+        self.contentView.translatesAutoresizingMaskIntoConstraints = NO;
         [NSLayoutConstraint activateConstraints:@[
-            relativeWidthConstraint,
-            maxWidthConstraint,
-            [stackView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor]
+            [self.contentView.leadingAnchor constraintEqualToAnchor:self.roseScrollView.contentLayoutGuide.leadingAnchor],
+            [self.contentView.trailingAnchor constraintEqualToAnchor:self.roseScrollView.contentLayoutGuide.trailingAnchor],
+            [self.contentView.topAnchor constraintEqualToAnchor:self.roseScrollView.contentLayoutGuide.topAnchor],
+            [self.contentView.bottomAnchor constraintEqualToAnchor:self.roseScrollView.contentLayoutGuide.bottomAnchor],
+            [self.contentView.widthAnchor constraintEqualToAnchor:self.roseScrollView.frameLayoutGuide.widthAnchor]
         ]];
     }
-    else
-    {
-        [NSLayoutConstraint activateConstraints:@[
-            [stackView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:UI_PADDING],
-            [stackView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-UI_PADDING],
-        ]];
+    [self.contentView addSubview:stackView];
+    [NSLayoutConstraint activateConstraints:@[
+        [stackView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
+        [stackView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
+        [stackView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
+        [stackView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
+    ]];
+
+    if (self.roseScrollView) {
+        UIView *spacing = [[UIView alloc] init];
+        [stackView addArrangedSubview:spacing];
+        [spacing.heightAnchor constraintEqualToConstant:18].active = YES;
     }
 
     //Header
     DOHeaderView *headerView = [[DOHeaderView alloc] initWithImage: [UIImage imageNamed:@"Dopamine"] subtitles: @[
         [DOGlobalAppearance mainSubtitleString:[[DOEnvironmentManager sharedManager] versionSupportString]],
-        [DOGlobalAppearance secondarySubtitleString:DOLocalizedString(@"Credits_Made_By") withAlpha:0.8],
-        [DOGlobalAppearance secondarySubtitleString:DOLocalizedString(@"AAAA") withAlpha:0.6],
-        [DOGlobalAppearance secondarySubtitleString:DOLocalizedString(@"AAAB") withAlpha:0.6],
-        [DOGlobalAppearance secondarySubtitleString:@" " withAlpha:0.8]
+        [DOGlobalAppearance secondarySubtitleString:DOLocalizedString(@"Credits_Made_By")],
     ]];
     
     [stackView addArrangedSubview:headerView];
+    if (self.roseScrollView) [stackView setCustomSpacing:28 afterView:headerView];
+    // 版本与注入模式、应用构建信息、运行时长共用作者行的边界与行距。
+    self.systemVersionLabel = [self addInformationRowToHeader:headerView titleKey:@"System version: %@"];
+    self.appBuildInfoLabel = [self addInformationRowToHeader:headerView titleKey:@"Build version: %@"];
+    self.appBuildTimeLabel = [self addInformationRowToHeader:headerView titleKey:@"Build time: %@"];
+    self.systemUptimeLabel = [self addInformationRowToHeader:headerView titleKey:@"System boot time: %@"];
+    NSString *issueNotice = [@"\n" stringByAppendingString:DOLocalizedString(@"If you encounter any issues, please reproduce them using the official version before reporting.")];
+    [headerView addSubtitle:[DOGlobalAppearance secondarySubtitleString:issueNotice]];
+    [self refreshSystemInformation];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(resumeSystemInformationUpdates) name:UIApplicationDidBecomeActiveNotification object:nil];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(stopUptimeTimer) name:UIApplicationWillResignActiveNotification object:nil];
 
     [NSLayoutConstraint activateConstraints:@[
-        [headerView.leadingAnchor constraintEqualToAnchor:stackView.leadingAnchor constant:5],
+        [headerView.leadingAnchor constraintEqualToAnchor:stackView.leadingAnchor constant:self.roseScrollView ? 0 : 5],
         [headerView.trailingAnchor constraintEqualToAnchor:stackView.trailingAnchor]
     ]];
     
@@ -130,7 +173,27 @@
         }]
     ] delegate:self];
     
+    if (self.roseScrollView) {
+        UIView *status = [[UIView alloc] init];
+        self.roseStateLabel = [[UILabel alloc] init];
+        self.roseStateLabel.translatesAutoresizingMaskIntoConstraints = NO;
+        self.roseStateLabel.textColor = [DOGlobalAppearance primaryTextColor];
+        self.roseStateLabel.font = [UIFont systemFontOfSize:23 weight:UIFontWeightSemibold];
+        self.roseStateLabel.textAlignment = NSTextAlignmentCenter;
+        self.roseStateLabel.numberOfLines = 0;
+        self.roseStateLabel.accessibilityTraits = UIAccessibilityTraitHeader;
+        [status addSubview:self.roseStateLabel];
+        [NSLayoutConstraint activateConstraints:@[
+            [self.roseStateLabel.leadingAnchor constraintEqualToAnchor:status.leadingAnchor],
+            [self.roseStateLabel.trailingAnchor constraintEqualToAnchor:status.trailingAnchor],
+            [self.roseStateLabel.topAnchor constraintEqualToAnchor:status.topAnchor constant:16],
+            [self.roseStateLabel.bottomAnchor constraintEqualToAnchor:status.bottomAnchor constant:-16]
+        ]];
+        [stackView addArrangedSubview:status];
+        [stackView setCustomSpacing:22 afterView:status];
+    }
     [stackView addArrangedSubview: actionView];
+    if (self.roseScrollView) [stackView setCustomSpacing:26 afterView:actionView];
 
     [NSLayoutConstraint activateConstraints:@[
         [actionView.leadingAnchor constraintEqualToAnchor:stackView.leadingAnchor],
@@ -140,10 +203,10 @@
     
     UIView *buttonPlaceHolder = [[UIView alloc] init];
     [buttonPlaceHolder setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [stackView addArrangedSubview:buttonPlaceHolder];
-    [NSLayoutConstraint activateConstraints:@[
-        [buttonPlaceHolder.heightAnchor constraintEqualToConstant:60]
-    ]];
+    if (!self.roseScrollView) {
+        [stackView addArrangedSubview:buttonPlaceHolder];
+        [buttonPlaceHolder.heightAnchor constraintEqualToConstant:60].active = YES;
+    }
     
     //Jailbreak Button
     BOOL isJailbroken = [[DOEnvironmentManager sharedManager] isJailbroken] || [[DOEnvironmentManager sharedManager] isJailbrokenWithOtherJailbreak];
@@ -158,7 +221,32 @@
         jailbreakButtonImage = [UIImage systemImageNamed:@"lock.slash" withConfiguration:[DOGlobalAppearance smallIconImageConfiguration]];
     
     self.jailbreakBtn = [[DOJailbreakButton alloc] initWithAction: [UIAction actionWithTitle:jailbreakButtonTitle image:jailbreakButtonImage identifier:@"jailbreak" handler:^(__kindof UIAction * _Nonnull action) {
+
+
+/********************************** roothide specific ************************************/
+        if(otherJailbreakActived(false)) {
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Error") message:DOLocalizedString(@"Your device currently has another jailbreak activated, please reboot device.") preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertAction *rebootAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Close") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                //exit(0);
+            }];
+            [alertController addAction:rebootAction];
+            [self presentViewController:alertController animated:YES completion:nil];
+            return;
+        }
+/********************************** roothide specific ************************************/
+
+
         [actionView hide];
+        // 移出缩放容器后固定动画起点，避免日志初始化布局时位置归零。
+        CGRect buttonFrame = [self.jailbreakBtn convertRect:self.jailbreakBtn.bounds toView:self.view];
+        [NSLayoutConstraint deactivateConstraints:self.jailbreakButtonConstraints];
+        [self.view addSubview:self.jailbreakBtn];
+        [NSLayoutConstraint activateConstraints:(self.jailbreakButtonConstraints = @[
+            [self.jailbreakBtn.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:CGRectGetMinX(buttonFrame)],
+            [self.jailbreakBtn.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:CGRectGetMinY(buttonFrame)],
+            [self.jailbreakBtn.widthAnchor constraintEqualToConstant:CGRectGetWidth(buttonFrame)],
+            [self.jailbreakBtn.heightAnchor constraintEqualToConstant:CGRectGetHeight(buttonFrame)]
+        ])];
         [self.jailbreakBtn expandButton: self.jailbreakButtonConstraints];
 
         self.updateButton.userInteractionEnabled = NO;
@@ -171,15 +259,28 @@
         
     }]];
     self.jailbreakBtn.enabled = !isJailbroken && isSupported;
+    if (self.roseStateLabel) {
+        self.roseStateLabel.text = !isSupported ? DOLocalizedString(@"Unsupported") :
+            (isJailbroken ? DOLocalizedString(@"Status_Title_Jailbroken") : DOLocalizedString(@"Rose_Status_Not_Jailbroken"));
+    }
 
-    [self.view addSubview:self.jailbreakBtn];
-
-    [NSLayoutConstraint activateConstraints:(self.jailbreakButtonConstraints = @[
-        [self.jailbreakBtn.leadingAnchor constraintEqualToAnchor:stackView.leadingAnchor],
-        [self.jailbreakBtn.trailingAnchor constraintEqualToAnchor:stackView.trailingAnchor],
-        [self.jailbreakBtn.heightAnchor constraintEqualToAnchor:buttonPlaceHolder.heightAnchor],
-        [self.jailbreakBtn.centerYAnchor constraintEqualToAnchor:buttonPlaceHolder.centerYAnchor]
-    ])];
+    if (self.roseScrollView) {
+        [self.view addSubview:self.jailbreakBtn];
+        [NSLayoutConstraint activateConstraints:(self.jailbreakButtonConstraints = @[
+            [self.jailbreakBtn.leadingAnchor constraintEqualToAnchor:self.roseFrame.leadingAnchor constant:16],
+            [self.jailbreakBtn.trailingAnchor constraintEqualToAnchor:self.roseFrame.trailingAnchor constant:-16],
+            [self.jailbreakBtn.heightAnchor constraintEqualToConstant:60],
+            [self.jailbreakBtn.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-16]
+        ])];
+    } else {
+        [self.contentView addSubview:self.jailbreakBtn];
+        [NSLayoutConstraint activateConstraints:(self.jailbreakButtonConstraints = @[
+            [self.jailbreakBtn.leadingAnchor constraintEqualToAnchor:stackView.leadingAnchor],
+            [self.jailbreakBtn.trailingAnchor constraintEqualToAnchor:stackView.trailingAnchor],
+            [self.jailbreakBtn.heightAnchor constraintEqualToAnchor:buttonPlaceHolder.heightAnchor],
+            [self.jailbreakBtn.centerYAnchor constraintEqualToAnchor:buttonPlaceHolder.centerYAnchor]
+        ])];
+    }
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
         if ([[DOUIManager sharedInstance] environmentUpdateAvailable])
@@ -195,6 +296,24 @@
             });
         }
     });
+}
+
+// 按安全区与内容自然尺寸计算统一比例，同步缩放文字、图标、按钮和间距。
+- (void)viewDidLayoutSubviews
+{
+    [super viewDidLayoutSubviews];
+    if (self.roseScrollView || self.jailbreakBtn.didExpand) return;
+    CGRect safeFrame = self.view.safeAreaLayoutGuide.layoutFrame;
+    BOOL isPad = UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad;
+    CGFloat width = isPad ? MIN(safeFrame.size.width * 0.8, UI_IPAD_MAX_WIDTH) : MAX(375, safeFrame.size.width) - UI_PADDING * 2;
+    CGFloat availableHeight = MIN(safeFrame.size.height - 24, self.view.bounds.size.height * ([DOGlobalAppearance isHomeButtonDevice] ? 0.78 : 0.73));
+    if (width <= 0 || availableHeight <= 0) return;
+    CGSize size = [self.mainStack systemLayoutSizeFittingSize:CGSizeMake(width, 0) withHorizontalFittingPriority:UILayoutPriorityRequired verticalFittingPriority:UILayoutPriorityFittingSizeLevel];
+    CGFloat height = MAX(size.height, availableHeight);
+    CGFloat scale = MIN(1, MIN((safeFrame.size.width - UI_PADDING * 2) / width, availableHeight / height));
+    self.contentView.bounds = CGRectMake(0, 0, width, height);
+    self.contentView.center = CGPointMake(CGRectGetMidX(safeFrame), CGRectGetMidY(safeFrame));
+    self.contentView.transform = CGAffineTransformMakeScale(scale, scale);
 }
 
 - (NSString *)jailbreakButtonTitle
@@ -214,11 +333,97 @@
     return jailbreakButtonTitle;
 }
 
+// 读取含休眠时间的系统运行时长，不受修改日期或定时器延迟影响。
+- (NSString *)systemUptimeDescription
+{
+    static mach_timebase_info_data_t timebase;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{ mach_timebase_info(&timebase); });
+    if (timebase.denom == 0) return DOLocalizedString(@"Unknown");
+    uint64_t seconds = (uint64_t)((double)mach_continuous_time() * timebase.numer / timebase.denom / NSEC_PER_SEC);
+    return [NSString stringWithFormat:DOLocalizedString(@"Uptime_Format"),
+        (unsigned long long)(seconds / 86400), (unsigned long long)(seconds / 3600 % 24),
+        (unsigned long long)(seconds / 60 % 60), (unsigned long long)(seconds % 60)];
+}
+
+// 将包内记录的实际构建时间转换为设备当前时区。
+- (NSString *)appBuildTimeDescription
+{
+    NSTimeInterval timestamp = [[[NSBundle mainBundle] objectForInfoDictionaryKey:@"DOBuildTimestamp"] doubleValue];
+    if (timestamp <= 0) return DOLocalizedString(@"Unknown");
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    formatter.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
+    formatter.timeZone = [NSTimeZone localTimeZone];
+    formatter.dateFormat = @"yyyy-MM-dd HH:mm:ss";
+    return [formatter stringFromDate:[NSDate dateWithTimeIntervalSince1970:timestamp]];
+}
+
+// 从本地化格式生成独立标题，动态内容由返回的标签负责显示。
+- (UILabel *)addInformationRowToHeader:(DOHeaderView *)header titleKey:(NSString *)key
+{
+    NSString *title = [[NSString stringWithFormat:DOLocalizedString(key), @""] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
+    return [header addInformationRowWithTitle:[DOGlobalAppearance secondarySubtitleString:title]];
+}
+
+// 返回主页或切回应用时刷新系统版本、注入模式与应用构建信息。
+- (void)refreshSystemInformation
+{
+    DOEnvironmentManager *environment = [DOEnvironmentManager sharedManager];
+    NSString *versionAndMode = [NSString stringWithFormat:@"%@ (%@)", environment.systemVersion ?: UIDevice.currentDevice.systemVersion, environment.injectionModeDescription];
+    self.systemVersionLabel.attributedText = [DOGlobalAppearance secondarySubtitleString:versionAndMode];
+    self.appBuildInfoLabel.attributedText = [DOGlobalAppearance secondarySubtitleString:environment.appVersion ?: DOLocalizedString(@"Unknown")];
+    self.appBuildTimeLabel.attributedText = [DOGlobalAppearance secondarySubtitleString:[self appBuildTimeDescription]];
+    [self refreshSystemUptime];
+}
+
+// 每次直接读取系统时钟刷新时长，避免逐秒累加造成误差。
+- (void)refreshSystemUptime
+{
+    self.systemUptimeLabel.attributedText = [DOGlobalAppearance secondarySubtitleString:[self systemUptimeDescription]];
+}
+
+// 仅在主页可见且应用活跃时每秒刷新，滚动期间也保持计时。
+- (void)resumeSystemInformationUpdates
+{
+    if (!self.informationVisible) return;
+    [self refreshSystemInformation];
+    if (self.uptimeTimer || UIApplication.sharedApplication.applicationState != UIApplicationStateActive) return;
+    __weak typeof(self) weakSelf = self;
+    self.uptimeTimer = [NSTimer timerWithTimeInterval:1 repeats:YES block:^(NSTimer *timer) {
+        [weakSelf refreshSystemUptime];
+    }];
+    [[NSRunLoop mainRunLoop] addTimer:self.uptimeTimer forMode:NSRunLoopCommonModes];
+}
+
+// 离开主页或进入后台时停止无用刷新。
+- (void)stopUptimeTimer
+{
+    [self.uptimeTimer invalidate];
+    self.uptimeTimer = nil;
+}
+
+// 显示主页时刷新信息及越狱按钮状态。
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    self.informationVisible = YES;
+    [self resumeSystemInformationUpdates];
     [self.jailbreakBtn.button setTitle:[self jailbreakButtonTitle] forState:UIControlStateNormal];
-    if (self.roseScrollView && !self.jailbreakBtn.didExpand) [self refreshRoseState];
+}
+
+// 页面隐藏后停止计时，返回时按系统时钟恢复。
+- (void)viewWillDisappear:(BOOL)animated
+{
+    [super viewWillDisappear:animated];
+    self.informationVisible = NO;
+    [self stopUptimeTimer];
+}
+
+// 释放定时器及通知观察，避免页面退出后继续刷新。
+- (void)dealloc
+{
+    [_uptimeTimer invalidate];
+    [NSNotificationCenter.defaultCenter removeObserver:self];
 }
 
 - (void)startJailbreak
@@ -314,31 +519,28 @@
 
     if (environmentUpdate)
     {
-        releaseFrom = [[DOEnvironmentManager sharedManager] jailbrokenVersion];
+/************************************* roothide specfic ***********************************/
+        releaseFrom = [[DOEnvironmentManager sharedManager] jailbrokenVersionRootHide];
+/************************************* roothide specfic ***********************************/
         releaseTo = [[DOUIManager sharedInstance] getLaunchedReleaseTag];
     }
 
     self.updateButton = [DOActionMenuButton buttonWithAction:[UIAction actionWithTitle:title image:[UIImage systemImageNamed:@"arrow.down.circle" withConfiguration:[DOGlobalAppearance smallIconImageConfiguration]] identifier:@"update-available" handler:^(__kindof UIAction * _Nonnull action) {
         [self.navigationController pushViewController:[[DOUpdateViewController alloc] initFromTag:releaseFrom toTag:releaseTo] animated:YES];
     }] chevron:NO];
-    if ([DOGlobalAppearance isRoseStyle]) {
-        self.updateButton.tintColor = [DOGlobalAppearance accentColor];
-        self.updateButton.configuration.baseForegroundColor = [DOGlobalAppearance accentColor];
-    }
 
     self.updateButton.translatesAutoresizingMaskIntoConstraints = NO;
-    if ([DOGlobalAppearance isRoseStyle]) {
-        NSUInteger menuIndex = [self.roseStack.arrangedSubviews indexOfObject:self.roseActionMenu];
-        [self.roseStack insertArrangedSubview:self.updateButton atIndex:menuIndex + 1];
-        [self.roseStack setCustomSpacing:8 afterView:self.roseActionMenu];
-        [self.roseStack setCustomSpacing:24 afterView:self.updateButton];
+    if (self.roseScrollView) {
+        [self.mainStack addArrangedSubview:self.updateButton];
         [self.updateButton.heightAnchor constraintEqualToConstant:32].active = YES;
     } else {
-        [self.view addSubview:self.updateButton];
+        [self.contentView addSubview:self.updateButton];
+        // 保留 RootHide 旧主题的原有更新入口位置。
+        [self.mainStack setCustomSpacing:[DOGlobalAppearance isHomeButtonDevice] ? 50 : 60 afterView:self.mainStack.arrangedSubviews[1]];
         [NSLayoutConstraint activateConstraints:@[
-            [self.updateButton.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+            [self.updateButton.centerXAnchor constraintEqualToAnchor:self.contentView.centerXAnchor],
             [self.updateButton.heightAnchor constraintEqualToConstant:30],
-            [self.updateButton.bottomAnchor constraintEqualToAnchor:self.jailbreakBtn.topAnchor constant:[DOGlobalAppearance isHomeButtonDevice] ? -10 : -20]
+            [self.updateButton.bottomAnchor constraintEqualToAnchor:self.mainStack.arrangedSubviews.lastObject.topAnchor constant:[DOGlobalAppearance isHomeButtonDevice] ? -10 : -20]
         ]];
     }
 

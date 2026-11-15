@@ -2,9 +2,12 @@
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
+//@class PSRootController, PSSpecifier, UIViewController<PSController>;
 
-@interface PSViewController : UIViewController  {
-
+@interface PSViewController : UIViewController /*<PSController>*/ {
+    /*UIViewController<PSController> *_parentController;
+     PSRootController *_rootController;
+     PSSpecifier *_specifier;*/
 }
 
 - (BOOL)canBeShownFromSuspendedState;

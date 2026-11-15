@@ -12,7 +12,7 @@
 
 - (id)initWithSpecifier:(PSSpecifier*)specifier
 {
-    if (self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:nil])
+    if (self = [super init])
     {
         UILabel *titleLabel = [[UILabel alloc] init];
         [titleLabel setText:[specifier propertyForKey:@"title"]];
@@ -24,8 +24,8 @@
         [self.contentView addSubview:titleLabel];
 
         [NSLayoutConstraint activateConstraints:@[
-            [titleLabel.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor constant:-3],
-            [titleLabel.centerXAnchor constraintEqualToAnchor:self.contentView.centerXAnchor]
+            [titleLabel.centerYAnchor constraintEqualToAnchor:self.centerYAnchor constant:-3],
+            [titleLabel.centerXAnchor constraintEqualToAnchor:self.centerXAnchor]
         ]];
 
         UIView *border = [[UIView alloc] init];
@@ -34,9 +34,9 @@
         [self.contentView addSubview:border];
 
         [NSLayoutConstraint activateConstraints:@[
-            [border.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:20],
-            [border.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-20],
-            [border.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-2],
+            [border.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:20],
+            [border.trailingAnchor constraintEqualToAnchor:self.trailingAnchor constant:-20],
+            [border.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-2],
             [border.heightAnchor constraintEqualToConstant:1]
         ]];
     }

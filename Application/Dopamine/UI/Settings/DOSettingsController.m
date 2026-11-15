@@ -160,13 +160,13 @@
 - (NSArray *)jetsamOptionTitles
 {
     return @[
-        @"1x",
-        @"1.5x",
-        @"2x",
-        @"2.5x",
-        [NSString stringWithFormat:@"3x (%@)", DOLocalizedString(@"Recommended")],
-        @"3.5x",
-        @"4x",
+        DOLocalizedString(@"Jetsam_Disabled"),
+        @"+15 MB",
+        @"+20 MB",
+        @"+25 MB",
+        [NSString stringWithFormat:@"+30 MB (%@)", DOLocalizedString(@"Recommended")],
+        @"+35 MB",
+        @"+40 MB",
     ];
 }
 
@@ -193,7 +193,7 @@
         
         PSSpecifier *headerSpecifier = [PSSpecifier emptyGroupSpecifier];
         [headerSpecifier setProperty:@"DOHeaderCell" forKey:@"headerCellClass"];
-        [headerSpecifier setProperty:[NSString stringWithFormat:DOLocalizedString(@"Menu_Settings_Title")] forKey:@"title"];
+        [headerSpecifier setProperty:[NSString stringWithFormat:@"Settings"] forKey:@"title"];
         [specifiers addObject:headerSpecifier];
         
         if (envManager.isSupported) {
@@ -247,9 +247,9 @@
                 }
             }
             
-            // PSSpecifier *settingsGroupSpecifier = [PSSpecifier emptyGroupSpecifier];
-            // settingsGroupSpecifier.name = DOLocalizedString(@"Section_Jailbreak_Settings");
-            // [specifiers addObject:settingsGroupSpecifier];
+            PSSpecifier *settingsGroupSpecifier = [PSSpecifier emptyGroupSpecifier];
+            settingsGroupSpecifier.name = DOLocalizedString(@"Section_Jailbreak_Settings");
+            [specifiers addObject:settingsGroupSpecifier];
             
             PSSpecifier *tweakInjectionSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Settings_Tweak_Injection") target:self set:@selector(setTweakInjectionEnabled:specifier:) get:@selector(readTweakInjectionEnabled:) detail:nil cell:PSSwitchCell edit:nil];
             [tweakInjectionSpecifier setProperty:@YES forKey:@"enabled"];
@@ -265,23 +265,37 @@
                 [specifiers addObject:verboseLogSpecifier];
             }
             
-            // PSSpecifier *idownloadSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Settings_iDownload") target:self set:@selector(setIDownloadEnabled:specifier:) get:@selector(readIDownloadEnabled:) detail:nil cell:PSSwitchCell edit:nil];
-            // [idownloadSpecifier setProperty:@YES forKey:@"enabled"];
-            // [idownloadSpecifier setProperty:@"idownloadEnabled" forKey:@"key"];
-            // [idownloadSpecifier setProperty:@NO forKey:@"default"];
-            // [specifiers addObject:idownloadSpecifier];
+            PSSpecifier *idownloadSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Settings_iDownload") target:self set:@selector(setIDownloadEnabled:specifier:) get:@selector(readIDownloadEnabled:) detail:nil cell:PSSwitchCell edit:nil];
+            [idownloadSpecifier setProperty:@YES forKey:@"enabled"];
+            [idownloadSpecifier setProperty:@"idownloadEnabled" forKey:@"key"];
+            [idownloadSpecifier setProperty:@NO forKey:@"default"];
+            [specifiers addObject:idownloadSpecifier];
             
             PSSpecifier *appJitSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Settings_Apps_JIT") target:self set:@selector(setAppJITEnabled:specifier:) get:@selector(readAppJITEnabled:) detail:nil cell:PSSwitchCell edit:nil];
             [appJitSpecifier setProperty:@YES forKey:@"enabled"];
             [appJitSpecifier setProperty:@"appJITEnabled" forKey:@"key"];
             [appJitSpecifier setProperty:@YES forKey:@"default"];
             [specifiers addObject:appJitSpecifier];
-
-            PSSpecifier *disableUpdateSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Settings_Disable_Update") target:self set:defSetter get:defGetter detail:nil cell:PSSwitchCell edit:nil];
-            [disableUpdateSpecifier setProperty:@YES forKey:@"enabled"];
-            [disableUpdateSpecifier setProperty:@"disableUpdateEnabled" forKey:@"key"];
-            [disableUpdateSpecifier setProperty:@NO forKey:@"default"];
-            [specifiers addObject:disableUpdateSpecifier];
+            
+            
+            /**************************** roothide specfic *********************************/
+            NSString* namedesc = DOLocalizedString(@"Enable dyld patch");
+            if(envManager.isArm64e && NSProcessInfo.processInfo.operatingSystemVersion.majorVersion==15) {
+                namedesc = DOLocalizedString(@"Dyld Patch(Spinlock Fix)");
+            }
+            PSSpecifier *dyldPatchSpecifier = [PSSpecifier preferenceSpecifierNamed:namedesc target:self set:@selector(setDyldPatchEnabled:specifier:) get:@selector(readDyldPatchEnabled:) detail:nil cell:PSSwitchCell edit:nil];
+            [dyldPatchSpecifier setProperty:@YES forKey:@"enabled"];
+            [dyldPatchSpecifier setProperty:@"dyldPatchEnabled" forKey:@"key"];
+            [dyldPatchSpecifier setProperty:@NO forKey:@"default"];
+            [specifiers addObject:dyldPatchSpecifier];
+            /**************************** roothide specfic *********************************/
+            
+            
+            PSSpecifier *trollStoreLiteFix = [PSSpecifier preferenceSpecifierNamed:@"TrollStoreLite Fix" target:self set:@selector(setTrollStoreLiteFixEnabled:specifier:) get:@selector(readTrollStoreLiteFixEnabled:) detail:nil cell:PSSwitchCell edit:nil];
+            [trollStoreLiteFix setProperty:@YES forKey:@"enabled"];
+            [trollStoreLiteFix setProperty:@"trollStoreLiteFixEnabled" forKey:@"key"];
+            [trollStoreLiteFix setProperty:@YES forKey:@"default"];
+            [specifiers addObject:trollStoreLiteFix];
 
             PSSpecifier *jetsamSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Settings_Jetsam_Multiplier") target:self set:@selector(setJetsamMultiplier:specifier:) get:@selector(readJetsamMultiplier:) detail:nil cell:PSLinkListCell edit:nil];
             [jetsamSpecifier setProperty:@YES forKey:@"enabled"];
@@ -305,6 +319,18 @@
                 [specifiers addObject:actionsGroupSpecifier];
 
                 if (envManager.isJailbroken) {
+                    for (NSDictionary *tool in @[
+                        @{@"title": @"Install Whitelist App", @"action": @"installWhitelistAppPressed"},
+                        @{@"title": @"Install Mount App", @"action": @"installMountAppPressed"}
+                    ]) {
+                        PSSpecifier *toolSpecifier = [PSSpecifier preferenceSpecifierNamed:@"" target:self set:defSetter get:defGetter detail:nil cell:PSStaticTextCell edit:nil];
+                        [toolSpecifier setProperty:tool[@"title"] forKey:@"title"];
+                        [toolSpecifier setProperty:DOButtonCell.class forKey:@"cellClass"];
+                        [toolSpecifier setProperty:buttonHeight forKey:@"height"];
+                        [toolSpecifier setProperty:@"square.and.arrow.down" forKey:@"image"];
+                        [toolSpecifier setProperty:tool[@"action"] forKey:@"action"];
+                        [specifiers addObject:toolSpecifier];
+                    }
                     PSSpecifier *refreshAppsSpecifier = [PSSpecifier preferenceSpecifierNamed:@"" target:self set:defSetter get:defGetter detail:nil cell:PSStaticTextCell edit:nil];
                     [refreshAppsSpecifier setProperty:@"Button_Refresh_Jailbreak_Apps" forKey:@"title"];
                     [refreshAppsSpecifier setProperty:[DOButtonCell class] forKey:@"cellClass"];
@@ -333,6 +359,7 @@
                     [specifiers addObject:reinstallPackageManagersSpecifier];
                 }
 
+/*
                 BOOL hideJailbreakButtonShown = (envManager.isJailbroken || (envManager.isInstalledThroughTrollStore && !envManager.isJailbreakHidden));
                 if (hideJailbreakButtonShown) {
                     // The "Hide Jailbreak" button should be shown
@@ -352,6 +379,7 @@
                     [hideUnhideJailbreakSpecifier setProperty:@"hideUnhideJailbreakPressed" forKey:@"action"];
                     [specifiers addObject:hideUnhideJailbreakSpecifier];
                 }
+*/
 
                 if (!envManager.isJailbroken && envManager.isInstalledThroughTrollStore) {
                     // The "Remove Jailbreak" button cannot show when being jailbroken since pressing it would kinda be russian roulette
@@ -367,21 +395,23 @@
                     [specifiers addObject:removeJailbreakSpecifier];
                 }
                 
+/*
                 if (hideJailbreakButtonShown) {
                     [actionsGroupSpecifier setProperty:DOLocalizedString(envManager.isJailbroken ? @"Hint_Hide_Jailbreak_Jailbroken" : @"Hint_Hide_Jailbreak") forKey:@"footerText"];
                 }
+*/
             }
         }
         
-        // PSSpecifier *themingGroupSpecifier = [PSSpecifier emptyGroupSpecifier];
-        // themingGroupSpecifier.name = DOLocalizedString(@"Section_Customization");
-        // [specifiers addObject:themingGroupSpecifier];
+        PSSpecifier *themingGroupSpecifier = [PSSpecifier emptyGroupSpecifier];
+        themingGroupSpecifier.name = DOLocalizedString(@"Section_Customization");
+        [specifiers addObject:themingGroupSpecifier];
         
         PSSpecifier *themeSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Theme") target:self set:defSetter get:defGetter detail:nil cell:PSLinkListCell edit:nil];
         themeSpecifier.detailControllerClass = [DOPSListItemsController class];
         [themeSpecifier setProperty:@YES forKey:@"enabled"];
         [themeSpecifier setProperty:@"theme" forKey:@"key"];
-        [themeSpecifier setProperty:@"dusty-rose" forKey:@"default"];
+        [themeSpecifier setProperty:[[self themeIdentifiers] firstObject] forKey:@"default"];
         [themeSpecifier setProperty:@"themeIdentifiers" forKey:@"valuesDataSource"];
         [themeSpecifier setProperty:@"themeNames" forKey:@"titlesDataSource"];
         [specifiers addObject:themeSpecifier];
@@ -416,37 +446,6 @@
                 [specifiers addObject:_customBootlogoSpecifier];
             }
         }
-
-        
-        if (envManager.isJailbroken) {
-            PSSpecifier *mountSpecifier = [PSSpecifier preferenceSpecifierNamed:@"" target:self set:defSetter get:defGetter detail:nil cell:PSStaticTextCell edit:nil];
-            [mountSpecifier setProperty:@"Input_Mmount_Title" forKey:@"title"];
-            [mountSpecifier setProperty:[DOButtonCell class] forKey:@"cellClass"];
-            [mountSpecifier setProperty:buttonHeight forKey:@"height"];
-            [mountSpecifier setProperty:@"doc" forKey:@"image"];
-            [mountSpecifier setProperty:@"mountPressed" forKey:@"action"];
-            [specifiers addObject:mountSpecifier];
-
-            PSSpecifier *unmountSpecifier = [PSSpecifier preferenceSpecifierNamed:@"" target:self set:defSetter get:defGetter detail:nil cell:PSStaticTextCell edit:nil];
-            [unmountSpecifier setProperty:@"Input_Unmount_Title" forKey:@"title"];
-            [unmountSpecifier setProperty:[DOButtonCell class] forKey:@"cellClass"];
-            [unmountSpecifier setProperty:buttonHeight forKey:@"height"];
-            [unmountSpecifier setProperty:@"trash" forKey:@"image"];
-            [unmountSpecifier setProperty:@"unmountPressed" forKey:@"action"];
-            [specifiers addObject:unmountSpecifier];
-        }
-
-        PSSpecifier *spaceGroupSpecifier = [PSSpecifier emptyGroupSpecifier];
-        [specifiers addObject:spaceGroupSpecifier];
-        
-        PSSpecifier *rebootSpecifier = [PSSpecifier preferenceSpecifierNamed:@"" target:self set:defSetter get:defGetter detail:nil cell:PSStaticTextCell edit:nil];
-        [rebootSpecifier setProperty:@"Button_Reboot" forKey:@"title"];
-        [rebootSpecifier setProperty:[DOButtonCell class] forKey:@"cellClass"];
-        [rebootSpecifier setProperty:buttonHeight forKey:@"height"];
-        [rebootSpecifier setProperty:@"arrow.triangle.2.circlepath" forKey:@"image"];
-        [rebootSpecifier setProperty:@"rebootPressed" forKey:@"action"];
-    	    [specifiers addObject:rebootSpecifier];
-        
 
         _specifiers = specifiers;
     }
@@ -559,6 +558,33 @@
     if (envManager.isJailbroken) {
         jbclient_platform_jbsettings_set_bool("markAppsAsDebugged", ((NSNumber *)value).boolValue);
     }
+}
+
+// 已越狱时读取实际状态，旧环境不支持该键时使用本地默认值。
+- (id)readTrollStoreLiteFixEnabled:(PSSpecifier *)specifier
+{
+    if ([DOEnvironmentManager sharedManager].isJailbroken) {
+        xpc_object_t value = NULL;
+        if (jbclient_jbsettings_get("trollStoreLiteFixEnabled", &value) == 0
+            && value && xpc_get_type(value) == XPC_TYPE_BOOL) {
+            return @(xpc_bool_get_value(value));
+        }
+    }
+    return [self readPreferenceValue:specifier];
+}
+
+// 运行中先同步开关，成功后持久化；现有租约继续等待进程退出。
+- (void)setTrollStoreLiteFixEnabled:(id)value specifier:(PSSpecifier *)specifier
+{
+    if ([DOEnvironmentManager sharedManager].isJailbroken
+        && jbclient_platform_jbsettings_set_bool("trollStoreLiteFixEnabled", [value boolValue]) != 0) {
+        [self reloadSpecifiers];
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Error") message:@"Could not apply this setting. Update the jailbreak environment and try again." preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:DOLocalizedString(@"OK") style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
+        return;
+    }
+    [self setPreferenceValue:value specifier:specifier];
 }
 
 - (id)readJetsamMultiplier:(PSSpecifier *)specifier
@@ -701,6 +727,32 @@
 
 #pragma mark - Button Actions
 
+// 打开当前 Sileo 的配套工具详情页。
+- (void)openSileoPackage:(NSString *)identifier
+{
+    DOEnvironmentManager *environment = DOEnvironmentManager.sharedManager;
+    if (!environment.isJailbroken) return;
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@://package/%@", environment.sileoURLScheme, identifier]];
+    [UIApplication.sharedApplication openURL:url options:@{} completionHandler:^(BOOL success) {
+        if (success) return;
+        UIAlertController *alert = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Error") message:DOLocalizedString(@"Sileo_Open_Failed") preferredStyle:UIAlertControllerStyleAlert];
+        [alert addAction:[UIAlertAction actionWithTitle:DOLocalizedString(@"OK") style:UIAlertActionStyleDefault handler:nil]];
+        [self presentViewController:alert animated:YES completion:nil];
+    }];
+}
+
+// 跳转安装白名单管理器。
+- (void)installWhitelistAppPressed
+{
+    [self openSileoPackage:@"cn.zqbb.inject.manager"];
+}
+
+// 跳转安装挂载管理器。
+- (void)installMountAppPressed
+{
+    [self openSileoPackage:@"cn.zqbb.hello.mnt"];
+}
+
 - (void)refreshJailbreakAppsPressed
 {
     [[DOEnvironmentManager sharedManager] refreshJailbreakApps];
@@ -765,12 +817,14 @@
     [self presentViewController:changeMobilePasswordAlert animated:YES completion:nil];
 }
 
+/*
 - (void)hideUnhideJailbreakPressed
 {
     DOEnvironmentManager *envManager = [DOEnvironmentManager sharedManager];
     [envManager setJailbreakHidden:!envManager.isJailbreakHidden];
     [self reloadSpecifiers];
 }
+*/
 
 - (void)removeJailbreakPressed
 {
@@ -795,153 +849,6 @@
     [self presentViewController:confirmationAlertController animated:YES completion:nil];
 }
 
-- (NSString *)ensureAbsolutePath:(NSString *)path {
-    NSString *trimmedPath = [path stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    
-    if (![trimmedPath hasPrefix:@"/"]) 
-        trimmedPath = [@"/" stringByAppendingString:trimmedPath];
-
-    return [trimmedPath stringByStandardizingPath];
-}
-
-- (void)mountPressed
-{
- 
-    UIAlertController *inputAlertController = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Input_Mmount_Title") message:DOLocalizedString(@"Input_Mount_Title") preferredStyle:UIAlertControllerStyleAlert];
-    
-
-    [inputAlertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
-        textField.placeholder = DOLocalizedString(@"Input_Mount_Title");
-    }];
-    
-    UIAlertAction *mountAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Mount") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-        UITextField *inputTextField = inputAlertController.textFields.firstObject;
-        NSString *mountPath = [self ensureAbsolutePath:inputTextField.text];
-        
-        BOOL isDirectory = NO;
-        BOOL isExist = [[NSFileManager defaultManager] fileExistsAtPath:mountPath isDirectory:&isDirectory];
-        if (!isExist || !isDirectory) {
-            UIAlertController *errorAlertController = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Log_Error") message:DOLocalizedString(@"Error_Mount_Body") preferredStyle:UIAlertControllerStyleAlert];
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Mount") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self mountPressed];
-            }];
-            [errorAlertController addAction:okAction];
-            [self presentViewController:errorAlertController animated:YES completion:nil];
-            return;
-        }
-
-        if (mountPath.length > 1) {
-            NSString *plistFilePath = JBROOT_PATH(@"/mnt/newFakePath.plist");
-            NSMutableDictionary *plistDictionary = [NSMutableDictionary dictionaryWithContentsOfFile:plistFilePath];
-            if (!plistDictionary) {
-                plistDictionary = [NSMutableDictionary dictionary];
-            }
-            NSMutableArray *pathArray = plistDictionary[@"path"];
-            if (!pathArray) {
-                pathArray = [NSMutableArray array];
-            }
-            if (![pathArray containsObject:mountPath]) {
-                [pathArray addObject:mountPath];
-                [plistDictionary setObject:pathArray forKey:@"path"];
-                [[DOEnvironmentManager sharedManager] mountDictionary:[plistDictionary copy] writeToFile:plistFilePath];
-            } 
-
-            [[DOEnvironmentManager sharedManager] fakeMount:mountPath unmount:NO shouldDeleteMntFiles:NO];
-
-        }
-    }];
-    
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Cancel") style:UIAlertActionStyleDefault handler:nil];
-
-    [inputAlertController addAction:mountAction];
-    [inputAlertController addAction:cancelAction];
-    
-    [self presentViewController:inputAlertController animated:YES completion:nil];
-}
-
-- (void)unmountPressed
-{
-    // 读取plist文件中的路径数组
-    NSString *plistPath = JBROOT_PATH(@"/mnt/newFakePath.plist");
-    NSMutableDictionary *plist = [NSMutableDictionary dictionaryWithContentsOfFile:plistPath];
-    NSMutableArray *paths = [plist[@"path"] mutableCopy];
-    
-    // 设置富文本标题
-    NSString *titleText = DOLocalizedString(@"Select_Mount_Title");
-    NSMutableAttributedString *attrTitle = [[NSMutableAttributedString alloc] initWithString:titleText];
-    [attrTitle addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:24] range:NSMakeRange(0, titleText.length)];
-    
-    // 创建一个UIAlertController作为列表
-    UIAlertController *listAlertController = [UIAlertController alertControllerWithTitle:@"" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    
-    // 设置富文本标题到UIAlertController
-    [listAlertController setValue:attrTitle forKey:@"attributedTitle"];
-    
-    for (NSString *path in paths) {
-        UIAlertAction *pathAction = [UIAlertAction actionWithTitle:path style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-            NSString *targetMountPath = JBROOT_PATH([@"/mnt" stringByAppendingString:path]);
-            
-            // 设置富文本标题
-            NSMutableAttributedString *attrActionTitle = [[NSMutableAttributedString alloc] initWithString:path];
-            [attrActionTitle addAttribute:NSFontAttributeName value:[UIFont boldSystemFontOfSize:12] range:NSMakeRange(0, path.length)];
-    
-            // 创建一个UIAlertController作为列表
-            UIAlertController *actionAlertController = [UIAlertController alertControllerWithTitle:@"" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
-    
-            // 设置富文本标题到UIAlertController
-            [actionAlertController setValue:attrActionTitle forKey:@"attributedTitle"];
-    
-            // 删除路径的操作
-            UIAlertAction *deletePathAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Delete_Path_Only") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-                // 删除plist中的对应路径并保存
-                [paths removeObject:path];
-                plist[@"path"] = paths;
-                [[DOEnvironmentManager sharedManager] mountDictionary:plist writeToFile:plistPath];
-            }];
-            
-            // 删除路径并卸载的操作
-            UIAlertAction *deleteAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Delete") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-                
-                [[DOEnvironmentManager sharedManager] fakeMount:path unmount:YES shouldDeleteMntFiles:YES];
-                
-                // 删除plist中的对应路径并保存
-                [paths removeObject:path];
-                plist[@"path"] = paths;
-                [[DOEnvironmentManager sharedManager] mountDictionary:plist writeToFile:plistPath];
-            }];
-            
-            UIAlertAction *viewAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_View") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"filza://"]]) {
-                    NSURL *filzaURL = [NSURL URLWithString:[@"filza://view" stringByAppendingString:targetMountPath]];
-                    [[UIApplication sharedApplication] openURL:filzaURL options:@{} completionHandler:nil];
-                }else if ([[UIApplication sharedApplication] canOpenURL:[NSURL URLWithString:@"fffff://"]]) {
-                    NSURL *fffffURL = [NSURL URLWithString:[@"fffff://view" stringByAppendingString:targetMountPath]];
-                    [[UIApplication sharedApplication] openURL:fffffURL options:@{} completionHandler:nil];
-                }
-            }];
-            
-            UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Cancel") style:UIAlertActionStyleCancel handler:nil];
-
-            [actionAlertController addAction:deleteAction];
-            [actionAlertController addAction:viewAction];
-            [actionAlertController addAction:deletePathAction]; // 添加仅删除路径的操作
-            [actionAlertController addAction:cancelAction];
-            
-            [self presentViewController:actionAlertController animated:YES completion:nil];
-        }];
-        
-        [listAlertController addAction:pathAction];
-    }
-    
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Cancel") style:UIAlertActionStyleCancel handler:nil];
-    
-    [listAlertController addAction:cancelAction];
-    
-    [self presentViewController:listAlertController animated:YES completion:nil];
-}
-
-
-
 - (void)resetSettingsPressed
 {
     [[DOUIManager sharedInstance] resetSettings];
@@ -949,27 +856,64 @@
     [self reloadSpecifiers];
 }
 
-- (void)rebootPressed
+
+- (id)readDyldPatchEnabled:(PSSpecifier *)specifier
 {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Button_Reboot")
-                                                                   message:DOLocalizedString(@"Update_Status_Subtitle_Restart_Soon")
-                                                            preferredStyle:UIAlertControllerStyleAlert];
-    
-    UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Cancel")
-                                                             style:UIAlertActionStyleCancel
-                                                           handler:nil];
-    
-    UIAlertAction *rebootAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Reboot")
-                                                             style:UIAlertActionStyleDestructive
-                                                           handler:^(UIAlertAction * _Nonnull action) {
-        exec_cmd_root(JBROOT_PATH("/sbin/reboot"), NULL);
-    }];
-    
-    [alert addAction:cancelAction];
-    [alert addAction:rebootAction];
-    
-    [self presentViewController:alert animated:YES completion:nil];
+    DOEnvironmentManager *envManager = [DOEnvironmentManager sharedManager];
+    if (envManager.isJailbroken) {
+        return @(jbclient_dyld_patch_enabled());
+    }
+    return [self readPreferenceValue:specifier];
 }
 
+- (void)setDyldPatchEnabled:(id)value specifier:(PSSpecifier *)specifier
+{
+    DOEnvironmentManager *envManager = [DOEnvironmentManager sharedManager];
+    
+    bool enable = ((NSNumber *)value).boolValue;
+    
+    void (^confirmAction)(void) = ^{
+        
+        if (!envManager.isJailbroken) {
+            
+            [self setPreferenceValue:value specifier:specifier];
+            return;
+        }
+    
+        UIAlertController *userspaceRebootAlertController = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Alert_Tweak_Injection_Toggled_Title") message:DOLocalizedString(@"Alert_Tweak_Injection_Toggled_Body") preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *rebootNowAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Menu_Reboot_Userspace_Title") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            if(jbclient_set_dyld_patch(enable) == 0) {
+                [self setPreferenceValue:value specifier:specifier];
+                [[DOEnvironmentManager sharedManager] rebootUserspace];
+            } else {
+                [self reloadSpecifiers];
+            }
+        }];
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            [self reloadSpecifiers];
+        }];
+        
+        [userspaceRebootAlertController addAction:cancelAction];
+        [userspaceRebootAlertController addAction:rebootNowAction];
+        [self presentViewController:userspaceRebootAlertController animated:YES completion:nil];
+    };
+    
+    
+    if(enable && envManager.isArm64e && NSProcessInfo.processInfo.operatingSystemVersion.majorVersion==15) {
+        UIAlertController* alert = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Warning") message:DOLocalizedString(@"When spinlock fix is ​​enabled, app extensions of blacklisted apps will be disabled and may also cause spinlock panics when the blacklisted app is in foreground/background.\n\nYou can first try disabling tweak injection for the app in Choicy (spinlock fix still works), and only blacklist the app if that doesn't work.") preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *continueAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Continue") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            confirmAction();
+        }];
+        UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+            [self reloadSpecifiers];
+        }];
+        
+        [alert addAction:cancelAction];
+        [alert addAction:continueAction];
+        [self presentViewController:alert animated:YES completion:nil];
+    } else {
+        confirmAction();
+    }
+}
 
 @end
