@@ -8,6 +8,12 @@
 #import "DOThemeManager.h"
 #import "DOTheme.h"
 #import <objc/runtime.h>
+#if __has_include(<Glassify/GLSGlassView.h>)
+#import <Glassify/GLSGlassView.h>
+#define DO_HAS_GLASSIFY 1
+#else
+#define DO_HAS_GLASSIFY 0
+#endif
 
 static char kDOPageContentKey;
 
@@ -52,15 +58,53 @@ static UIVisualEffect *DOCreateSurfaceEffect(DOTheme *theme)
 }
 @end
 
+#if DO_HAS_GLASSIFY
+@interface DOGlassifyEffectView : GLSGlassView
+@property (nonatomic, copy) NSString *appearanceKey;
+@end
+
+@implementation DOGlassifyEffectView
+- (instancetype)init
+{
+    if ((self = [super initWithFrame:CGRectZero])) {
+        self.tag = kDOLiquidGlassEffectTag;
+        self.translatesAutoresizingMaskIntoConstraints = NO;
+        self.userInteractionEnabled = NO;
+        self.contentVibrancy = NO;
+        self.frost = GLSGlassFrostReduced;
+        self.style = GLSGlassStyleClear;
+        self.tracksBackdropMotion = NO;
+    }
+    return self;
+}
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    UIView *host = self.superview;
+    self.cornerRadius = host.layer.cornerRadius > 0 ? host.layer.cornerRadius : 22;
+    [self setNeedsBackdropUpdate];
+}
+- (void)didMoveToWindow
+{
+    [super didMoveToWindow];
+    self.backdropSourceView = self.superview;
+    [self setNeedsBackdropUpdate];
+}
+@end
+#endif
+
 @interface DOGlobalAppearance ()
 + (DOTheme *)theme;
 @end
 
-static UIVisualEffectView *DOFindGlassEffect(UIView *view)
+static UIView *DOFindGlassEffect(UIView *view)
 {
     for (UIView *subview in view.subviews) {
-        if (subview.tag == kDOLiquidGlassEffectTag && [subview isKindOfClass:UIVisualEffectView.class])
-            return (UIVisualEffectView *)subview;
+        if (subview.tag != kDOLiquidGlassEffectTag) continue;
+#if DO_HAS_GLASSIFY
+        if ([subview isKindOfClass:GLSGlassView.class]) return subview;
+#endif
+        if ([subview isKindOfClass:UIVisualEffectView.class]) return subview;
     }
     return nil;
 }
@@ -216,9 +260,14 @@ static UIVisualEffectView *DOFindGlassEffect(UIView *view)
 {
     if (!view) return;
     DOTheme *theme = [self theme];
-    UIVisualEffectView *effect = DOFindGlassEffect(view);
+    BOOL reduced = UIAccessibilityIsReduceTransparencyEnabled();
+    UIView *effect = DOFindGlassEffect(view);
     if (!effect) {
+#if DO_HAS_GLASSIFY
+        effect = [[DOGlassifyEffectView alloc] init];
+#else
         effect = [[DOThemeEffectView alloc] initWithEffect:nil];
+#endif
         effect.tag = kDOLiquidGlassEffectTag;
         effect.translatesAutoresizingMaskIntoConstraints = NO;
         effect.userInteractionEnabled = NO;
@@ -236,23 +285,36 @@ static UIVisualEffectView *DOFindGlassEffect(UIView *view)
             [effect.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
         ]];
     }
-    NSString *appearanceKey = [NSString stringWithFormat:@"%@-%d", theme.key, UIAccessibilityIsReduceTransparencyEnabled()];
+    NSString *appearanceKey = [NSString stringWithFormat:@"%@-%d", theme.key, reduced];
+#if DO_HAS_GLASSIFY
+    if ([effect isKindOfClass:DOGlassifyEffectView.class]) {
+        DOGlassifyEffectView *glass = (DOGlassifyEffectView *)effect;
+        glass.appearanceKey = appearanceKey;
+        glass.style = GLSGlassStyleClear;
+        glass.frost = GLSGlassFrostReduced;
+        glass.glassTintColor = reduced ? nil : theme.glassColor;
+        glass.glassEnabled = !reduced;
+        glass.adaptsColorScheme = YES;
+        glass.contentVibrancy = NO;
+        glass.backdropSourceView = view.superview ?: view.window;
+        glass.tracksBackdropMotion = NO;
+    } else
+#endif
     if ([effect isKindOfClass:DOThemeEffectView.class]) {
         DOThemeEffectView *themeEffect = (DOThemeEffectView *)effect;
         if (![themeEffect.appearanceKey isEqualToString:appearanceKey]) {
             themeEffect.effect = DOCreateSurfaceEffect(theme);
             themeEffect.appearanceKey = appearanceKey;
         }
+        Class glassClass = NSClassFromString(@"UIGlassEffect");
+        BOOL nativeGlass = glassClass && [themeEffect.effect isKindOfClass:glassClass];
+        themeEffect.contentView.backgroundColor = reduced ? theme.windowColor : (nativeGlass ? UIColor.clearColor : theme.glassColor);
     }
-    effect.overrideUserInterfaceStyle = [self interfaceStyle];
-    Class glassClass = NSClassFromString(@"UIGlassEffect");
-    BOOL nativeGlass = glassClass && [effect.effect isKindOfClass:glassClass];
-    effect.contentView.backgroundColor = UIAccessibilityIsReduceTransparencyEnabled() ? theme.windowColor : (nativeGlass ? UIColor.clearColor : theme.glassColor);
     effect.alpha = 1.0;
     effect.layer.cornerRadius = view.layer.cornerRadius > 0 ? view.layer.cornerRadius : 22;
     effect.layer.cornerCurve = kCACornerCurveContinuous;
     effect.layer.masksToBounds = YES;
-    view.backgroundColor = UIColor.clearColor;
+    view.backgroundColor = reduced ? theme.windowColor : UIColor.clearColor;
     view.layer.cornerRadius = effect.layer.cornerRadius;
     view.layer.cornerCurve = kCACornerCurveContinuous;
     view.layer.borderWidth = 0.5;

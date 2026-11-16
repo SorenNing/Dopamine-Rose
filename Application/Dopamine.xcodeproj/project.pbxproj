@@ -7,6 +7,31 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D0F9E32BD8FB85BDDAB9F62D /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F8AFC0AB82536450E02150 /* Metal.framework */; };
+		D0F9B201FE5BF044CF87729D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F8D925CAA658E855A9E6F8 /* QuartzCore.framework */; };
+		D0F9AB7532C69A346A0E1656 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F833FF5CDD943372BC2E3E /* CoreGraphics.framework */; };
+		D0F760E3262FAE987561BD1D /* color_matrix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0F69CBAB527807D9A7C859C /* color_matrix.cpp */; };
+		D0F7AF0A5CF96E0FECB5F52D /* glass_inputs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0F6F2FE1893E32D9B98E60D /* glass_inputs.cpp */; };
+		D0F76BE28862E45DEB4CD68D /* pack.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0F674C476B3FA498653C627 /* pack.cpp */; };
+		D0F70ED37C09EBBE4D32E563 /* press.cpp in Sources */ = {isa = PBXBuildFile; fileRef = D0F619040D21FA2BA30C0376 /* press.cpp */; };
+		D0F7F27D7727607904B4FC27 /* GLSBackdrop.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6BE0764E849620FF64841 /* GLSBackdrop.mm */; };
+		D0F740BEADACADAFFBB29B9C /* GLSBarButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6CFD2619E9223D2F2B13B /* GLSBarButton.mm */; };
+		D0F74BE93CB315C35095F048 /* GLSContentMask.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6FB1C7C31F841C8BD6BE1 /* GLSContentMask.mm */; };
+		D0F7F92A841EF74564817307 /* GLSGlassButton.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F67BC632E2F2883A471CCD /* GLSGlassButton.mm */; };
+		D0F79A2EB6BF208608F0FC35 /* GLSGlassSurface.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6C8E5EA5006315AB46EFB /* GLSGlassSurface.mm */; };
+		D0F726B62E0E61E82D7565C9 /* GLSGlassView.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F67AACDC40F78BD207BC86 /* GLSGlassView.mm */; };
+		D0F732D62496866CD3551D43 /* GLSLiquidLensView.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F635536FFC89D702AFE269 /* GLSLiquidLensView.mm */; };
+		D0F7193AB40734A2CF2E690F /* GLSNavigationBar.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6783C53246654B220F6BA /* GLSNavigationBar.mm */; };
+		D0F7C097A2EFFB631DBF8755 /* GLSNavigationController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F65F0BD63A77012E031A64 /* GLSNavigationController.mm */; };
+		D0F7E1B14E6D0E02DEC6AC9E /* GLSRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6602A83586EC727A92DCF /* GLSRenderer.mm */; };
+		D0F72F2477B0F10FE3C30BA5 /* GLSScrollEdgeEffectView.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6A911990AF724D1A395C5 /* GLSScrollEdgeEffectView.mm */; };
+		D0F716C624D9CA5E7356868D /* GLSSegmentedControl.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F657B47B5F0BC37007C9BD /* GLSSegmentedControl.mm */; };
+		D0F74375FB2F1CB72F2B52BB /* GLSSlider.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6D54943CA2D6423C85EF7 /* GLSSlider.mm */; };
+		D0F75F98F976D34B02737068 /* GLSSwitch.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F636E745BB5A7152921777 /* GLSSwitch.mm */; };
+		D0F79184B2ED166562E4FB04 /* GLSTabBarController.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6FF8B322D9256BFBE4738 /* GLSTabBarController.mm */; };
+		D0F735B55CBCEFFC302599DF /* GLSToolbar.mm in Sources */ = {isa = PBXBuildFile; fileRef = D0F6D34FD9F5E1AE7F2D45F8 /* GLSToolbar.mm */; };
+		D0F7325B6DACBE1B87AC0E1B /* blur.metal in Sources */ = {isa = PBXBuildFile; fileRef = D0F6E15676830E64CB17CEB6 /* blur.metal */; };
+		D0F7EF1180386BEE81EC51A3 /* glass.metal in Sources */ = {isa = PBXBuildFile; fileRef = D0F67E8174E87EFFDB6E7555 /* glass.metal */; };
 		A25990010000000000000001 /* DORuntimeConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = A25990010000000000000002 /* DORuntimeConfiguration.m */; };
 		040622AA2B77FE8E00393AAD /* DOPkgManagerPickerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 040622A92B77FE8E00393AAD /* DOPkgManagerPickerViewController.m */; };
 		042479A22B66916B0082581B /* DOCreditsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0424796B2B66916B0082581B /* DOCreditsViewController.m */; };
@@ -386,6 +411,59 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D0F8AFC0AB82536450E02150 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
+		D0F8D925CAA658E855A9E6F8 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		D0F833FF5CDD943372BC2E3E /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		D0F69CBAB527807D9A7C859C /* color_matrix.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "Dopamine/Glassify/Sources/Glassify/Core/color_matrix.cpp"; sourceTree = SOURCE_ROOT; };
+		D0F6F2FE1893E32D9B98E60D /* glass_inputs.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "Dopamine/Glassify/Sources/Glassify/Core/glass_inputs.cpp"; sourceTree = SOURCE_ROOT; };
+		D0F654C0BD35F198C12271E8 /* color_matrix.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Core/include/glassify/color_matrix.h"; sourceTree = SOURCE_ROOT; };
+		D0F610FA829B7DD89222FD99 /* glass_inputs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Core/include/glassify/glass_inputs.h"; sourceTree = SOURCE_ROOT; };
+		D0F67E5156429B6B598D60FE /* pack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Core/include/glassify/pack.h"; sourceTree = SOURCE_ROOT; };
+		D0F67A6B38F63F1B7389DE66 /* press.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Core/include/glassify/press.h"; sourceTree = SOURCE_ROOT; };
+		D0F674C476B3FA498653C627 /* pack.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "Dopamine/Glassify/Sources/Glassify/Core/pack.cpp"; sourceTree = SOURCE_ROOT; };
+		D0F619040D21FA2BA30C0376 /* press.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = "Dopamine/Glassify/Sources/Glassify/Core/press.cpp"; sourceTree = SOURCE_ROOT; };
+		D0F669C38D361467DDC5131B /* GLSBackdrop.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSBackdrop.h"; sourceTree = SOURCE_ROOT; };
+		D0F6BE0764E849620FF64841 /* GLSBackdrop.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSBackdrop.mm"; sourceTree = SOURCE_ROOT; };
+		D0F6D5A2A89CB2F3B5308D73 /* GLSBarButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSBarButton.h"; sourceTree = SOURCE_ROOT; };
+		D0F6CFD2619E9223D2F2B13B /* GLSBarButton.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSBarButton.mm"; sourceTree = SOURCE_ROOT; };
+		D0F67432D25E883244E018B6 /* GLSContentMask.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSContentMask.h"; sourceTree = SOURCE_ROOT; };
+		D0F6FB1C7C31F841C8BD6BE1 /* GLSContentMask.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSContentMask.mm"; sourceTree = SOURCE_ROOT; };
+		D0F67BC632E2F2883A471CCD /* GLSGlassButton.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSGlassButton.mm"; sourceTree = SOURCE_ROOT; };
+		D0F68FAFE2942371DA6B2E23 /* GLSGlassSurface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSGlassSurface.h"; sourceTree = SOURCE_ROOT; };
+		D0F6C8E5EA5006315AB46EFB /* GLSGlassSurface.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSGlassSurface.mm"; sourceTree = SOURCE_ROOT; };
+		D0F67AACDC40F78BD207BC86 /* GLSGlassView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSGlassView.mm"; sourceTree = SOURCE_ROOT; };
+		D0F61DCFC7C7C4D8EAD1E8C5 /* GLSGlassViewInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSGlassViewInternal.h"; sourceTree = SOURCE_ROOT; };
+		D0F635536FFC89D702AFE269 /* GLSLiquidLensView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSLiquidLensView.mm"; sourceTree = SOURCE_ROOT; };
+		D0F6783C53246654B220F6BA /* GLSNavigationBar.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSNavigationBar.mm"; sourceTree = SOURCE_ROOT; };
+		D0F65F0BD63A77012E031A64 /* GLSNavigationController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSNavigationController.mm"; sourceTree = SOURCE_ROOT; };
+		D0F66662E47EF1C1F6A5D58A /* GLSRenderer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSRenderer.h"; sourceTree = SOURCE_ROOT; };
+		D0F6602A83586EC727A92DCF /* GLSRenderer.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSRenderer.mm"; sourceTree = SOURCE_ROOT; };
+		D0F6A911990AF724D1A395C5 /* GLSScrollEdgeEffectView.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSScrollEdgeEffectView.mm"; sourceTree = SOURCE_ROOT; };
+		D0F6A6B72BA7CCD7D0D3F19E /* GLSScrollEdgeEffectViewInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSScrollEdgeEffectViewInternal.h"; sourceTree = SOURCE_ROOT; };
+		D0F657B47B5F0BC37007C9BD /* GLSSegmentedControl.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSSegmentedControl.mm"; sourceTree = SOURCE_ROOT; };
+		D0F6D54943CA2D6423C85EF7 /* GLSSlider.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSSlider.mm"; sourceTree = SOURCE_ROOT; };
+		D0F636E745BB5A7152921777 /* GLSSwitch.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSSwitch.mm"; sourceTree = SOURCE_ROOT; };
+		D0F6FF8B322D9256BFBE4738 /* GLSTabBarController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSTabBarController.mm"; sourceTree = SOURCE_ROOT; };
+		D0F6D34FD9F5E1AE7F2D45F8 /* GLSToolbar.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = "Dopamine/Glassify/Sources/Glassify/Platform/GLSToolbar.mm"; sourceTree = SOURCE_ROOT; };
+		D0F6E15676830E64CB17CEB6 /* blur.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = "Dopamine/Glassify/Sources/Glassify/Shaders/blur.metal"; sourceTree = SOURCE_ROOT; };
+		D0F67E8174E87EFFDB6E7555 /* glass.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = "Dopamine/Glassify/Sources/Glassify/Shaders/glass.metal"; sourceTree = SOURCE_ROOT; };
+		D0F69FE7E832071313A67F26 /* glass_sdf.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Shaders/glass_sdf.h"; sourceTree = SOURCE_ROOT; };
+		D0F61DDC61F17B7DCA349012 /* glass_shared.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/Shaders/glass_shared.h"; sourceTree = SOURCE_ROOT; };
+		D0F6B7E7CD0CC9D7F5A1D9EE /* GLSDebug.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSDebug.h"; sourceTree = SOURCE_ROOT; };
+		D0F63CF204AE90D9FBA76376 /* GLSGlassButton.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSGlassButton.h"; sourceTree = SOURCE_ROOT; };
+		D0F68FD0B4B3B6AFA38E4142 /* GLSGlassContainerView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSGlassContainerView.h"; sourceTree = SOURCE_ROOT; };
+		D0F6F70E58AE2A4936A294C4 /* GLSGlassView+Testing.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSGlassView+Testing.h"; sourceTree = SOURCE_ROOT; };
+		D0F6EF07217FF865D2DF7433 /* GLSGlassView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSGlassView.h"; sourceTree = SOURCE_ROOT; };
+		D0F6D85E9EE60902906334D5 /* GLSLiquidLensView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSLiquidLensView.h"; sourceTree = SOURCE_ROOT; };
+		D0F61BA32FD33C7C8EBB49F8 /* GLSNavigationBar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSNavigationBar.h"; sourceTree = SOURCE_ROOT; };
+		D0F6E7D379CA3DA075063336 /* GLSNavigationController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSNavigationController.h"; sourceTree = SOURCE_ROOT; };
+		D0F698322E8360BAE4A802CC /* GLSScrollEdgeEffectView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSScrollEdgeEffectView.h"; sourceTree = SOURCE_ROOT; };
+		D0F62BE0C3E2714365453F1B /* GLSSegmentedControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSSegmentedControl.h"; sourceTree = SOURCE_ROOT; };
+		D0F672DE02487DDC74B3F270 /* GLSSlider.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSSlider.h"; sourceTree = SOURCE_ROOT; };
+		D0F6F538017BFC0164EAA457 /* GLSSwitch.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSSwitch.h"; sourceTree = SOURCE_ROOT; };
+		D0F60E91E7635FA1660BA369 /* GLSTabBarController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSTabBarController.h"; sourceTree = SOURCE_ROOT; };
+		D0F621313F3774FC143D6E9D /* GLSToolbar.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/GLSToolbar.h"; sourceTree = SOURCE_ROOT; };
+		D0F607D59F6CEAD058C2BA6C /* Glassify.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Glassify/Sources/Glassify/include/Glassify/Glassify.h"; sourceTree = SOURCE_ROOT; };
         A25990010000000000000002 /* DORuntimeConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DORuntimeConfiguration.m; sourceTree = "<group>"; };
         A25990010000000000000003 /* DORuntimeConfiguration.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DORuntimeConfiguration.h; sourceTree = "<group>"; };
 		040622A82B77FE8E00393AAD /* DOPkgManagerPickerViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DOPkgManagerPickerViewController.h; sourceTree = "<group>"; };
@@ -811,6 +889,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0F9E32BD8FB85BDDAB9F62D /* Metal.framework in Frameworks */,
+				D0F9B201FE5BF044CF87729D /* QuartzCore.framework in Frameworks */,
+				D0F9AB7532C69A346A0E1656 /* CoreGraphics.framework in Frameworks */,
 				8C029F6B2B4E320E0071DE58 /* libz.tbd in Frameworks */,
 				8CDD08472B4F6DD800A32B61 /* libxpf.dylib in Frameworks */,
 				8CDD08462B4F6DD800A32B61 /* libchoma.dylib in Frameworks */,
@@ -854,6 +935,74 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		D0F61AAAD29F4BB88494251F /* Glassify */ = {isa = PBXGroup; children = (
+			D0F6410188F9DC6E499FEC68 /* Core */,
+			D0F607479753A6A783FB63EF /* Platform */,
+			D0F60316323D6919A9600FA5 /* Include */,
+			D0F68D839654AA33DDDB38CC /* Shaders */,
+		); name = Glassify; path = Dopamine/Glassify; sourceTree = SOURCE_ROOT; };
+		D0F6410188F9DC6E499FEC68 /* Core */ = {isa = PBXGroup; children = (
+				D0F69CBAB527807D9A7C859C /* color_matrix.cpp */,
+				D0F6F2FE1893E32D9B98E60D /* glass_inputs.cpp */,
+				D0F654C0BD35F198C12271E8 /* color_matrix.h */,
+				D0F610FA829B7DD89222FD99 /* glass_inputs.h */,
+				D0F67E5156429B6B598D60FE /* pack.h */,
+				D0F67A6B38F63F1B7389DE66 /* press.h */,
+				D0F674C476B3FA498653C627 /* pack.cpp */,
+				D0F619040D21FA2BA30C0376 /* press.cpp */,
+		); name = Core; path = Dopamine/Glassify/Sources/Glassify/Core; sourceTree = SOURCE_ROOT; };
+		D0F607479753A6A783FB63EF /* Platform */ = {isa = PBXGroup; children = (
+				D0F669C38D361467DDC5131B /* GLSBackdrop.h */,
+				D0F6BE0764E849620FF64841 /* GLSBackdrop.mm */,
+				D0F6D5A2A89CB2F3B5308D73 /* GLSBarButton.h */,
+				D0F6CFD2619E9223D2F2B13B /* GLSBarButton.mm */,
+				D0F67432D25E883244E018B6 /* GLSContentMask.h */,
+				D0F6FB1C7C31F841C8BD6BE1 /* GLSContentMask.mm */,
+				D0F67BC632E2F2883A471CCD /* GLSGlassButton.mm */,
+				D0F68FAFE2942371DA6B2E23 /* GLSGlassSurface.h */,
+				D0F6C8E5EA5006315AB46EFB /* GLSGlassSurface.mm */,
+				D0F67AACDC40F78BD207BC86 /* GLSGlassView.mm */,
+				D0F61DCFC7C7C4D8EAD1E8C5 /* GLSGlassViewInternal.h */,
+				D0F635536FFC89D702AFE269 /* GLSLiquidLensView.mm */,
+				D0F6783C53246654B220F6BA /* GLSNavigationBar.mm */,
+				D0F65F0BD63A77012E031A64 /* GLSNavigationController.mm */,
+				D0F66662E47EF1C1F6A5D58A /* GLSRenderer.h */,
+				D0F6602A83586EC727A92DCF /* GLSRenderer.mm */,
+				D0F6A911990AF724D1A395C5 /* GLSScrollEdgeEffectView.mm */,
+				D0F6A6B72BA7CCD7D0D3F19E /* GLSScrollEdgeEffectViewInternal.h */,
+				D0F657B47B5F0BC37007C9BD /* GLSSegmentedControl.mm */,
+				D0F6D54943CA2D6423C85EF7 /* GLSSlider.mm */,
+				D0F636E745BB5A7152921777 /* GLSSwitch.mm */,
+				D0F6FF8B322D9256BFBE4738 /* GLSTabBarController.mm */,
+				D0F6D34FD9F5E1AE7F2D45F8 /* GLSToolbar.mm */,
+		); name = Platform; path = Dopamine/Glassify/Sources/Glassify/Platform; sourceTree = SOURCE_ROOT; };
+		D0F60316323D6919A9600FA5 /* Include */ = {isa = PBXGroup; children = (
+				D0F654C0BD35F198C12271E8 /* color_matrix.h */,
+				D0F610FA829B7DD89222FD99 /* glass_inputs.h */,
+				D0F67E5156429B6B598D60FE /* pack.h */,
+				D0F67A6B38F63F1B7389DE66 /* press.h */,
+				D0F6B7E7CD0CC9D7F5A1D9EE /* GLSDebug.h */,
+				D0F63CF204AE90D9FBA76376 /* GLSGlassButton.h */,
+				D0F68FD0B4B3B6AFA38E4142 /* GLSGlassContainerView.h */,
+				D0F6F70E58AE2A4936A294C4 /* GLSGlassView+Testing.h */,
+				D0F6EF07217FF865D2DF7433 /* GLSGlassView.h */,
+				D0F6D85E9EE60902906334D5 /* GLSLiquidLensView.h */,
+				D0F61BA32FD33C7C8EBB49F8 /* GLSNavigationBar.h */,
+				D0F6E7D379CA3DA075063336 /* GLSNavigationController.h */,
+				D0F698322E8360BAE4A802CC /* GLSScrollEdgeEffectView.h */,
+				D0F62BE0C3E2714365453F1B /* GLSSegmentedControl.h */,
+				D0F672DE02487DDC74B3F270 /* GLSSlider.h */,
+				D0F6F538017BFC0164EAA457 /* GLSSwitch.h */,
+				D0F60E91E7635FA1660BA369 /* GLSTabBarController.h */,
+				D0F621313F3774FC143D6E9D /* GLSToolbar.h */,
+				D0F607D59F6CEAD058C2BA6C /* Glassify.h */,
+		); name = Include; path = Dopamine/Glassify/Sources/Glassify/include; sourceTree = SOURCE_ROOT; };
+		D0F68D839654AA33DDDB38CC /* Shaders */ = {isa = PBXGroup; children = (
+				D0F6E15676830E64CB17CEB6 /* blur.metal */,
+				D0F67E8174E87EFFDB6E7555 /* glass.metal */,
+				D0F69FE7E832071313A67F26 /* glass_sdf.h */,
+				D0F61DDC61F17B7DCA349012 /* glass_shared.h */,
+		); name = Shaders; path = Dopamine/Glassify/Sources/Glassify/Shaders; sourceTree = SOURCE_ROOT; };
 		042479672B66916B0082581B /* UI */ = {
 			isa = PBXGroup;
 			children = (
@@ -1096,6 +1245,9 @@
 		8C029F642B4E2E7D0071DE58 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D0F8AFC0AB82536450E02150 /* Metal.framework */,
+				D0F8D925CAA658E855A9E6F8 /* QuartzCore.framework */,
+				D0F833FF5CDD943372BC2E3E /* CoreGraphics.framework */,
 				2F11A32A301C007500C1C9F0 /* IOKit.framework */,
 				3165D0063020A584002737DA /* IOKit.framework */,
 				2F11A328301C006D00C1C9F0 /* IOSurface.framework */,
@@ -1351,6 +1503,7 @@
 		8C7198172ABF0E82003C6658 /* Dopamine */ = {
 			isa = PBXGroup;
 			children = (
+				D0F61AAAD29F4BB88494251F /* Glassify */,
 				8CB94F012B59E16D0098BAFD /* Resources */,
 				8C46D71D2B588857002899DB /* Headers */,
 				8C7198332ABF133D003C6658 /* App Delegates */,
@@ -2275,6 +2428,28 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0F760E3262FAE987561BD1D /* color_matrix.cpp in Sources */,
+				D0F7AF0A5CF96E0FECB5F52D /* glass_inputs.cpp in Sources */,
+				D0F76BE28862E45DEB4CD68D /* pack.cpp in Sources */,
+				D0F70ED37C09EBBE4D32E563 /* press.cpp in Sources */,
+				D0F7F27D7727607904B4FC27 /* GLSBackdrop.mm in Sources */,
+				D0F740BEADACADAFFBB29B9C /* GLSBarButton.mm in Sources */,
+				D0F74BE93CB315C35095F048 /* GLSContentMask.mm in Sources */,
+				D0F7F92A841EF74564817307 /* GLSGlassButton.mm in Sources */,
+				D0F79A2EB6BF208608F0FC35 /* GLSGlassSurface.mm in Sources */,
+				D0F726B62E0E61E82D7565C9 /* GLSGlassView.mm in Sources */,
+				D0F732D62496866CD3551D43 /* GLSLiquidLensView.mm in Sources */,
+				D0F7193AB40734A2CF2E690F /* GLSNavigationBar.mm in Sources */,
+				D0F7C097A2EFFB631DBF8755 /* GLSNavigationController.mm in Sources */,
+				D0F7E1B14E6D0E02DEC6AC9E /* GLSRenderer.mm in Sources */,
+				D0F72F2477B0F10FE3C30BA5 /* GLSScrollEdgeEffectView.mm in Sources */,
+				D0F716C624D9CA5E7356868D /* GLSSegmentedControl.mm in Sources */,
+				D0F74375FB2F1CB72F2B52BB /* GLSSlider.mm in Sources */,
+				D0F75F98F976D34B02737068 /* GLSSwitch.mm in Sources */,
+				D0F79184B2ED166562E4FB04 /* GLSTabBarController.mm in Sources */,
+				D0F735B55CBCEFFC302599DF /* GLSToolbar.mm in Sources */,
+				D0F7325B6DACBE1B87AC0E1B /* blur.metal in Sources */,
+				D0F7EF1180386BEE81EC51A3 /* glass.metal in Sources */,
 				8C609C9E2C19B4270023DD12 /* NSString+Version.m in Sources */,
 				042479A62B66916B0082581B /* DOHeaderCell.m in Sources */,
 				8C6599DD2C555A71000FF57F /* DOPSJetsamListItemsController.h in Sources */,
@@ -3082,6 +3257,9 @@
 		8C71982F2ABF0E84003C6658 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				HEADER_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/../BaseBin/.include", "$(SRCROOT)/Dopamine/Glassify/Sources/Glassify/include", "$(SRCROOT)/Dopamine/Glassify/Sources/Glassify/Core/include", "$(SRCROOT)/Dopamine/Glassify/Sources/Glassify/Platform");
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/Dopamine/Glassify/Sources/Glassify/Shaders";
 				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon_ElleKit AppIcon_Red AppIcon_Purple AppIcon_Blue";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -3120,6 +3298,9 @@
 		8C7198302ABF0E84003C6658 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++17";
+				HEADER_SEARCH_PATHS = ("$(inherited)", "$(SRCROOT)/../BaseBin/.include", "$(SRCROOT)/Dopamine/Glassify/Sources/Glassify/include", "$(SRCROOT)/Dopamine/Glassify/Sources/Glassify/Core/include", "$(SRCROOT)/Dopamine/Glassify/Sources/Glassify/Platform");
+				MTL_HEADER_SEARCH_PATHS = "$(SRCROOT)/Dopamine/Glassify/Sources/Glassify/Shaders";
 				ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES = "AppIcon_ElleKit AppIcon_Red AppIcon_Purple AppIcon_Blue";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
