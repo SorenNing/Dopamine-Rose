@@ -25,6 +25,8 @@ static NSArray<UIView *> *DODescendants(UIView *root, Class type);
 static BOOL DOContains(CGRect outer, CGRect inner);
 static BOOL DONearRect(CGRect lhs, CGRect rhs);
 static BOOL DOVisible(UIView *view);
+static BOOL DOPillHasRoundedPixels(UIView *pill);
+static BOOL DOTransitionBackdropHasCorrectLayering(DONavigationController *nav);
 static BOOL DOIsSettled(DONavigationController *nav);
 static void DOCheckAmbiguity(UIView *root);
 static void DOCapture(UIView *view, NSString *name);
@@ -201,6 +203,58 @@ static BOOL DOVisible(UIView *view)
     if (!view || !view.window) return NO;
     for (UIView *parent = view; parent; parent = parent.superview) if (parent.hidden || parent.alpha < 0.01) return NO;
     return YES;
+}
+static BOOL DOPillHasRoundedPixels(UIView *pill)
+{
+    if (!pill || CGRectGetWidth(pill.bounds) < 48 || CGRectGetHeight(pill.bounds) < 48) return NO;
+    const size_t width = (size_t)ceil(CGRectGetWidth(pill.bounds));
+    const size_t height = (size_t)ceil(CGRectGetHeight(pill.bounds));
+    if (width > 2048 || height > 2048) return NO;
+    uint8_t *pixels = calloc(width * height, 4);
+    if (!pixels) return NO;
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    if (!colorSpace) { free(pixels); return NO; }
+    CGContextRef bitmap = CGBitmapContextCreate(pixels, width, height, 8, width * 4, colorSpace,
+        kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
+    BOOL rounded = NO;
+    if (bitmap) {
+        [pill.layer renderInContext:bitmap];
+        size_t center = ((height / 2) * width + width / 2) * 4 + 3;
+        size_t topLeft = (width + 1) * 4 + 3;
+        size_t topRight = (width + width - 2) * 4 + 3;
+        size_t bottomLeft = ((height - 2) * width + 1) * 4 + 3;
+        size_t bottomRight = ((height - 2) * width + width - 2) * 4 + 3;
+        rounded = pixels[center] > 3 && pixels[topLeft] < 4 && pixels[topRight] < 4 &&
+            pixels[bottomLeft] < 4 && pixels[bottomRight] < 4;
+        CGContextRelease(bitmap);
+    }
+    CGColorSpaceRelease(colorSpace);
+    free(pixels);
+    return rounded;
+}
+static BOOL DOTransitionBackdropHasCorrectLayering(DONavigationController *nav)
+{
+    id<UIViewControllerTransitionCoordinator> coordinator = nav.transitionCoordinator;
+    UIView *backdrop = DOFind(nav.view, @"DOTransitionBackdrop");
+    if (!coordinator || !DOVisible(backdrop)) return NO;
+    UIView *container = coordinator.containerView;
+    UIView *from = [coordinator viewForKey:UITransitionContextFromViewKey] ?: [coordinator viewControllerForKey:UITransitionContextFromViewControllerKey].view;
+    UIView *to = [coordinator viewForKey:UITransitionContextToViewKey] ?: [coordinator viewControllerForKey:UITransitionContextToViewControllerKey].view;
+    while (from && from.superview != container) from = from.superview;
+    while (to && to.superview != container) to = to.superview;
+    if (!from || !to || from == to) return NO;
+    NSUInteger fromIndex = [container.subviews indexOfObjectIdenticalTo:from];
+    NSUInteger toIndex = [container.subviews indexOfObjectIdenticalTo:to];
+    if (fromIndex == NSNotFound || toIndex == NSNotFound) return NO;
+    UIView *front = fromIndex > toIndex ? from : to;
+    if (front == from) {
+        // Pop: the background belongs to the departing front view.
+        return backdrop.superview == from && DONearRect(backdrop.frame, from.bounds);
+    }
+    // Push: a fixed backdrop is above the old page and below the incoming page.
+    NSUInteger backdropIndex = [container.subviews indexOfObjectIdenticalTo:backdrop];
+    return backdrop.superview == container && backdropIndex != NSNotFound &&
+        fromIndex < backdropIndex && backdropIndex < toIndex;
 }
 static BOOL DOIsSettled(DONavigationController *nav)
 {
@@ -415,10 +469,18 @@ static void DOCheckNavigation(DONavigationController *nav, NSInteger tab)
         }
         BOOL active = (button.accessibilityTraits & UIAccessibilityTraitSelected) != 0;
         if (active) selected++;
-        UIColor *configurationFill = button.configuration.background.backgroundColor;
-        BOOL clearFill = !configurationFill || CGColorGetAlpha(configurationFill.CGColor) < 0.001;
-        DORecord(@"tab_selection_has_one_clipped_surface", button.clipsToBounds &&
-            !button.automaticallyUpdatesConfiguration && clearFill && button.layer.cornerRadius > 0, nil);
+        UIView *pill = DOFind(bar, [NSString stringWithFormat:@"DOTabPill%ld", (long)index]);
+        CGRect pillRect = [pill convertRect:pill.bounds toView:bar];
+        CGRect buttonRect = [button convertRect:button.bounds toView:bar];
+        BOOL clearButton = !button.backgroundColor || CGColorGetAlpha(button.backgroundColor.CGColor) < 0.001;
+        BOOL roundedPixels = !active || DOPillHasRoundedPixels(pill);
+        DORecord(@"tab_selection_has_one_clipped_surface", pill && button.configuration == nil && !button.selected &&
+            clearButton && pill.hidden == !active && pill.layer.masksToBounds && pill.layer.cornerRadius > 0 &&
+            DONearRect(pillRect, buttonRect) && roundedPixels,
+            @{@"buttonConfigurationIsNil": @(button.configuration == nil), @"buttonSelected": @(button.selected),
+              @"buttonClear": @(clearButton), @"pillFound": @(pill != nil), @"pillHidden": @(pill.hidden),
+              @"pillMasks": @(pill.layer.masksToBounds), @"pillRadius": @(pill.layer.cornerRadius),
+              @"sameFrame": @(DONearRect(pillRect, buttonRect)), @"roundedPixels": @(roundedPixels)});
         CGRect rect = [button convertRect:button.bounds toView:bar];
         CGPoint center = [button convertPoint:CGPointMake(CGRectGetMidX(button.bounds), CGRectGetMidY(button.bounds)) toView:nav.view];
         UIView *hit = [nav.view hitTest:center withEvent:nil];
@@ -507,6 +569,7 @@ static void DONavigationCases(DOTheme *theme)
                 DOEnqueue(0.12, ^{
                     UIView *backdrop = DOFind(nav.view, @"DOTransitionBackdrop");
                     DORecord(@"push_transition_has_isolating_backdrop", nav.transitionCoordinator != nil && DOVisible(backdrop), nil);
+                    DORecord(@"push_backdrop_separates_page_layers", DOTransitionBackdropHasCorrectLayering(nav), nil);
                     DOCapture(nav.view, [NSString stringWithFormat:@"%@-390-push-transition", theme.key]);
                 });
             }
@@ -531,6 +594,7 @@ static void DONavigationCases(DOTheme *theme)
                 DOEnqueue(0.12, ^{
                     UIView *backdrop = DOFind(nav.view, @"DOTransitionBackdrop");
                     DORecord(@"pop_transition_has_isolating_backdrop", nav.transitionCoordinator != nil && DOVisible(backdrop), nil);
+                    DORecord(@"pop_backdrop_attached_to_front_page", DOTransitionBackdropHasCorrectLayering(nav), nil);
                     DOCapture(nav.view, [NSString stringWithFormat:@"%@-390-pop-transition", theme.key]);
                 });
             }

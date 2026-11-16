@@ -40,8 +40,17 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
         backdrop.backgroundColor = background.superview.backgroundColor;
         backdrop.contentMode = background.contentMode;
         backdrop.clipsToBounds = YES;
-        backdrop.frame = [background convertRect:background.bounds toView:container];
-        [container insertSubview:backdrop belowSubview:front];
+        if (front == to) {
+            // During a push, hide the previous page behind the entering page.
+            backdrop.frame = [background convertRect:background.bounds toView:container];
+            [container insertSubview:backdrop belowSubview:to];
+        } else {
+            // During a pop, move the backdrop with the departing page so the
+            // destination is revealed instead of being covered by a blank view.
+            backdrop.frame = from.bounds;
+            backdrop.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+            [from insertSubview:backdrop atIndex:0];
+        }
     } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
         [backdrop removeFromSuperview];
     }];
@@ -53,6 +62,7 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
 @property (nonatomic) DOMainViewController *mainView;
 @property (nonatomic) UIView *secondaryBar;
 @property (nonatomic) NSArray<UIButton *> *secondaryTabs;
+@property (nonatomic) NSArray<UIView *> *secondarySelectionPills;
 @property (nonatomic) NSMutableDictionary<NSNumber *, NSArray<UIViewController *> *> *tabStacks;
 @property (nonatomic) NSInteger selectedTab;
 @property (nonatomic) BOOL navigationEnabled;
@@ -134,34 +144,72 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
     NSArray *titles = @[chinese ? @"主页" : @"Home", DOLocalizedString(@"Menu_Settings_Title"), chinese ? @"关于" : @"About"];
     NSArray *symbols = @[@"house", @"slider.horizontal.3", @"info.circle"];
     NSMutableArray *tabs = [NSMutableArray array];
+    NSMutableArray *pills = [NSMutableArray array];
     for (NSInteger index = 0; index < 3; index++) {
+        UIView *slot = [[UIView alloc] init];
+        slot.backgroundColor = UIColor.clearColor;
+        UIView *pill = [[UIView alloc] init];
+        pill.translatesAutoresizingMaskIntoConstraints = NO;
+        pill.userInteractionEnabled = NO;
+        pill.accessibilityIdentifier = [NSString stringWithFormat:@"DOTabPill%ld", (long)index];
+        pill.layer.cornerRadius = 27;
+        pill.layer.cornerCurve = kCACornerCurveContinuous;
+        pill.layer.masksToBounds = YES;
+        [slot addSubview:pill];
         UIButton *tab = [UIButton buttonWithType:UIButtonTypeCustom];
         tab.tag = index;
-        tab.layer.cornerRadius = 27;
-        tab.layer.cornerCurve = kCACornerCurveContinuous;
-        tab.clipsToBounds = YES;
-        // Selection is drawn once by updateNavigationForController:, not by
-        // UIButtonConfiguration's additional selected-state background.
-        tab.automaticallyUpdatesConfiguration = NO;
-        UIButtonConfiguration *configuration = [UIButtonConfiguration plainButtonConfiguration];
-        configuration.background = [UIBackgroundConfiguration clearConfiguration];
-        configuration.title = titles[index];
-        configuration.image = [UIImage systemImageNamed:symbols[index] withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular]];
-        configuration.imagePlacement = NSDirectionalRectEdgeTop;
-        configuration.imagePadding = 4;
-        configuration.baseForegroundColor = [DOGlobalAppearance primaryTextColor];
-        configuration.titleTextAttributesTransformer = ^NSDictionary *(NSDictionary *attributes) {
-            NSMutableDictionary *result = attributes.mutableCopy;
-            result[NSFontAttributeName] = [UIFont systemFontOfSize:10 weight:UIFontWeightMedium];
-            return result;
-        };
-        tab.configuration = configuration;
+        tab.translatesAutoresizingMaskIntoConstraints = NO;
+        tab.backgroundColor = UIColor.clearColor;
+        // Use plain content views, not UIButtonConfiguration's state-driven
+        // background: the rounded sibling pill is the only selection layer.
+        UIImageView *symbol = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:symbols[index] withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular]]];
+        symbol.contentMode = UIViewContentModeScaleAspectFit;
+        symbol.tintColor = [DOGlobalAppearance primaryTextColor];
+        symbol.isAccessibilityElement = NO;
+        [symbol.widthAnchor constraintEqualToConstant:20].active = YES;
+        [symbol.heightAnchor constraintEqualToConstant:20].active = YES;
+        UILabel *caption = [[UILabel alloc] init];
+        caption.text = titles[index];
+        caption.textColor = [DOGlobalAppearance primaryTextColor];
+        caption.font = [UIFont systemFontOfSize:10 weight:UIFontWeightMedium];
+        caption.textAlignment = NSTextAlignmentCenter;
+        caption.numberOfLines = 1;
+        caption.adjustsFontSizeToFitWidth = YES;
+        caption.minimumScaleFactor = 0.8;
+        caption.isAccessibilityElement = NO;
+        UIStackView *content = [[UIStackView alloc] initWithArrangedSubviews:@[symbol, caption]];
+        content.axis = UILayoutConstraintAxisVertical;
+        content.alignment = UIStackViewAlignmentCenter;
+        content.spacing = 4;
+        content.translatesAutoresizingMaskIntoConstraints = NO;
+        content.userInteractionEnabled = NO;
+        [tab addSubview:content];
+        [NSLayoutConstraint activateConstraints:@[
+            [content.centerXAnchor constraintEqualToAnchor:tab.centerXAnchor],
+            [content.centerYAnchor constraintEqualToAnchor:tab.centerYAnchor],
+            [content.widthAnchor constraintLessThanOrEqualToAnchor:tab.widthAnchor constant:-4]
+        ]];
+        tab.isAccessibilityElement = YES;
+        tab.accessibilityLabel = titles[index];
         tab.accessibilityIdentifier = [NSString stringWithFormat:@"DOTab%ld", (long)index];
         [tab addTarget:self action:@selector(topLevelTabPressed:) forControlEvents:UIControlEventTouchUpInside];
-        [stack addArrangedSubview:tab];
+        [slot addSubview:tab];
+        [NSLayoutConstraint activateConstraints:@[
+            [pill.leadingAnchor constraintEqualToAnchor:slot.leadingAnchor],
+            [pill.trailingAnchor constraintEqualToAnchor:slot.trailingAnchor],
+            [pill.topAnchor constraintEqualToAnchor:slot.topAnchor],
+            [pill.bottomAnchor constraintEqualToAnchor:slot.bottomAnchor],
+            [tab.leadingAnchor constraintEqualToAnchor:slot.leadingAnchor],
+            [tab.trailingAnchor constraintEqualToAnchor:slot.trailingAnchor],
+            [tab.topAnchor constraintEqualToAnchor:slot.topAnchor],
+            [tab.bottomAnchor constraintEqualToAnchor:slot.bottomAnchor]
+        ]];
+        [stack addArrangedSubview:slot];
         [tabs addObject:tab];
+        [pills addObject:pill];
     }
     self.secondaryTabs = tabs;
+    self.secondarySelectionPills = pills;
 }
 
 - (void)topLevelTabPressed:(UIButton *)sender
@@ -209,10 +257,13 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
     self.secondaryBar.userInteractionEnabled = self.navigationEnabled && !result;
     for (UIButton *tab in self.secondaryTabs) {
         BOOL active = tab.tag == targetTab;
-        tab.selected = active;
-        tab.backgroundColor = active ? [DOGlobalAppearance selectedColor] : UIColor.clearColor;
-        tab.layer.borderWidth = active ? 0.5 : 0;
-        tab.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
+        // The separate rounded sibling is the only selected surface.
+        tab.selected = NO;
+        UIView *pill = self.secondarySelectionPills[tab.tag];
+        pill.hidden = !active;
+        pill.backgroundColor = [DOGlobalAppearance selectedColor];
+        pill.layer.borderWidth = active ? 0.5 : 0;
+        pill.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
         tab.accessibilityTraits = UIAccessibilityTraitButton | (active ? UIAccessibilityTraitSelected : 0);
     }
     [self.view bringSubviewToFront:self.secondaryBar];
