@@ -47,7 +47,7 @@ def prepare(repo, output):
         "DOCreditsViewController.h": '#import <UIKit/UIKit.h>\n@interface DOCreditsViewController : UIViewController\n@end\n',
         "DOUIManager.h": '#import <UIKit/UIKit.h>\nFOUNDATION_EXPORT NSString *DOLocalizedString(NSString *key);\n',
         "DOThemeManager.h": '#import "DOTheme.h"\n@interface DOThemeManager : NSObject\n@property(nonatomic, strong) NSArray<DOTheme *> *themes;\n@property(nonatomic) NSInteger selectedIndex;\n+ (instancetype)sharedInstance;\n- (DOTheme *)enabledTheme;\n@end\n',
-        "DONavigationController.h": '#import <UIKit/UIKit.h>\n#import "DOMainViewController.h"\n#import "DOGlobalAppearance.h"\n#import "DOModalTransitionScale.h"\n#import "DOModalTransitionPush.h"\n@interface DONavigationController : UINavigationController <UINavigationControllerDelegate>\n- (CGRect)contentFrameForViewController:(UIViewController *)controller;\n- (void)selectTopLevelTab:(NSInteger)index;\n- (void)setNavigationEnabled:(BOOL)enabled;\n@end\n',
+        "DONavigationController.h": '#import <UIKit/UIKit.h>\n#import "DOMainViewController.h"\n#import "DOGlobalAppearance.h"\n#import "DOModalTransitionScale.h"\n#import "DOModalTransitionPush.h"\n@interface DONavigationController : UINavigationController <UINavigationControllerDelegate>\n- (void)selectTopLevelTab:(NSInteger)index;\n- (void)setNavigationEnabled:(BOOL)enabled;\n@end\n',
     }
     for name, contents in shims.items():
         (src / name).write_text(contents)

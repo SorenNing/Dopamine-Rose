@@ -25,7 +25,7 @@ collect_logs() {
     [[ -n "$UDID" ]] || return 0
     set +e
     python3 "$SCRIPT_DIR/verify.py" bounded 10 -- xcrun simctl spawn "$UDID" log show \
-        --last 5m --style compact --level debug \
+        --last 5m --style compact --info --debug \
         --predicate 'process == "DopamineLayoutHarness"' >"$OUTPUT/simulator.log" 2>"$OUTPUT/simulator-log.stderr.log"
     local status=$?
     printf '%s\n' "$status" >"$OUTPUT/simulator-log-status.txt"

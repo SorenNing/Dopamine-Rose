@@ -332,7 +332,7 @@ static UIVisualEffectView *DOFindGlassEffect(UIView *view)
     [group addSubview:brand];
     CGFloat naturalWidth = ceil([brand.text sizeWithAttributes:@{NSFontAttributeName:brand.font}].width);
     NSLayoutConstraint *desiredWidth = [group.widthAnchor constraintEqualToConstant:41 + naturalWidth];
-    desiredWidth.priority = 999;
+    desiredWidth.priority = 998;
     [NSLayoutConstraint activateConstraints:@[
         desiredWidth,
         [group.centerXAnchor constraintEqualToAnchor:card.centerXAnchor],

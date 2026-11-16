@@ -14,6 +14,8 @@ static UIViewController *DOHost;
 static UIWindow *DOWindow;
 static BOOL DOPublished;
 static char DODataSourceKey;
+static NSMutableArray<NSDictionary *> *DOSteps;
+static NSUInteger DOStepIndex;
 
 // Forward declarations keep the standalone clang build independent of declaration order.
 static void DORecord(NSString *name, BOOL passed, NSDictionary *details);
@@ -23,8 +25,7 @@ static NSArray<UIView *> *DODescendants(UIView *root, Class type);
 static BOOL DOContains(CGRect outer, CGRect inner);
 static BOOL DONearRect(CGRect lhs, CGRect rhs);
 static BOOL DOVisible(UIView *view);
-static void DOPump(NSTimeInterval seconds);
-static BOOL DOSettle(DONavigationController *nav);
+static BOOL DOIsSettled(DONavigationController *nav);
 static void DOCheckAmbiguity(UIView *root);
 static void DOCapture(UIView *view, NSString *name);
 static void DOInstallFixturePage(UIViewController *controller, NSString *title);
@@ -35,6 +36,11 @@ static void DOBrandCases(DOTheme *theme);
 static void DONavigationCases(DOTheme *theme);
 static void DOPublish(void);
 static void DORun(void);
+static void DOEnqueue(NSTimeInterval delay, dispatch_block_t block);
+static void DOAdvance(void);
+static void DOEnqueueNavigation(DONavigationController *nav, dispatch_block_t block);
+static void DOExecuteStep(NSDictionary *step);
+static void DOAwaitStep(NSDictionary *step, CFTimeInterval deadline, NSInteger quiet);
 
 @implementation DOThemeManager
 + (instancetype)sharedInstance
@@ -196,27 +202,57 @@ static BOOL DOVisible(UIView *view)
     for (UIView *parent = view; parent; parent = parent.superview) if (parent.hidden || parent.alpha < 0.01) return NO;
     return YES;
 }
-static void DOPump(NSTimeInterval seconds)
+static BOOL DOIsSettled(DONavigationController *nav)
 {
-    NSDate *end = [NSDate dateWithTimeIntervalSinceNow:seconds];
-    do { [[NSRunLoop mainRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.01]]; }
-    while ([end timeIntervalSinceNow] > 0);
+    [DOHost.view layoutIfNeeded]; [nav.view layoutIfNeeded]; [nav.topViewController.view layoutIfNeeded];
+    return !nav.transitionCoordinator && !nav.topViewController.transitionCoordinator &&
+        !nav.topViewController.isMovingToParentViewController && !nav.topViewController.isMovingFromParentViewController;
 }
-static BOOL DOSettle(DONavigationController *nav)
+static void DOEnqueue(NSTimeInterval delay, dispatch_block_t block)
 {
-    NSDate *deadline = [NSDate dateWithTimeIntervalSinceNow:2.5];
-    DOPump(0.06);
-    NSInteger quiet = 0;
-    while ([deadline timeIntervalSinceNow] > 0) {
-        [DOHost.view layoutIfNeeded]; [nav.view layoutIfNeeded]; [nav.topViewController.view layoutIfNeeded];
-        [CATransaction flush];
-        BOOL done = !nav.transitionCoordinator && !nav.topViewController.transitionCoordinator &&
-            !nav.topViewController.isMovingToParentViewController && !nav.topViewController.isMovingFromParentViewController;
-        quiet = done ? quiet + 1 : 0;
-        if (quiet >= 3) return YES;
-        DOPump(0.02);
+    [DOSteps addObject:@{@"delay": @(delay), @"block": [block copy]}];
+}
+static void DOEnqueueNavigation(DONavigationController *nav, dispatch_block_t block)
+{
+    [DOSteps addObject:@{@"delay": @0.04, @"navigation": nav, @"block": [block copy]}];
+}
+static void DOExecuteStep(NSDictionary *step)
+{
+    @try {
+        dispatch_block_t block = step[@"block"];
+        block();
+        DOAdvance();
+    } @catch (NSException *exception) {
+        DORecord(@"no_unhandled_exception", NO, @{@"name": exception.name, @"reason": exception.reason ?: @"", @"stack": exception.callStackSymbols ?: @[]});
+        DOPublish();
     }
-    return NO;
+}
+static void DOAwaitStep(NSDictionary *step, CFTimeInterval deadline, NSInteger quiet)
+{
+    DONavigationController *nav = step[@"navigation"];
+    quiet = DOIsSettled(nav) ? quiet+1 : 0;
+    if (quiet >= 3 || CACurrentMediaTime() >= deadline) {
+        DOExecuteStep(step);
+        return;
+    }
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.02*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        DOAwaitStep(step, deadline, quiet);
+    });
+}
+static void DOAdvance(void)
+{
+    if (DOPublished) return;
+    if (DOStepIndex >= DOSteps.count) {
+        DOContext = @"completion";
+        DORecord(@"all_required_screenshots_captured", DOShots.count == 45, @{@"actual": @(DOShots.count), @"expected": @45});
+        DOPublish();
+        return;
+    }
+    NSDictionary *step = DOSteps[DOStepIndex++];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)([step[@"delay"] doubleValue]*NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (step[@"navigation"]) DOAwaitStep(step, CACurrentMediaTime()+3.0, 0);
+        else DOExecuteStep(step);
+    });
 }
 static void DOCheckAmbiguity(UIView *root)
 {
@@ -230,7 +266,7 @@ static void DOCheckAmbiguity(UIView *root)
 
 static void DOCapture(UIView *view, NSString *name)
 {
-    [view layoutIfNeeded]; [CATransaction flush]; DOPump(0.03);
+    [view layoutIfNeeded]; [CATransaction flush];
     UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat preferredFormat];
     format.scale = 2; format.opaque = YES;
     UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:view.bounds.size format:format];
@@ -266,6 +302,7 @@ static void DOBrandCases(DOTheme *theme)
 {
     for (NSNumber *widthNumber in @[@320, @390, @430]) {
         for (NSNumber *large in @[@NO, @YES]) {
+            DOEnqueue(0.05, ^{
             CGFloat width = widthNumber.doubleValue;
             DOContext = [NSString stringWithFormat:@"%@-brand-%@-%@", theme.key, widthNumber, large.boolValue ? @"large" : @"default"];
             DOMainViewController *home = [DOMainViewController new];
@@ -291,7 +328,7 @@ static void DOBrandCases(DOTheme *theme)
                     label.font = [label.font fontWithSize:MAX(28.0, label.font.pointSize)];
                     [label invalidateIntrinsicContentSize];
                 }
-                [home.view setNeedsLayout]; [home.view layoutIfNeeded]; DOPump(0.04);
+                [home.view setNeedsLayout]; [home.view layoutIfNeeded];
                 CGRect labelRect = [label convertRect:label.bounds toView:card];
                 CGFloat natural = ceil([label.text sizeWithAttributes:@{NSFontAttributeName:label.font}].width);
                 CGFloat available = CGRectGetWidth(label.bounds);
@@ -310,6 +347,7 @@ static void DOBrandCases(DOTheme *theme)
             }
             [home willMoveToParentViewController:nil];
             [home.view removeFromSuperview]; [home removeFromParentViewController];
+            });
         }
     }
 }
@@ -419,69 +457,87 @@ static void DOCheckNavigation(DONavigationController *nav, NSInteger tab)
 static void DONavigationCases(DOTheme *theme)
 {
     for (NSNumber *widthNumber in @[@320, @390, @430]) {
-        CGFloat width = widthNumber.doubleValue;
         DONavigationController *nav = [DONavigationController new];
-        [DOHost addChildViewController:nav];
-        [DOHost.view addSubview:nav.view];
-        nav.view.frame = CGRectMake((DOHost.view.bounds.size.width-width)/2, 0, width, DOHost.view.bounds.size.height);
-        [nav didMoveToParentViewController:DOHost];
-        DOContext = [NSString stringWithFormat:@"%@-navigation-%@", theme.key, widthNumber];
-        DORecord(@"initial_navigation_settles", DOSettle(nav), nil);
+        DOEnqueue(0.02, ^{
+            CGFloat width = widthNumber.doubleValue;
+            [DOHost addChildViewController:nav];
+            [DOHost.view addSubview:nav.view];
+            nav.view.frame = CGRectMake((DOHost.view.bounds.size.width-width)/2, 0, width, DOHost.view.bounds.size.height);
+            [nav didMoveToParentViewController:DOHost];
+            DOContext = [NSString stringWithFormat:@"%@-navigation-%@", theme.key, widthNumber];
+        });
+        DOEnqueueNavigation(nav, ^{ DORecord(@"initial_navigation_settles", DOIsSettled(nav), nil); });
         NSMutableSet *captured = [NSMutableSet set];
         NSArray<Class> *classes = @[DOMainViewController.class, DOSettingsController.class, DOCreditsViewController.class];
         NSInteger step = 0;
         for (NSNumber *tabNumber in @[@0, @1, @2, @1, @0, @2, @0]) {
             NSInteger tab = tabNumber.integerValue;
-            DOContext = [NSString stringWithFormat:@"%@-navigation-%@-switch%ld-tab%ld", theme.key, widthNumber, (long)step++, (long)tab];
-            [nav selectTopLevelTab:tab];
-            DORecord(@"top_level_switch_settles", DOSettle(nav), nil);
-            DORecord(@"top_level_switch_routes_to_expected_real_UIKit_fixture", [nav.topViewController isKindOfClass:classes[tab]] && nav.viewControllers.count == 1,
-                @{@"visibleClass": NSStringFromClass(nav.topViewController.class), @"stackCount": @(nav.viewControllers.count)});
-            DOCheckNavigation(nav, tab);
-            if (![captured containsObject:tabNumber]) {
-                NSString *pageName = @[@"home", @"settings", @"about"][tab];
-                DOCapture(nav.view, [NSString stringWithFormat:@"%@-%@-%@", theme.key, widthNumber, pageName]);
-                [captured addObject:tabNumber];
-            }
+            NSString *context = [NSString stringWithFormat:@"%@-navigation-%@-switch%ld-tab%ld", theme.key, widthNumber, (long)step++, (long)tab];
+            DOEnqueueNavigation(nav, ^{ DOContext = context; [nav selectTopLevelTab:tab]; });
+            DOEnqueueNavigation(nav, ^{
+                DORecord(@"top_level_switch_settles", DOIsSettled(nav), nil);
+                DORecord(@"top_level_switch_routes_to_expected_real_UIKit_fixture", [nav.topViewController isKindOfClass:classes[tab]] && nav.viewControllers.count == 1,
+                    @{@"visibleClass": NSStringFromClass(nav.topViewController.class), @"stackCount": @(nav.viewControllers.count)});
+                DOCheckNavigation(nav, tab);
+                if (![captured containsObject:tabNumber]) {
+                    NSString *pageName = @[@"home", @"settings", @"about"][tab];
+                    DOCapture(nav.view, [NSString stringWithFormat:@"%@-%@-%@", theme.key, widthNumber, pageName]);
+                    [captured addObject:tabNumber];
+                }
+            });
         }
         for (NSInteger tab = 0; tab < 3; tab++) {
-            [nav selectTopLevelTab:tab]; DOSettle(nav);
-            UIViewController *root = nav.topViewController;
+            __block UIViewController *root;
             DOHarnessDetailController *detail = [DOHarnessDetailController new];
-            DOContext = [NSString stringWithFormat:@"%@-navigation-%@-animated-push-tab%ld", theme.key, widthNumber, (long)tab];
-            id<UIViewControllerAnimatedTransitioning> animator = [nav navigationController:nav animationControllerForOperation:UINavigationControllerOperationPush fromViewController:root toViewController:detail];
-            DORecord(@"nested_navigation_uses_UIKit_standard_transition", animator == nil, nil);
-            [nav pushViewController:detail animated:YES];
-            DORecord(@"animated_push_has_transition_coordinator", nav.transitionCoordinator != nil, nil);
-            DORecord(@"animated_push_finishes", DOSettle(nav) && nav.topViewController == detail && nav.viewControllers.count == 2, nil);
-            DOCheckNavigation(nav, tab);
+            DOEnqueueNavigation(nav, ^{ [nav selectTopLevelTab:tab]; });
+            DOEnqueueNavigation(nav, ^{
+                root = nav.topViewController;
+                DOContext = [NSString stringWithFormat:@"%@-navigation-%@-animated-push-tab%ld", theme.key, widthNumber, (long)tab];
+                id<UIViewControllerAnimatedTransitioning> animator = [nav navigationController:nav animationControllerForOperation:UINavigationControllerOperationPush fromViewController:root toViewController:detail];
+                DORecord(@"nested_navigation_uses_UIKit_standard_transition", animator == nil, nil);
+                [nav pushViewController:detail animated:YES];
+                DORecord(@"animated_push_has_transition_coordinator", nav.transitionCoordinator != nil, nil);
+            });
+            DOEnqueueNavigation(nav, ^{
+                DORecord(@"animated_push_finishes", DOIsSettled(nav) && nav.topViewController == detail && nav.viewControllers.count == 2, nil);
+                DOCheckNavigation(nav, tab);
+            });
             if (tab == 1) {
-                [nav selectTopLevelTab:2]; DOSettle(nav);
-                [nav selectTopLevelTab:1];
-                DORecord(@"switching_tabs_preserves_nested_stack", DOSettle(nav) && nav.topViewController == detail && nav.viewControllers.count == 2, nil);
-                DOCheckNavigation(nav, 1);
+                DOEnqueueNavigation(nav, ^{ [nav selectTopLevelTab:2]; });
+                DOEnqueueNavigation(nav, ^{ [nav selectTopLevelTab:1]; });
+                DOEnqueueNavigation(nav, ^{
+                    DORecord(@"switching_tabs_preserves_nested_stack", DOIsSettled(nav) && nav.topViewController == detail && nav.viewControllers.count == 2, nil);
+                    DOCheckNavigation(nav, 1);
+                });
             }
-            DOContext = [NSString stringWithFormat:@"%@-navigation-%@-animated-pop-tab%ld", theme.key, widthNumber, (long)tab];
-            [nav popViewControllerAnimated:YES];
-            DORecord(@"animated_pop_has_transition_coordinator", nav.transitionCoordinator != nil, nil);
-            DORecord(@"animated_pop_restores_tab_root", DOSettle(nav) && nav.topViewController == root && nav.viewControllers.count == 1, nil);
-            DOCheckNavigation(nav, tab);
+            DOEnqueueNavigation(nav, ^{
+                DOContext = [NSString stringWithFormat:@"%@-navigation-%@-animated-pop-tab%ld", theme.key, widthNumber, (long)tab];
+                [nav popViewControllerAnimated:YES];
+                DORecord(@"animated_pop_has_transition_coordinator", nav.transitionCoordinator != nil, nil);
+            });
+            DOEnqueueNavigation(nav, ^{
+                DORecord(@"animated_pop_restores_tab_root", DOIsSettled(nav) && nav.topViewController == root && nav.viewControllers.count == 1, nil);
+                DOCheckNavigation(nav, tab);
+            });
         }
-        DOContext = [NSString stringWithFormat:@"%@-navigation-%@-enabled-and-action", theme.key, widthNumber];
-        UIViewController *beforeDisable = nav.topViewController;
-        [nav setNavigationEnabled:NO];
-        [nav selectTopLevelTab:0];
-        DORecord(@"disabled_navigation_hides_bar_and_blocks_switch", DOFind(nav.view, @"DOTopLevelBar").hidden && nav.topViewController == beforeDisable, nil);
-        [nav setNavigationEnabled:YES];
-        UIButton *homeButton = (UIButton *)DOFind(nav.view, @"DOTab0");
-        [homeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
-        DORecord(@"real_tab_control_action_routes_home", DOSettle(nav) && homeButton && [nav.topViewController isKindOfClass:DOMainViewController.class], nil);
-        DOCheckNavigation(nav, 0);
-        // Leave the last actual simulator surface visible for the runner's simctl screenshot.
-        BOOL last = DOThemeManager.sharedInstance.selectedIndex == DOThemeManager.sharedInstance.themes.count-1 && widthNumber.integerValue == 430;
-        if (!last) {
-            [nav willMoveToParentViewController:nil]; [nav.view removeFromSuperview]; [nav removeFromParentViewController];
-        }
+        DOEnqueueNavigation(nav, ^{
+            DOContext = [NSString stringWithFormat:@"%@-navigation-%@-enabled-and-action", theme.key, widthNumber];
+            UIViewController *beforeDisable = nav.topViewController;
+            [nav setNavigationEnabled:NO]; [nav selectTopLevelTab:0];
+            DORecord(@"disabled_navigation_hides_bar_and_blocks_switch", DOFind(nav.view, @"DOTopLevelBar").hidden && nav.topViewController == beforeDisable, nil);
+            [nav setNavigationEnabled:YES];
+            UIButton *homeButton = (UIButton *)DOFind(nav.view, @"DOTab0");
+            [homeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+        });
+        DOEnqueueNavigation(nav, ^{
+            UIButton *homeButton = (UIButton *)DOFind(nav.view, @"DOTab0");
+            DORecord(@"real_tab_control_action_routes_home", DOIsSettled(nav) && homeButton && [nav.topViewController isKindOfClass:DOMainViewController.class], nil);
+            DOCheckNavigation(nav, 0);
+            BOOL last = DOThemeManager.sharedInstance.selectedIndex == DOThemeManager.sharedInstance.themes.count-1 && widthNumber.integerValue == 430;
+            if (!last) {
+                [nav willMoveToParentViewController:nil]; [nav.view removeFromSuperview]; [nav removeFromParentViewController];
+            }
+        });
     }
 }
 
@@ -519,16 +575,19 @@ static void DORun(void)
             [DONavigationController instancesRespondToSelector:@selector(setNavigationEnabled:)], nil);
         DORecord(@"production_brand_and_content_factories_present", [DOGlobalAppearance respondsToSelector:@selector(brandCardView)] &&
             [DOGlobalAppearance respondsToSelector:@selector(contentViewForController:)], nil);
+        DOSteps = [NSMutableArray array]; DOStepIndex = 0;
         for (NSInteger index = 0; index < DOThemeManager.sharedInstance.themes.count; index++) {
-            DOThemeManager.sharedInstance.selectedIndex = index;
-            DOTheme *theme = [DOThemeManager.sharedInstance enabledTheme];
-            DOContext = theme.key;
-            DORecord(@"production_theme_raster_loaded_by_production_image_method", theme.image.CGImage != NULL, @{@"theme": theme.key});
+            DOTheme *theme = DOThemeManager.sharedInstance.themes[index];
+            DOEnqueue(0, ^{
+                DOThemeManager.sharedInstance.selectedIndex = index;
+                DOContext = theme.key;
+                DORecord(@"production_theme_raster_loaded_by_production_image_method", theme.image.CGImage != NULL, @{@"theme": theme.key});
+            });
             DOBrandCases(theme);
             DONavigationCases(theme);
         }
-        DOContext = @"completion";
-        DORecord(@"all_required_screenshots_captured", DOShots.count == 45, @{@"actual": @(DOShots.count), @"expected": @45});
+        DOAdvance();
+        return;
     } @catch (NSException *exception) {
         DORecord(@"no_unhandled_exception", NO, @{@"name": exception.name, @"reason": exception.reason ?: @"", @"stack": exception.callStackSymbols ?: @[]});
     }
