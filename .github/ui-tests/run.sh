@@ -79,7 +79,9 @@ RUNTIME="$(sed -n '2p' "$WORK/selection.txt")"
 UDID="$(xcrun simctl create "DopamineUIKit-$(basename "$WORK")" "$DEVICE_TYPE" "$RUNTIME")"
 printf 'deviceType=%s\nruntime=%s\nudid=%s\n' "$DEVICE_TYPE" "$RUNTIME" "$UDID" >"$OUTPUT/selected-simulator.txt"
 xcrun simctl boot "$UDID"
-python3 "$SCRIPT_DIR/verify.py" bounded 120 -- xcrun simctl bootstatus "$UDID" -b >"$OUTPUT/boot.log" 2>&1
+# A fresh runtime may spend several minutes in locationd/CoreLocation migration.
+# Keep a bounded wait for this one boot; do not retry or relaunch the harness.
+python3 "$SCRIPT_DIR/verify.py" bounded 360 -- xcrun simctl bootstatus "$UDID" -b >"$OUTPUT/boot.log" 2>&1
 xcrun simctl status_bar "$UDID" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState charged --batteryLevel 100
 python3 "$SCRIPT_DIR/verify.py" bounded 120 -- xcrun simctl install "$UDID" "$WORK/DopamineLayoutHarness.app" >"$OUTPUT/install.log" 2>&1
 : >"$OUTPUT/app.stdout.log"

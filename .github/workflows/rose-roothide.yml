@@ -48,7 +48,7 @@ jobs:
           xcrun --sdk iphonesimulator metal --version
 
       - name: Run native UIKit layout regression
-        timeout-minutes: 12
+        timeout-minutes: 18
         run: bash .github/ui-tests/run.sh "$RUNNER_TEMP/dopamine-ui-regression"
 
       - name: Upload UIKit layout evidence
