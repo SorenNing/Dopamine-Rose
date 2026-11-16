@@ -76,9 +76,17 @@ xcrun simctl status_bar "$UDID" override --time '9:41' --dataNetwork wifi --wifi
 python3 "$SCRIPT_DIR/verify.py" bounded 30 -- xcrun simctl install "$UDID" "$WORK/DopamineLayoutHarness.app" >"$OUTPUT/install.log" 2>&1
 : >"$OUTPUT/app.stdout.log"
 : >"$OUTPUT/app.stderr.log"
-SIMCTL_CHILD_OS_ACTIVITY_MODE=enable python3 "$SCRIPT_DIR/verify.py" bounded 15 -- xcrun simctl launch \
+launch_status=0
+SIMCTL_CHILD_OS_ACTIVITY_MODE=enable python3 "$SCRIPT_DIR/verify.py" bounded 120 -- xcrun simctl launch \
     --terminate-running-process --stdout="$OUTPUT/app.stdout.log" --stderr="$OUTPUT/app.stderr.log" \
-    "$UDID" dev.dopamine.layout-harness >"$OUTPUT/launch.log" 2>&1
+    "$UDID" dev.dopamine.layout-harness >"$OUTPUT/launch.log" 2>&1 || launch_status=$?
+printf '%s\n' "$launch_status" >"$OUTPUT/launch-status.txt"
+# simctl may time out while SpringBoard is still completing the first cold launch.
+# Do not issue a second launch: the fresh app must publish its complete report.
+if [[ "$launch_status" != 0 && "$launch_status" != 124 ]]; then
+    cat "$OUTPUT/launch.log" >&2
+    exit "$launch_status"
+fi
 python3 "$SCRIPT_DIR/verify.py" poll "$UDID" "$OUTPUT" >"$WORK/container.txt"
 CONTAINER="$(cat "$WORK/container.txt")"
 cp "$CONTAINER/Documents/report.json" "$OUTPUT/report.json"
