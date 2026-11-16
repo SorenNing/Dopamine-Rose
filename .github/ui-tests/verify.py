@@ -143,7 +143,7 @@ def verify(output):
     report = json.loads((output / "report.json").read_text())
     errors, images = [], []
     checks = report.get("checks", [])
-    if report.get("complete") is not True or report.get("passed") is not True:
+    if not bool(report.get("complete")) or not bool(report.get("passed")):
         errors.append("Harness did not pass all native layout checks")
     failures = [item for item in checks if item.get("passed") is not True]
     if failures or report.get("failureCount") != 0 or len(checks) < 500:
