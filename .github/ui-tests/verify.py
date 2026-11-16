@@ -65,12 +65,30 @@ def poll_report(udid, output):
     container = None
     while time.monotonic() < deadline:
         if container is None:
-            query = subprocess.run(["xcrun", "simctl", "get_app_container", udid,
-                                    "dev.dopamine.layout-harness", "data"],
-                                   capture_output=True, text=True, timeout=4, check=False)
-            candidate = Path(query.stdout.strip())
-            if query.returncode == 0 and candidate.is_dir():
-                container = candidate
+            # This UDID was freshly created for this run. Read its data-container
+            # metadata directly so a busy CoreSimulator service cannot abort polling.
+            base = Path.home() / "Library/Developer/CoreSimulator/Devices" / udid / "data/Containers/Data/Application"
+            if base.is_dir():
+                import plistlib
+                for candidate in base.iterdir():
+                    metadata = candidate / ".com.apple.mobile_container_manager.metadata.plist"
+                    try:
+                        info = plistlib.loads(metadata.read_bytes())
+                    except (OSError, ValueError, plistlib.InvalidFileException):
+                        continue
+                    if info.get("MCMMetadataIdentifier") == "dev.dopamine.layout-harness":
+                        container = candidate
+                        break
+            if container is None:
+                try:
+                    query = subprocess.run(["xcrun", "simctl", "get_app_container", udid,
+                                            "dev.dopamine.layout-harness", "data"],
+                                           capture_output=True, text=True, timeout=30, check=False)
+                    candidate = Path(query.stdout.strip())
+                    if query.returncode == 0 and candidate.is_dir():
+                        container = candidate
+                except subprocess.TimeoutExpired:
+                    continue
         if container is not None:
             report = container / "Documents/report.json"
             if report.is_file():

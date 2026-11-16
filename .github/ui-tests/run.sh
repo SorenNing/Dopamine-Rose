@@ -24,8 +24,8 @@ UDID=""
 collect_logs() {
     [[ -n "$UDID" ]] || return 0
     set +e
-    python3 "$SCRIPT_DIR/verify.py" bounded 10 -- xcrun simctl spawn "$UDID" log show \
-        --last 5m --style compact --info --debug \
+    python3 "$SCRIPT_DIR/verify.py" bounded 60 -- xcrun simctl spawn "$UDID" log show \
+        --last 15m --style compact --info --debug \
         --predicate 'process == "DopamineLayoutHarness"' >"$OUTPUT/simulator.log" 2>"$OUTPUT/simulator-log.stderr.log"
     local status=$?
     printf '%s\n' "$status" >"$OUTPUT/simulator-log-status.txt"
@@ -93,9 +93,9 @@ cp "$CONTAINER/Documents/report.json" "$OUTPUT/report.json"
 for image in "$CONTAINER/Documents/"*.png; do
     [[ -f "$image" ]] && cp "$image" "$OUTPUT/"
 done
-python3 "$SCRIPT_DIR/verify.py" bounded 10 -- xcrun simctl io "$UDID" screenshot "$OUTPUT/simulator-screen.png" >"$OUTPUT/screenshot.log" 2>&1
+python3 "$SCRIPT_DIR/verify.py" bounded 60 -- xcrun simctl io "$UDID" screenshot "$OUTPUT/simulator-screen.png" >"$OUTPUT/screenshot.log" 2>&1
 # Termination flushes app console output before log and sentinel validation.
-xcrun simctl terminate "$UDID" dev.dopamine.layout-harness
+python3 "$SCRIPT_DIR/verify.py" bounded 60 -- xcrun simctl terminate "$UDID" dev.dopamine.layout-harness
 collect_logs
 python3 "$SCRIPT_DIR/verify.py" check "$OUTPUT"
 printf 'UIKit simulator regression evidence: %s\n' "$OUTPUT"
