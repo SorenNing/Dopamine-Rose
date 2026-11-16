@@ -43,6 +43,8 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)styleTableCell:(UITableViewCell *)cell;
 + (void)applyLiquidGlassToView:(UIView *)view;
 + (void)styleViewController:(UIViewController *)viewController;
++ (UIView *)contentViewForController:(UIViewController *)viewController;
++ (UIView *)brandCardView;
 + (UIImageSymbolConfiguration *)smallIconImageConfiguration;
 + (UIButtonConfiguration *)defaultButtonConfiguration;
 + (UIButtonConfiguration *)defaultButtonConfigurationWithImagePadding:(CGFloat)imagePadding;

@@ -27,27 +27,30 @@
 {
     [super viewDidLoad];
     [DOPSListController setupViewControllerStyle:self];
+    UIView *pageContent = [DOGlobalAppearance contentViewForController:self];
 
     UIView *header = [DOPSListItemsController makeHeader:DOLocalizedString(@"Credits_Button_License") withTarget:self];
     header.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:header];
+    [pageContent addSubview:header];
 
     [NSLayoutConstraint activateConstraints:@[
-        [header.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:5],
-        [header.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [header.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [header.topAnchor constraintEqualToAnchor:pageContent.topAnchor constant:5],
+        [header.leadingAnchor constraintEqualToAnchor:pageContent.leadingAnchor],
+        [header.trailingAnchor constraintEqualToAnchor:pageContent.trailingAnchor],
         [header.heightAnchor constraintEqualToConstant:70]
-    ]]; 
+    ]];
     
     self.scrollView = [[UIScrollView alloc] init];
     self.scrollView.showsHorizontalScrollIndicator = NO;
+    self.scrollView.showsVerticalScrollIndicator = NO;
+    self.scrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     self.scrollView.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:self.scrollView];
+    [pageContent addSubview:self.scrollView];
 
     [NSLayoutConstraint activateConstraints:@[
         [self.scrollView.topAnchor constraintEqualToAnchor:header.bottomAnchor],
-        [self.scrollView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:25],
-        [self.scrollView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [self.scrollView.leadingAnchor constraintEqualToAnchor:pageContent.leadingAnchor constant:25],
+        [self.scrollView.trailingAnchor constraintEqualToAnchor:pageContent.trailingAnchor],
         [self.scrollView.heightAnchor constraintEqualToConstant:30]
     ]];
 
@@ -55,14 +58,15 @@
     
     self.license = [[UITextView alloc] init];
     self.license.translatesAutoresizingMaskIntoConstraints = NO;
+    self.license.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
 
-    [self.view addSubview:self.license];
+    [pageContent addSubview:self.license];
 
     [NSLayoutConstraint activateConstraints:@[
         [self.license.topAnchor constraintEqualToAnchor:self.scrollView.bottomAnchor constant:10],
-        [self.license.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [self.license.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
-        [self.license.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:0]
+        [self.license.leadingAnchor constraintEqualToAnchor:pageContent.leadingAnchor constant:20],
+        [self.license.trailingAnchor constraintEqualToAnchor:pageContent.trailingAnchor constant:-20],
+        [self.license.bottomAnchor constraintEqualToAnchor:pageContent.bottomAnchor]
     ]];
 
     self.license.editable = NO;
@@ -150,20 +154,23 @@
 {
     NSArray *licenses = [DOLicenseViewController licenses];
 
-    NSLayoutAnchor *lastAnchor = self.scrollView.leadingAnchor;
-    for (NSDictionary *license in licenses)
+    UILayoutGuide *contentGuide = self.scrollView.contentLayoutGuide;
+    NSLayoutXAxisAnchor *lastAnchor = contentGuide.leadingAnchor;
+    for (NSUInteger index = 0; index < licenses.count; index++)
     {
+        NSDictionary *license = licenses[index];
         UIButton *button = [UIButton buttonWithType:UIButtonTypeSystem];
+        button.tag = (NSInteger)index;
         [button setTitle:license[@"name"] forState:UIControlStateNormal];
         [button setTitleColor:[DOGlobalAppearance primaryTextColor] forState:UIControlStateNormal];
         button.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
-        button.backgroundColor = UIColor.clearColor;
+        button.backgroundColor = [DOGlobalAppearance tileColor];
         button.tintColor = [DOGlobalAppearance accentColor];
         button.layer.borderWidth = 1;
         button.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
         button.layer.cornerRadius = 8;
-        [DOGlobalAppearance applyLiquidGlassToView:button];
         button.layer.cornerCurve = kCACornerCurveContinuous;
+        button.clipsToBounds = YES;
         button.translatesAutoresizingMaskIntoConstraints = NO;
         [button addTarget:self action:@selector(licenseButtonTapped:) forControlEvents:UIControlEventTouchUpInside];
 
@@ -172,46 +179,41 @@
         NSString *buttonTitle = license[@"name"];
         CGSize textSize = [buttonTitle sizeWithAttributes:@{NSFontAttributeName: button.titleLabel.font}];
         CGFloat buttonWidth = textSize.width + 20;
-        
-        BOOL isFirst = self.scrollView.leadingAnchor == lastAnchor;
 
         [NSLayoutConstraint activateConstraints: @[
-            [button.centerYAnchor constraintEqualToAnchor:self.scrollView.centerYAnchor],
-            [button.heightAnchor constraintEqualToConstant:30],
+            [button.topAnchor constraintEqualToAnchor:contentGuide.topAnchor],
+            [button.bottomAnchor constraintEqualToAnchor:contentGuide.bottomAnchor],
+            [button.heightAnchor constraintEqualToAnchor:self.scrollView.frameLayoutGuide.heightAnchor],
             [button.widthAnchor constraintEqualToConstant:buttonWidth],
-            [button.leadingAnchor constraintEqualToAnchor:lastAnchor constant:isFirst ? 0 : 5]
+            [button.leadingAnchor constraintEqualToAnchor:lastAnchor constant:index == 0 ? 0 : 5]
         ]];
         
         lastAnchor = button.trailingAnchor;
     }
 
-    [lastAnchor constraintEqualToAnchor:self.scrollView.trailingAnchor constant:-25].active = YES;
+    [lastAnchor constraintEqualToAnchor:contentGuide.trailingAnchor constant:-25].active = YES;
 }
 
 - (void)licenseButtonTapped:(UIButton *)sender
 {
-    NSInteger index = [self.scrollView.subviews indexOfObject:sender];
-    self.selectedLicense = (int)index;
+    self.selectedLicense = (int)sender.tag;
     [self.impactGenerator impactOccurred];
 }
 
 
 - (void)setSelectedLicense:(int)selectedLicense
 {
+    NSArray *licenses = [DOLicenseViewController licenses];
+    if (selectedLicense < 0 || (NSUInteger)selectedLicense >= licenses.count) return;
     _selectedLicense = selectedLicense;
-    self.license.text = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:[DOLicenseViewController licenses][_selectedLicense][@"file"] ofType:@"md"] encoding:NSUTF8StringEncoding error:nil];
-    [self.scrollView.subviews enumerateObjectsUsingBlock:^(UIView *view, NSUInteger idx, BOOL *stop) {
-        if ([view isKindOfClass:UIButton.class]) {
-            UIButton *button = (UIButton *)view;
-            BOOL selected = idx == (NSUInteger)self.selectedLicense;
-            button.alpha = 1;
-            button.backgroundColor = selected ? [DOGlobalAppearance accentColor] : [[DOGlobalAppearance accentColor] colorWithAlphaComponent:0.06];
-            [button setTitleColor:selected ? [DOGlobalAppearance buttonTextColor] : [DOGlobalAppearance primaryTextColor] forState:UIControlStateNormal];
-        }
-        else {
-            view.alpha = idx == (NSUInteger)self.selectedLicense ? 1 : 0.2;
-        }
-    }];
+    self.license.text = [NSString stringWithContentsOfFile:[[NSBundle mainBundle] pathForResource:licenses[_selectedLicense][@"file"] ofType:@"md"] encoding:NSUTF8StringEncoding error:nil];
+    for (UIView *view in self.scrollView.subviews) {
+        if (![view isKindOfClass:UIButton.class]) continue;
+        UIButton *button = (UIButton *)view;
+        button.selected = button.tag == self.selectedLicense;
+        button.backgroundColor = button.selected ? [DOGlobalAppearance selectedColor] : [DOGlobalAppearance tileColor];
+        [button setTitleColor:[DOGlobalAppearance primaryTextColor] forState:UIControlStateNormal];
+    }
 }
 
 - (void)dismiss

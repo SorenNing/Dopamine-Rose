@@ -15,7 +15,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface DONavigationController : UINavigationController <UINavigationControllerDelegate>
 
-- (CGRect)contentFrameForViewController:(UIViewController *)viewController;
+- (void)selectTopLevelTab:(NSInteger)index;
+- (void)setNavigationEnabled:(BOOL)enabled;
+@property (nonatomic, readonly) NSInteger selectedTab;
 
 @end
 

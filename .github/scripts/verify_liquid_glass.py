@@ -25,10 +25,12 @@ with zipfile.ZipFile(archive) as z:
     assert base + 'bootstrap_1800.tar.zst' not in names
     assert not any('/palera1n.framework/' in n for n in names)
     executable = z.read(base + info['CFBundleExecutable'])
-    for marker in (b'makeBottomBar', b'makeInformationCard', b'restartCardWithAction:subtitle:', b'showResultTitle:failed:', b'contentFrameForViewController:', b'UIGlassEffect'):
+    for marker in (b'brandCardView', b'contentViewForController:', b'makeInformationCard', b'restartCardWithAction:subtitle:', b'showResultTitle:failed:', b'selectTopLevelTab:', b'UIGlassEffect'):
         assert marker in executable, marker
     assert b'_displayCornerRadius' not in executable
     assert b'_frameForViewController:' not in executable
+    assert b'contentFrameForViewController:' not in executable
+    assert b'makeBottomBar' not in executable
     images = {}
     required_images = ['Dopamine', 'libchoma.dylib', 'libxpf.dylib', 'libjailbreak.dylib', 'libroothider.dylib']
     for name in names:

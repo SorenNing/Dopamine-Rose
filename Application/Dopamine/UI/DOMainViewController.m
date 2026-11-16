@@ -13,6 +13,7 @@
 #import "DOActionMenuButton.h"
 #import "DOUpdateViewController.h"
 #import "DOLogCrashViewController.h"
+#import "DONavigationController.h"
 #import <pthread.h>
 #import <sys/sysctl.h>
 #import <mach/mach_time.h>
@@ -31,7 +32,6 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
 @property UIStackView *mainStack;
 @property UIView *contentView;
 @property UIView *brandCard;
-@property UIView *bottomBar;
 @property UIScrollView *informationScrollView;
 @property UIButton *respringButton;
 @property UIButton *userspaceButton;
@@ -63,10 +63,8 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
     self.view.backgroundColor = UIColor.clearColor;
     self.view.tintColor = [DOGlobalAppearance accentColor];
 
-    self.brandCard = [self makeBrandCard];
-    self.bottomBar = [self makeBottomBar];
+    self.brandCard = [DOGlobalAppearance brandCardView];
     [self.view addSubview:self.brandCard];
-    [self.view addSubview:self.bottomBar];
 
     self.informationScrollView = [[UIScrollView alloc] init];
     self.informationScrollView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -84,11 +82,7 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
         [self.brandCard.heightAnchor constraintEqualToConstant:60],
         [self.informationScrollView.leadingAnchor constraintEqualToAnchor:self.brandCard.leadingAnchor],
         [self.informationScrollView.trailingAnchor constraintEqualToAnchor:self.brandCard.trailingAnchor],
-        [self.informationScrollView.topAnchor constraintEqualToAnchor:self.brandCard.bottomAnchor constant:13],
-        [self.bottomBar.leadingAnchor constraintEqualToAnchor:self.brandCard.leadingAnchor constant:7],
-        [self.bottomBar.trailingAnchor constraintEqualToAnchor:self.brandCard.trailingAnchor constant:-7],
-        [self.bottomBar.heightAnchor constraintEqualToConstant:64],
-        [self.bottomBar.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-8]
+        [self.informationScrollView.topAnchor constraintEqualToAnchor:self.brandCard.bottomAnchor constant:13]
     ]];
 
     self.contentView = [[UIView alloc] init];
@@ -168,7 +162,7 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
 
 
         self.informationScrollView.userInteractionEnabled = NO;
-        self.bottomBar.userInteractionEnabled = NO;
+        [(DONavigationController *)self.navigationController setNavigationEnabled:NO];
         self.updateButton.userInteractionEnabled = NO;
         [self.view layoutIfNeeded];
         [self.view bringSubviewToFront:self.jailbreakBtn];
@@ -177,7 +171,6 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
         [UIView animateWithDuration:0.75 delay:0 usingSpringWithDamping:0.9 initialSpringVelocity:2.0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
             self.informationScrollView.alpha = 0;
             self.informationScrollView.transform = CGAffineTransformMakeTranslation(0, -25);
-            self.bottomBar.alpha = 0;
             self.updateButton.alpha = 0;
         } completion:nil];
         
@@ -190,7 +183,7 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
         [self.jailbreakBtn.leadingAnchor constraintEqualToAnchor:self.brandCard.leadingAnchor],
         [self.jailbreakBtn.trailingAnchor constraintEqualToAnchor:self.brandCard.trailingAnchor],
         [self.jailbreakBtn.heightAnchor constraintEqualToConstant:74],
-        [self.jailbreakBtn.bottomAnchor constraintEqualToAnchor:self.bottomBar.topAnchor constant:-13]
+        [self.jailbreakBtn.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-85]
     ])];
     [self.informationScrollView.bottomAnchor constraintEqualToAnchor:self.jailbreakBtn.topAnchor constant:-13].active = YES;
 
@@ -229,38 +222,6 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
     label.numberOfLines = 0;
     label.translatesAutoresizingMaskIntoConstraints = NO;
     return label;
-}
-
-- (UIView *)makeBrandCard
-{
-    UIView *card = [self glassCardWithRadius:23];
-    UILabel *mark = [self labelWithText:@"D" size:18 weight:UIFontWeightSemibold color:[DOGlobalAppearance accentColor]];
-    mark.textAlignment = NSTextAlignmentCenter;
-    mark.backgroundColor = [DOGlobalAppearance tileColor];
-    mark.layer.cornerRadius = 11;
-    mark.layer.cornerCurve = kCACornerCurveContinuous;
-    mark.layer.masksToBounds = YES;
-    mark.layer.borderWidth = 0.5;
-    mark.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
-    UILabel *brand = [self labelWithText:@"Dopamine" size:23 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]];
-    UIStackView *group = [[UIStackView alloc] initWithArrangedSubviews:@[mark, brand]];
-    group.axis = UILayoutConstraintAxisHorizontal;
-    group.alignment = UIStackViewAlignmentCenter;
-    group.spacing = 10;
-    group.translatesAutoresizingMaskIntoConstraints = NO;
-    [card addSubview:group];
-    [NSLayoutConstraint activateConstraints:@[
-        [mark.widthAnchor constraintEqualToConstant:31],
-        [mark.heightAnchor constraintEqualToConstant:31],
-        [group.centerXAnchor constraintEqualToAnchor:card.centerXAnchor],
-        [group.centerYAnchor constraintEqualToAnchor:card.centerYAnchor],
-        [group.leadingAnchor constraintGreaterThanOrEqualToAnchor:card.leadingAnchor constant:13],
-        [group.trailingAnchor constraintLessThanOrEqualToAnchor:card.trailingAnchor constant:-13]
-    ]];
-    card.isAccessibilityElement = YES;
-    card.accessibilityLabel = @"Dopamine";
-    card.accessibilityTraits = UIAccessibilityTraitHeader;
-    return card;
 }
 
 - (UIStackView *)informationFieldWithTitleKey:(NSString *)key valueLabel:(UILabel *)valueLabel
@@ -313,67 +274,6 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
     button.accessibilityLabel = action.title;
     button.accessibilityHint = subtitle;
     return button;
-}
-
-- (UIView *)makeBottomBar
-{
-    UIView *bar = [self glassCardWithRadius:32];
-    UIStackView *tabs = [[UIStackView alloc] init];
-    tabs.axis = UILayoutConstraintAxisHorizontal;
-    tabs.distribution = UIStackViewDistributionFillEqually;
-    tabs.spacing = 3;
-    tabs.translatesAutoresizingMaskIntoConstraints = NO;
-    [bar addSubview:tabs];
-    [NSLayoutConstraint activateConstraints:@[
-        [tabs.leadingAnchor constraintEqualToAnchor:bar.leadingAnchor constant:5],
-        [tabs.trailingAnchor constraintEqualToAnchor:bar.trailingAnchor constant:-5],
-        [tabs.topAnchor constraintEqualToAnchor:bar.topAnchor constant:5],
-        [tabs.bottomAnchor constraintEqualToAnchor:bar.bottomAnchor constant:-5]
-    ]];
-    NSArray<NSString *> *names = @[DOHomeCaption(@"Home", @"主页"), DOLocalizedString(@"Menu_Settings_Title"), DOHomeCaption(@"About", @"关于")];
-    NSArray<NSString *> *symbols = @[@"house", @"slider.horizontal.3", @"info.circle"];
-    __weak typeof(self) weakSelf = self;
-    for (NSUInteger index = 0; index < names.count; index++) {
-        UIButton *tab = [UIButton buttonWithType:UIButtonTypeCustom];
-        tab.layer.cornerRadius = 27;
-        tab.layer.cornerCurve = kCACornerCurveContinuous;
-        if (index == 0) {
-            tab.backgroundColor = [DOGlobalAppearance selectedColor];
-            tab.layer.borderWidth = 0.5;
-            tab.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
-            tab.accessibilityTraits |= UIAccessibilityTraitSelected;
-        }
-        UIImageView *image = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:symbols[index] withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular]]];
-        image.tintColor = [DOGlobalAppearance accentColor];
-        image.contentMode = UIViewContentModeScaleAspectFit;
-        UILabel *title = [self labelWithText:names[index] size:10 weight:UIFontWeightMedium color:[DOGlobalAppearance primaryTextColor]];
-        title.numberOfLines = 1;
-        title.textAlignment = NSTextAlignmentCenter;
-        UIStackView *content = [[UIStackView alloc] initWithArrangedSubviews:@[image, title]];
-        content.axis = UILayoutConstraintAxisVertical;
-        content.alignment = UIStackViewAlignmentCenter;
-        content.spacing = 4;
-        content.userInteractionEnabled = NO;
-        content.translatesAutoresizingMaskIntoConstraints = NO;
-        [tab addSubview:content];
-        [NSLayoutConstraint activateConstraints:@[
-            [image.heightAnchor constraintEqualToConstant:21],
-            [image.widthAnchor constraintEqualToConstant:21],
-            [content.centerXAnchor constraintEqualToAnchor:tab.centerXAnchor],
-            [content.centerYAnchor constraintEqualToAnchor:tab.centerYAnchor],
-            [content.leadingAnchor constraintGreaterThanOrEqualToAnchor:tab.leadingAnchor constant:4],
-            [content.trailingAnchor constraintLessThanOrEqualToAnchor:tab.trailingAnchor constant:-4]
-        ]];
-        tab.accessibilityLabel = names[index];
-        [tab addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
-            DOMainViewController *owner = weakSelf;
-            if (!owner || owner.jailbreakBtn.didExpand || owner.navigationController.topViewController != owner) return;
-            if (index == 1) [owner.navigationController pushViewController:[[DOSettingsController alloc] init] animated:YES];
-            else if (index == 2) [owner.navigationController pushViewController:[[DOCreditsViewController alloc] init] animated:YES];
-        }] forControlEvents:UIControlEventTouchUpInside];
-        [tabs addArrangedSubview:tab];
-    }
-    return bar;
 }
 
 - (UIView *)makeInformationCard

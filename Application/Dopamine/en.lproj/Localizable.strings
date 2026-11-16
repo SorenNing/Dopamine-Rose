@@ -44,6 +44,9 @@
 "Settings_Apps_JIT" = "Allow JIT in Apps";
 "Settings_Allow_Old_arm64e_ABI_Libraries" = "Allow Legacy arm64e Libraries";
 "Settings_Jetsam_Multiplier" = "Jetsam Additional Memory";
+"Enable dyld patch" = "Enable dyld Patch";
+"Dyld Patch(Spinlock Fix)" = "dyld Patch (Spinlock Fix)";
+"TrollStoreLite Fix" = "TrollStoreLite Fix";
 
 // Settings Buttons
 "Button_Remove_Jailbreak" = "Remove Jailbreak";
@@ -104,6 +107,9 @@
 "Respring_Cancel" = "Cancel";
 
 // Credits
+"Developers" = "Developers";
+"UI and Design" = "UI and Design";
+"Credits" = "Credits";
 "Credits_Button_Discord" = "Discord";
 "Credits_Button_License" = "Licenses";
 "Credits_Button_Source_Code" = "Source Code";

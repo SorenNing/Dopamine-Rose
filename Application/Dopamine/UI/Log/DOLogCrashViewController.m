@@ -33,15 +33,16 @@
 {
     [super viewDidLoad];
     [DOPSListController setupViewControllerStyle:self];
+    UIView *pageContent = [DOGlobalAppearance contentViewForController:self];
 
     UIView *header = [DOPSListItemsController makeHeader:DOLocalizedString(@"Log_Error") withTarget:self];
     header.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:header];
+    [pageContent addSubview:header];
 
     [NSLayoutConstraint activateConstraints:@[
-        [header.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:5],
-        [header.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [header.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
+        [header.topAnchor constraintEqualToAnchor:pageContent.topAnchor constant:5],
+        [header.leadingAnchor constraintEqualToAnchor:pageContent.leadingAnchor],
+        [header.trailingAnchor constraintEqualToAnchor:pageContent.trailingAnchor],
         [header.heightAnchor constraintEqualToConstant:70]
     ]];
     
@@ -52,12 +53,12 @@
     shareButton = [DOActionMenuButton buttonWithAction:shareAction chevron:NO];
     
     shareButton.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:shareButton];
+    [pageContent addSubview:shareButton];
 
     [NSLayoutConstraint activateConstraints:@[
-        [shareButton.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+        [shareButton.centerXAnchor constraintEqualToAnchor:pageContent.centerXAnchor],
         [shareButton.heightAnchor constraintEqualToConstant:30],
-        [shareButton.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-30]
+        [shareButton.bottomAnchor constraintEqualToAnchor:pageContent.bottomAnchor constant:-30]
     ]];
     
     if (@available(iOS 16.0, *)) {
@@ -67,13 +68,14 @@
         _logView = [[UITextView alloc] init];
     }
     _logView.translatesAutoresizingMaskIntoConstraints = NO;
+    _logView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
 
-    [self.view addSubview:_logView];
+    [pageContent addSubview:_logView];
 
     [NSLayoutConstraint activateConstraints:@[
         [_logView.topAnchor constraintEqualToAnchor:header.bottomAnchor constant:-12],
-        [_logView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor constant:20],
-        [_logView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor constant:-20],
+        [_logView.leadingAnchor constraintEqualToAnchor:pageContent.leadingAnchor constant:20],
+        [_logView.trailingAnchor constraintEqualToAnchor:pageContent.trailingAnchor constant:-20],
         [_logView.bottomAnchor constraintEqualToAnchor:shareButton.topAnchor constant:-10]
     ]];
 

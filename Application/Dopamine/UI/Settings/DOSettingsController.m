@@ -196,7 +196,7 @@
         
         PSSpecifier *headerSpecifier = [PSSpecifier emptyGroupSpecifier];
         [headerSpecifier setProperty:@"DOHeaderCell" forKey:@"headerCellClass"];
-        [headerSpecifier setProperty:[NSString stringWithFormat:@"Settings"] forKey:@"title"];
+        [headerSpecifier setProperty:DOLocalizedString(@"Menu_Settings_Title") forKey:@"title"];
         [specifiers addObject:headerSpecifier];
         
         if (envManager.isSupported) {
@@ -294,7 +294,7 @@
             /**************************** roothide specfic *********************************/
             
             
-            PSSpecifier *trollStoreLiteFix = [PSSpecifier preferenceSpecifierNamed:@"TrollStoreLite Fix" target:self set:@selector(setTrollStoreLiteFixEnabled:specifier:) get:@selector(readTrollStoreLiteFixEnabled:) detail:nil cell:PSSwitchCell edit:nil];
+            PSSpecifier *trollStoreLiteFix = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"TrollStoreLite Fix") target:self set:@selector(setTrollStoreLiteFixEnabled:specifier:) get:@selector(readTrollStoreLiteFixEnabled:) detail:nil cell:PSSwitchCell edit:nil];
             [trollStoreLiteFix setProperty:@YES forKey:@"enabled"];
             [trollStoreLiteFix setProperty:@"trollStoreLiteFixEnabled" forKey:@"key"];
             [trollStoreLiteFix setProperty:@YES forKey:@"default"];

@@ -41,7 +41,14 @@
 "Settings_Tweak_Injection" = "插件注入";
 "Settings_iDownload" = "iDownload (开发商终端)";
 "Settings_Verbose_Logs" = "詳細日誌";
-/*Settings_Apps_JIT*/
+"Settings_Apps_JIT" = "允許 App 使用 JIT";
+"Enable dyld patch" = "啟用 dyld 修補";
+"Dyld Patch(Spinlock Fix)" = "dyld 修補（自旋鎖修復）";
+"TrollStoreLite Fix" = "TrollStoreLite 修復";
+"Section_Boot_Logo" = "開機圖示";
+"Enabled" = "啟用";
+"Custom_Boot_Logo" = "自訂開機圖示";
+"Select_Image" = "選擇圖片";
 
 // Settings Buttons
 "Button_Remove_Jailbreak" = "清除越獄";
@@ -54,10 +61,10 @@
 // Settings Hints
 "Hint_Hide_Jailbreak" = "「隱藏越獄」將在下次越獄前臨時移除越獄相關的文件";
 /*Hint_Hide_Jailbreak_Jailbroken*/
-/*Section_Jailbreak_Settings*/
-/*Section_Actions*/
-/*Section_Customization*/
-/*Section_Exploits*/
+"Section_Jailbreak_Settings" = "越獄設置";
+"Section_Actions" = "操作";
+"Section_Customization" = "自訂";
+"Section_Exploits" = "漏洞利用";
 
 // Settings Alerts
 /*Alert_Tweak_Injection_Toggled_Title*/
@@ -81,13 +88,13 @@
 /*Duplicate_Apps_Error_Icon_Cache*/
 
 // Settings Lists
-/*Theme*/
-/*Kernel Exploit*/
-/*PPL Bypass*/
-/*SPTM Bypass*/
-/*PAC Bypass*/
-/*None*/
-/*Recommended*/
+"Theme" = "主題";
+"Kernel Exploit" = "核心漏洞";
+"PPL Bypass" = "繞過 PPL";
+"SPTM Bypass" = "繞過 SPTM";
+"PAC Bypass" = "繞過 PAC";
+"None" = "無";
+"Recommended" = "建議";
 
 // DarkSword Workaround
 /*Respring_Required*/
@@ -97,6 +104,9 @@
 /*Respring_Cancel*/
 
 // Credits
+"Developers" = "開發者";
+"UI and Design" = "介面與設計";
+"Credits" = "鳴謝";
 "Credits_Button_Discord" = "Discord";
 "Credits_Button_License" = "許可證";
 "Credits_Button_Source_Code" = "原始碼";

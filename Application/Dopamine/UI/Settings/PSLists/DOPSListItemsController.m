@@ -15,12 +15,25 @@
 
 @implementation DOPSListItemsController
 
+- (void)loadView
+{
+    [super loadView];
+    if ([self.view isKindOfClass:UITableView.class]) {
+        UITableView *table = _table ?: (UITableView *)self.view;
+        UIView *root = [[UIView alloc] initWithFrame:self.view.bounds];
+        [root addSubview:table];
+        self.view = root;
+        _table = table;
+    }
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     
     [_table setSeparatorColor:[UIColor clearColor]];
     [_table setBackgroundColor:[UIColor clearColor]];
-    [DOPSListController setupViewControllerStyle: self];
+    [DOPSListController setupViewControllerStyle:self];
+    [DOPSListController layoutTable:_table inController:self];
     
     _table.tableHeaderView = [DOPSListItemsController makeHeader: ((PSSpecifier*)self.specifier).name withTarget:self];
 }
@@ -91,7 +104,7 @@
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
-    _table.frame = CGRectMake(12, 5, self.view.bounds.size.width - 24, self.view.bounds.size.height - 10);
+    [DOPSListController layoutTable:_table inController:self];
 }
 
 #pragma mark - Status Bar

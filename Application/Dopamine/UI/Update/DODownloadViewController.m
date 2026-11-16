@@ -38,6 +38,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [DOPSListController setupViewControllerStyle:self];
+    UIView *pageContent = [DOGlobalAppearance contentViewForController:self];
 
     UIStackView *stackView = [[UIStackView alloc] init];
     stackView.axis = UILayoutConstraintAxisVertical;
@@ -75,12 +76,12 @@
         [spacer.heightAnchor constraintEqualToConstant:20]
     ]];   
 
-    [self.view addSubview:stackView];
+    [pageContent addSubview:stackView];
 
     [NSLayoutConstraint activateConstraints:@[
-        [stackView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-        [stackView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor],
-        [stackView.widthAnchor constraintEqualToAnchor:self.view.widthAnchor multiplier:0.8]
+        [stackView.centerXAnchor constraintEqualToAnchor:pageContent.centerXAnchor],
+        [stackView.centerYAnchor constraintEqualToAnchor:pageContent.centerYAnchor],
+        [stackView.widthAnchor constraintEqualToAnchor:pageContent.widthAnchor multiplier:0.8]
     ]];
 
     [self startDownload];

@@ -26,23 +26,34 @@
         self.label.font = [UIFont systemFontOfSize:14 weight:UIFontWeightRegular];
         self.label.textColor = [DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance secondaryTextColor] : [DOGlobalAppearance primaryTextColor];
         self.label.alpha = [DOGlobalAppearance isRoseStyle] ? 1.0 : 0.65;
-        self.label.textAlignment = NSTextAlignmentLeft;
+        self.label.textAlignment = NSTextAlignmentNatural;
+        self.label.numberOfLines = 1;
+        self.label.adjustsFontSizeToFitWidth = YES;
+        self.label.minimumScaleFactor = 0.8;
+        self.label.lineBreakMode = NSLineBreakByTruncatingTail;
+        [self.label setContentCompressionResistancePriority:UILayoutPriorityDefaultLow forAxis:UILayoutConstraintAxisHorizontal];
 
-        [self.contentView addSubview:self.label];
-        [NSLayoutConstraint activateConstraints:@[
-            [self.label.centerXAnchor constraintEqualToAnchor:self.contentView.centerXAnchor constant:-17 * ([DOGlobalAppearance isRTL] ? -1 : 1)],
-            [self.label.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor],
-        ]];
-
-        UIImage *chevronImage = [UIImage systemImageNamed:@"chevron.right"];
+        UIImage *chevronImage = [[UIImage systemImageNamed:@"chevron.right"] imageFlippedForRightToLeftLayoutDirection];
         chevronImage = [chevronImage imageWithConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:14 weight:UIImageSymbolWeightRegular]];
         UIImageView *chevronView = [[UIImageView alloc] initWithImage:chevronImage];
         chevronView.translatesAutoresizingMaskIntoConstraints = NO;
         chevronView.tintColor = [DOGlobalAppearance isRoseStyle] ? [DOGlobalAppearance accentColor] : [[DOGlobalAppearance primaryTextColor] colorWithAlphaComponent:self.label.alpha];
-        [self.contentView addSubview:chevronView];
+        [chevronView setContentCompressionResistancePriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+        [chevronView setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+
+        UIStackView *nameStack = [[UIStackView alloc] initWithArrangedSubviews:@[self.label, chevronView]];
+        nameStack.translatesAutoresizingMaskIntoConstraints = NO;
+        nameStack.axis = UILayoutConstraintAxisHorizontal;
+        nameStack.alignment = UIStackViewAlignmentCenter;
+        nameStack.spacing = 6;
+        [self.contentView addSubview:nameStack];
         [NSLayoutConstraint activateConstraints:@[
-            [chevronView.trailingAnchor constraintEqualToAnchor:self.label.trailingAnchor constant:17],
-            [chevronView.centerYAnchor constraintEqualToAnchor:self.label.centerYAnchor],
+            [nameStack.centerXAnchor constraintEqualToAnchor:self.contentView.centerXAnchor],
+            [nameStack.centerYAnchor constraintEqualToAnchor:self.contentView.centerYAnchor],
+            [nameStack.leadingAnchor constraintGreaterThanOrEqualToAnchor:self.contentView.leadingAnchor constant:6],
+            [nameStack.trailingAnchor constraintLessThanOrEqualToAnchor:self.contentView.trailingAnchor constant:-6],
+            [nameStack.topAnchor constraintGreaterThanOrEqualToAnchor:self.contentView.topAnchor constant:2],
+            [nameStack.bottomAnchor constraintLessThanOrEqualToAnchor:self.contentView.bottomAnchor constant:-2],
         ]];
         
     }
@@ -101,6 +112,9 @@
         self.collectionView = [[UICollectionView alloc] initWithFrame:CGRectZero collectionViewLayout:layout];
         self.collectionView.translatesAutoresizingMaskIntoConstraints = NO;
         self.collectionView.backgroundColor = [UIColor clearColor];
+        self.collectionView.scrollEnabled = NO;
+        self.collectionView.bounces = NO;
+        self.collectionView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
         self.collectionView.showsVerticalScrollIndicator = NO;
         self.collectionView.showsHorizontalScrollIndicator = NO;
 
@@ -111,10 +125,10 @@
         [self.contentView addSubview:self.collectionView];
 
         [NSLayoutConstraint activateConstraints:@[
-            [self.collectionView.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:20],
-            [self.collectionView.trailingAnchor constraintEqualToAnchor:self.trailingAnchor constant:-20],
-            [self.collectionView.topAnchor constraintEqualToAnchor:self.topAnchor constant:0],
-            [self.collectionView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-0],
+            [self.collectionView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor constant:20],
+            [self.collectionView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor constant:-20],
+            [self.collectionView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
+            [self.collectionView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
         ]];
         
     }

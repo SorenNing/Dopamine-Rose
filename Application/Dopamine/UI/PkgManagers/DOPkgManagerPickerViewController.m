@@ -9,6 +9,7 @@
 #import "DOPkgManagerPickerView.h"
 #import "DOEnvironmentManager.h"
 #import "DOPSListController.h"
+#import "DOGlobalAppearance.h"
 
 
 @interface DOPkgManagerPickerViewController ()
@@ -20,6 +21,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [DOPSListController setupViewControllerStyle:self];
+    UIView *pageContent = [DOGlobalAppearance contentViewForController:self];
     DOPkgManagerPickerView *picker = [[DOPkgManagerPickerView alloc] initWithCallback:^(BOOL success) {
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
             [[DOEnvironmentManager sharedManager] reinstallPackageManagers];
@@ -29,12 +31,12 @@
         });
     }];
     picker.translatesAutoresizingMaskIntoConstraints = NO;
-    [self.view addSubview:picker];
+    [pageContent addSubview:picker];
     [NSLayoutConstraint activateConstraints:@[
-        [picker.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [picker.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [picker.topAnchor constraintEqualToAnchor:self.view.topAnchor],
-        [picker.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
+        [picker.leadingAnchor constraintEqualToAnchor:pageContent.leadingAnchor],
+        [picker.trailingAnchor constraintEqualToAnchor:pageContent.trailingAnchor],
+        [picker.topAnchor constraintEqualToAnchor:pageContent.topAnchor],
+        [picker.bottomAnchor constraintEqualToAnchor:pageContent.bottomAnchor]
     ]];
 }
 

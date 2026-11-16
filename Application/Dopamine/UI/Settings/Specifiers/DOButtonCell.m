@@ -12,11 +12,15 @@
 
 @implementation DOButtonCell
 
-- (id)initWithStyle:(long long)arg1 reuseIdentifier:(id)arg2 specifier:(PSSpecifier *)specifier
+- (id)initWithStyle:(int)style reuseIdentifier:(id)reuseIdentifier specifier:(PSSpecifier *)specifier
 {
-    self = [super init];
+    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier specifier:specifier];
     if (self)
     {
+        [self setShouldHideTitle:YES];
+        self.selectionStyle = UITableViewCellSelectionStyleNone;
+        self.contentView.backgroundColor = UIColor.clearColor;
+
         UIAction *action = [UIAction actionWithTitle:DOLocalizedString([specifier propertyForKey:@"title"]) image:[UIImage systemImageNamed:[specifier propertyForKey:@"image"] withConfiguration:[DOGlobalAppearance smallIconImageConfiguration]] identifier:[specifier propertyForKey:@"key"] handler:^(__kindof UIAction * _Nonnull action) {
             SEL selector = NSSelectorFromString([specifier propertyForKey:@"action"]);
             if ([[specifier target] respondsToSelector:selector]) {
@@ -28,26 +32,28 @@
 
         button.translatesAutoresizingMaskIntoConstraints = NO;
         [button setContentHorizontalAlignment:UIControlContentHorizontalAlignmentCenter];
-        button.layer.cornerRadius = 10;
-        button.layer.masksToBounds = YES;
-        button.layer.cornerCurve = kCACornerCurveContinuous;
-        button.layer.borderWidth = 1;
-        button.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
         button.tintColor = [DOGlobalAppearance accentColor];
         button.backgroundColor = UIColor.clearColor;
-        [DOGlobalAppearance applyLiquidGlassToView:button];
-        UIButtonConfiguration *configuration = button.configuration;
+
+        // The table cell supplies the single row surface, including accessories.
+        UIButtonConfiguration *configuration = [UIButtonConfiguration plainButtonConfiguration];
+        configuration.background = [UIBackgroundConfiguration clearConfiguration];
         configuration.baseForegroundColor = [DOGlobalAppearance accentColor];
-        configuration.background.backgroundColor = [DOGlobalAppearance tileColor];
+        configuration.image = action.image;
+        configuration.imagePadding = 10;
+        configuration.contentInsets = NSDirectionalEdgeInsetsMake(0, 20, 0, 20);
+        configuration.attributedTitle = [[NSAttributedString alloc] initWithString:action.title attributes:@{
+            NSFontAttributeName: [UIFont systemFontOfSize:15 weight:UIFontWeightMedium]
+        }];
         button.configuration = configuration;
 
         [self.contentView addSubview:button];
 
         [NSLayoutConstraint activateConstraints:@[
-            [button.leadingAnchor constraintEqualToAnchor:self.leadingAnchor constant:20],
-            [button.trailingAnchor constraintEqualToAnchor:self.trailingAnchor constant:-20],
-            [button.topAnchor constraintEqualToAnchor:self.topAnchor constant:4],
-            [button.bottomAnchor constraintEqualToAnchor:self.bottomAnchor constant:-4],
+            [button.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
+            [button.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
+            [button.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
+            [button.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
         ]];
     }
     return self;

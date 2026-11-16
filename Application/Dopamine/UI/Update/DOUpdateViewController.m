@@ -43,6 +43,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     [DOPSListController setupViewControllerStyle:self];
+    UIView *pageContent = [DOGlobalAppearance contentViewForController:self];
 
     UILabel *title = [[UILabel alloc] init];
     title.text = DOLocalizedString(@"Title_Changelog");
@@ -51,11 +52,11 @@
     title.textAlignment = NSTextAlignmentCenter;
     title.translatesAutoresizingMaskIntoConstraints = NO;
 
-    [self.view addSubview:title];
+    [pageContent addSubview:title];
 
     [NSLayoutConstraint activateConstraints:@[
-        [title.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-        [title.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:20]
+        [title.centerXAnchor constraintEqualToAnchor:pageContent.centerXAnchor],
+        [title.topAnchor constraintEqualToAnchor:pageContent.topAnchor constant:20]
     ]];
 
     self.changelogSuperview = [[UIView alloc] init];
@@ -68,6 +69,7 @@
     self.changelog.linkTextAttributes = @{NSForegroundColorAttributeName: [DOGlobalAppearance accentColor]};
     self.changelog.backgroundColor = [UIColor clearColor];
     self.changelog.translatesAutoresizingMaskIntoConstraints = NO;
+    self.changelog.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
     self.changelog.editable = NO;
     self.changelog.textAlignment = NSTextAlignmentCenter;
     self.changelog.alpha = [DOGlobalAppearance isRoseStyle] ? 1.0 : 0.7;
@@ -76,13 +78,12 @@
     paragraphStyle.alignment = NSTextAlignmentCenter;
 
     [self.changelogSuperview addSubview:self.changelog];
-    [self.view addSubview:self.changelogSuperview];
+    [pageContent addSubview:self.changelogSuperview];
 
     [NSLayoutConstraint activateConstraints:@[
         [self.changelogSuperview.topAnchor constraintEqualToAnchor:title.bottomAnchor constant:20],
-        [self.changelogSuperview.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.changelogSuperview.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.changelogSuperview.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [self.changelogSuperview.leadingAnchor constraintEqualToAnchor:pageContent.leadingAnchor],
+        [self.changelogSuperview.trailingAnchor constraintEqualToAnchor:pageContent.trailingAnchor],
         [self.changelog.topAnchor constraintEqualToAnchor:self.changelogSuperview.topAnchor],
         [self.changelog.leadingAnchor constraintEqualToAnchor:self.changelogSuperview.leadingAnchor],
         [self.changelog.trailingAnchor constraintEqualToAnchor:self.changelogSuperview.trailingAnchor],
@@ -149,12 +150,13 @@
     
     self.button.translatesAutoresizingMaskIntoConstraints = NO;
     self.button.hidden = !envUpdate;
-    [self.view addSubview:self.button];
+    [pageContent addSubview:self.button];
 
     [NSLayoutConstraint activateConstraints:@[
-        [self.button.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+        [self.button.centerXAnchor constraintEqualToAnchor:pageContent.centerXAnchor],
         [self.button.heightAnchor constraintEqualToConstant:30],
-        [self.button.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:-20]
+        [self.button.bottomAnchor constraintEqualToAnchor:pageContent.bottomAnchor constant:-20],
+        [self.changelogSuperview.bottomAnchor constraintEqualToAnchor:self.button.topAnchor constant:-10]
     ]];
 
 

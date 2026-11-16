@@ -7,6 +7,9 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import "DOThemeManager.h"
 #import "DOTheme.h"
+#import <objc/runtime.h>
+
+static char kDOPageContentKey;
 
 static NSInteger const kDOLiquidGlassEffectTag = 0xD027;
 static NSInteger const kDOLiquidGlassBackgroundTag = 0xD028;
@@ -62,31 +65,58 @@ static UIVisualEffectView *DOFindGlassEffect(UIView *view)
     return nil;
 }
 
-static void DOInstallGlassBackdrop(UIView *view)
+@interface DOPageSurfaceView : UIView
+@property (nonatomic, strong) UIView *clippedContent;
+@end
+
+@implementation DOPageSurfaceView
+- (instancetype)init
 {
-    if (!view) return;
-    DOTheme *theme = [DOThemeManager.sharedInstance enabledTheme];
-    UIImageView *background = (UIImageView *)[view viewWithTag:kDOLiquidGlassBackgroundTag];
-    if (!background) {
-        background = [[UIImageView alloc] init];
-        background.tag = kDOLiquidGlassBackgroundTag;
-        background.translatesAutoresizingMaskIntoConstraints = NO;
-        background.contentMode = UIViewContentModeScaleAspectFill;
-        background.userInteractionEnabled = NO;
-        [view insertSubview:background atIndex:0];
+    if ((self = [super init])) {
+        self.translatesAutoresizingMaskIntoConstraints = NO;
+        self.layer.cornerRadius = 27;
+        self.layer.cornerCurve = kCACornerCurveContinuous;
+        [DOGlobalAppearance applyLiquidGlassToView:self];
+        _clippedContent = [[UIView alloc] init];
+        _clippedContent.accessibilityIdentifier = @"DOPageContent";
+        _clippedContent.translatesAutoresizingMaskIntoConstraints = NO;
+        _clippedContent.layer.cornerRadius = 27;
+        _clippedContent.layer.cornerCurve = kCACornerCurveContinuous;
+        _clippedContent.clipsToBounds = YES;
+        [self addSubview:_clippedContent];
         [NSLayoutConstraint activateConstraints:@[
-            [background.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
-            [background.trailingAnchor constraintEqualToAnchor:view.trailingAnchor],
-            [background.topAnchor constraintEqualToAnchor:view.topAnchor],
-            [background.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
+            [_clippedContent.leadingAnchor constraintEqualToAnchor:self.leadingAnchor],
+            [_clippedContent.trailingAnchor constraintEqualToAnchor:self.trailingAnchor],
+            [_clippedContent.topAnchor constraintEqualToAnchor:self.topAnchor],
+            [_clippedContent.bottomAnchor constraintEqualToAnchor:self.bottomAnchor]
         ]];
     }
-    background.image = theme.image;
-    background.alpha = 1.0;
-    background.clipsToBounds = YES;
-    background.layer.cornerRadius = view.layer.cornerRadius;
-    background.layer.cornerCurve = kCACornerCurveContinuous;
+    return self;
 }
+@end
+
+@interface DORowSurfaceView : UIView
+@property (nonatomic, strong) UIView *fillView;
+@end
+
+@implementation DORowSurfaceView
+- (instancetype)init
+{
+    if ((self = [super init])) {
+        self.userInteractionEnabled = NO;
+        _fillView = [[UIView alloc] init];
+        _fillView.layer.cornerRadius = 14;
+        _fillView.layer.cornerCurve = kCACornerCurveContinuous;
+        [self addSubview:_fillView];
+    }
+    return self;
+}
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    self.fillView.frame = UIEdgeInsetsInsetRect(self.bounds, UIEdgeInsetsMake(3, 0, 3, 0));
+}
+@end
 
 @implementation DOGlobalAppearance
 
@@ -234,38 +264,120 @@ static void DOInstallGlassBackdrop(UIView *view)
     view.layer.masksToBounds = NO;
 }
 
++ (UIView *)contentViewForController:(UIViewController *)viewController
+{
+    DOPageSurfaceView *surface = objc_getAssociatedObject(viewController, &kDOPageContentKey);
+    if (!surface) {
+        UIView *root = viewController.view;
+        surface = [[DOPageSurfaceView alloc] init];
+        surface.accessibilityIdentifier = @"DOPageSurface";
+        [root insertSubview:surface atIndex:0];
+        NSLayoutConstraint *width = [surface.widthAnchor constraintEqualToAnchor:root.safeAreaLayoutGuide.widthAnchor constant:-36];
+        width.priority = UILayoutPriorityDefaultHigh;
+        [NSLayoutConstraint activateConstraints:@[
+            width,
+            [surface.widthAnchor constraintLessThanOrEqualToConstant:UI_IPAD_MAX_WIDTH],
+            [surface.centerXAnchor constraintEqualToAnchor:root.safeAreaLayoutGuide.centerXAnchor],
+            [surface.topAnchor constraintEqualToAnchor:root.safeAreaLayoutGuide.topAnchor constant:8],
+            [surface.bottomAnchor constraintEqualToAnchor:root.safeAreaLayoutGuide.bottomAnchor constant:-85]
+        ]];
+        objc_setAssociatedObject(viewController, &kDOPageContentKey, surface, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    return surface.clippedContent;
+}
+
 + (void)styleViewController:(UIViewController *)viewController
 {
     if (!viewController.isViewLoaded) return;
     viewController.overrideUserInterfaceStyle = [self interfaceStyle];
     viewController.view.tintColor = [self accentColor];
     viewController.view.backgroundColor = UIColor.clearColor;
-    if (![viewController isKindOfClass:NSClassFromString(@"DOMainViewController")]) {
-        viewController.view.layer.cornerRadius = 27;
-        DOInstallGlassBackdrop(viewController.view);
-        [self applyLiquidGlassToView:viewController.view];
-    }
+    if (![viewController isKindOfClass:NSClassFromString(@"DOMainViewController")])
+        [self contentViewForController:viewController];
+}
+
++ (UIView *)brandCardView
+{
+    UIView *card = [[UIView alloc] init];
+    card.translatesAutoresizingMaskIntoConstraints = NO;
+    card.accessibilityIdentifier = @"DOBrandCard";
+    card.layer.cornerRadius = 23;
+    [self applyLiquidGlassToView:card];
+    UIView *group = [[UIView alloc] init];
+    group.translatesAutoresizingMaskIntoConstraints = NO;
+    [card addSubview:group];
+    UILabel *mark = [[UILabel alloc] init];
+    mark.translatesAutoresizingMaskIntoConstraints = NO;
+    mark.text = @"D";
+    mark.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
+    mark.textColor = [self accentColor];
+    mark.textAlignment = NSTextAlignmentCenter;
+    mark.backgroundColor = [self tileColor];
+    mark.layer.cornerRadius = 11;
+    mark.layer.cornerCurve = kCACornerCurveContinuous;
+    mark.clipsToBounds = YES;
+    [group addSubview:mark];
+    UILabel *brand = [[UILabel alloc] init];
+    brand.accessibilityIdentifier = @"DOBrandLabel";
+    brand.translatesAutoresizingMaskIntoConstraints = NO;
+    brand.text = @"Dopamine";
+    brand.font = [UIFont systemFontOfSize:23 weight:UIFontWeightSemibold];
+    brand.textColor = [self primaryTextColor];
+    brand.numberOfLines = 1;
+    brand.lineBreakMode = NSLineBreakByTruncatingTail;
+    brand.adjustsFontSizeToFitWidth = YES;
+    brand.minimumScaleFactor = 0.75;
+    [brand setContentCompressionResistancePriority:999 forAxis:UILayoutConstraintAxisHorizontal];
+    [brand setContentHuggingPriority:UILayoutPriorityRequired forAxis:UILayoutConstraintAxisHorizontal];
+    [group addSubview:brand];
+    CGFloat naturalWidth = ceil([brand.text sizeWithAttributes:@{NSFontAttributeName:brand.font}].width);
+    NSLayoutConstraint *desiredWidth = [group.widthAnchor constraintEqualToConstant:41 + naturalWidth];
+    desiredWidth.priority = 999;
+    [NSLayoutConstraint activateConstraints:@[
+        desiredWidth,
+        [group.centerXAnchor constraintEqualToAnchor:card.centerXAnchor],
+        [group.centerYAnchor constraintEqualToAnchor:card.centerYAnchor],
+        [group.heightAnchor constraintEqualToConstant:36],
+        [group.leadingAnchor constraintGreaterThanOrEqualToAnchor:card.leadingAnchor constant:13],
+        [group.trailingAnchor constraintLessThanOrEqualToAnchor:card.trailingAnchor constant:-13],
+        [group.topAnchor constraintGreaterThanOrEqualToAnchor:card.topAnchor constant:8],
+        [group.bottomAnchor constraintLessThanOrEqualToAnchor:card.bottomAnchor constant:-8],
+        [mark.leadingAnchor constraintEqualToAnchor:group.leadingAnchor],
+        [mark.centerYAnchor constraintEqualToAnchor:group.centerYAnchor],
+        [mark.widthAnchor constraintEqualToConstant:31],
+        [mark.heightAnchor constraintEqualToConstant:31],
+        [brand.leadingAnchor constraintEqualToAnchor:mark.trailingAnchor constant:10],
+        [brand.trailingAnchor constraintEqualToAnchor:group.trailingAnchor],
+        [brand.topAnchor constraintEqualToAnchor:group.topAnchor],
+        [brand.bottomAnchor constraintEqualToAnchor:group.bottomAnchor]
+    ]];
+    card.isAccessibilityElement = YES;
+    card.accessibilityLabel = @"Dopamine";
+    card.accessibilityTraits = UIAccessibilityTraitHeader;
+    return card;
 }
 
 + (void)styleTableCell:(UITableViewCell *)cell
 {
     if (!cell) return;
     cell.backgroundColor = UIColor.clearColor;
-    cell.contentView.backgroundColor = [self informationPanelColor];
-    cell.contentView.layer.cornerRadius = 14;
-    cell.contentView.layer.cornerCurve = kCACornerCurveContinuous;
+    if (cell.backgroundConfiguration) cell.backgroundConfiguration = nil;
+    cell.contentView.backgroundColor = UIColor.clearColor;
+    cell.contentView.layer.cornerRadius = 0;
+    BOOL plain = [cell isKindOfClass:NSClassFromString(@"DOHeaderCell")] || [cell isKindOfClass:NSClassFromString(@"DOCreditsCell")];
+    DORowSurfaceView *row = [cell.backgroundView isKindOfClass:DORowSurfaceView.class] ? (DORowSurfaceView *)cell.backgroundView : [[DORowSurfaceView alloc] init];
+    row.fillView.backgroundColor = plain ? UIColor.clearColor : [self tileColor];
+    cell.backgroundView = row;
     cell.tintColor = [self accentColor];
     cell.textLabel.textColor = cell.userInteractionEnabled ? [self primaryTextColor] : [self secondaryTextColor];
     cell.detailTextLabel.textColor = [self secondaryTextColor];
     if ([cell.accessoryView isKindOfClass:UISwitch.class]) {
         UISwitch *toggle = (UISwitch *)cell.accessoryView;
         toggle.onTintColor = [self accentColor];
-        toggle.thumbTintColor = [self buttonTextColor];
+        toggle.thumbTintColor = UIColor.whiteColor;
     }
-    UIView *selected = [[UIView alloc] init];
-    selected.backgroundColor = [self selectedColor];
-    selected.layer.cornerRadius = 14;
-    selected.layer.cornerCurve = kCACornerCurveContinuous;
+    DORowSurfaceView *selected = [[DORowSurfaceView alloc] init];
+    selected.fillView.backgroundColor = plain ? UIColor.clearColor : [self selectedColor];
     cell.selectedBackgroundView = selected;
 }
 

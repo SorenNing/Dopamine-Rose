@@ -5,6 +5,7 @@
 
 #import "DOPSListController.h"
 #import "DOGlobalAppearance.h"
+#import "DOUIManager.h"
 #import <Preferences/PSTableCell.h>
 #import <Preferences/PSSwitchTableCell.h>
 
@@ -13,7 +14,7 @@ static void DOStylePreferenceControls(UIView *view)
     if ([view isKindOfClass:UISwitch.class]) {
         UISwitch *toggle = (UISwitch *)view;
         toggle.onTintColor = [DOGlobalAppearance accentColor];
-        toggle.thumbTintColor = [DOGlobalAppearance buttonTextColor];
+        toggle.thumbTintColor = UIColor.whiteColor;
     } else if ([view isKindOfClass:UITextField.class]) {
         UITextField *textField = (UITextField *)view;
         textField.textColor = [DOGlobalAppearance primaryTextColor];
@@ -34,11 +35,25 @@ static void DOStylePreferenceSectionView(UIView *view)
         UITableViewHeaderFooterView *sectionView = (UITableViewHeaderFooterView *)view;
         sectionView.textLabel.textColor = [DOGlobalAppearance secondaryTextColor];
         sectionView.detailTextLabel.textColor = [DOGlobalAppearance secondaryTextColor];
+        if (sectionView.textLabel.text.length) sectionView.textLabel.text = DOLocalizedString(sectionView.textLabel.text);
         sectionView.tintColor = [DOGlobalAppearance accentColor];
     }
 }
 
 @implementation DOPSListController
+
+- (void)loadView
+{
+    [super loadView];
+    if ([self.view isKindOfClass:UITableView.class]) {
+        UITableView *table = _table ?: (UITableView *)self.view;
+        UIView *root = [[UIView alloc] initWithFrame:self.view.bounds];
+        root.backgroundColor = UIColor.clearColor;
+        [root addSubview:table];
+        self.view = root;
+        _table = table;
+    }
+}
 
 - (void)viewDidLoad
 {
@@ -46,6 +61,7 @@ static void DOStylePreferenceSectionView(UIView *view)
     [_table setSeparatorColor:UIColor.clearColor];
     [_table setBackgroundColor:UIColor.clearColor];
     [DOPSListController setupViewControllerStyle:self];
+    [DOPSListController layoutTable:_table inController:self];
 }
 
 + (void)setupViewControllerStyle:(UIViewController *)vc
@@ -93,10 +109,29 @@ static void DOStylePreferenceSectionView(UIView *view)
     DOStylePreferenceSectionView(view);
 }
 
++ (void)layoutTable:(UITableView *)table inController:(UIViewController *)controller
+{
+    if (!table) return;
+    UIView *content = [DOGlobalAppearance contentViewForController:controller];
+    if (table.superview != content) {
+        [table removeFromSuperview];
+        table.translatesAutoresizingMaskIntoConstraints = YES;
+        table.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [content addSubview:table];
+    }
+    table.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    table.contentInset = UIEdgeInsetsMake(0, 0, 12, 0);
+    table.scrollIndicatorInsets = UIEdgeInsetsMake(6, 0, 6, 0);
+    table.clipsToBounds = YES;
+    table.backgroundColor = UIColor.clearColor;
+    table.separatorColor = UIColor.clearColor;
+    table.frame = CGRectMake(12, 5, MAX(0, CGRectGetWidth(content.bounds) - 24), MAX(0, CGRectGetHeight(content.bounds) - 10));
+}
+
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
-    _table.frame = CGRectMake(12, 5, self.view.bounds.size.width - 24, self.view.bounds.size.height - 10);
+    [DOPSListController layoutTable:_table inController:self];
 }
 
 - (UIStatusBarStyle)preferredStatusBarStyle

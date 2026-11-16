@@ -43,7 +43,10 @@
 "Settings_Verbose_Logs" = "詳細日誌";
 "Settings_Apps_JIT" = "允許應用程式使用 JIT";
 "Settings_Allow_Old_arm64e_ABI_Libraries" = "允許舊版 arm64e 函式庫";
-"Settings_Jetsam_Multiplier" = "Jetsam Additional Memory";
+"Settings_Jetsam_Multiplier" = "Jetsam 額外記憶體";
+"Enable dyld patch" = "啟用 dyld 修補";
+"Dyld Patch(Spinlock Fix)" = "dyld 修補（自旋鎖修復）";
+"TrollStoreLite Fix" = "TrollStoreLite 修復";
 
 // Settings Buttons
 "Button_Remove_Jailbreak" = "移除越獄";
@@ -104,6 +107,9 @@
 "Respring_Cancel" = "取消";
 
 // Credits
+"Developers" = "開發者";
+"UI and Design" = "介面與設計";
+"Credits" = "致謝";
 "Credits_Button_Discord" = "Discord";
 "Credits_Button_License" = "授權條款";
 "Credits_Button_Source_Code" = "原始碼";

@@ -16,9 +16,12 @@
 
 @property (nonatomic) UIImageView *backgroundImageView;
 @property (nonatomic) DOMainViewController *mainView;
-@property (nonatomic) DOModalBackAction *backAction;
 @property (nonatomic) UIView *secondaryBar;
 @property (nonatomic) NSArray<UIButton *> *secondaryTabs;
+@property (nonatomic) NSMutableDictionary<NSNumber *, NSArray<UIViewController *> *> *tabStacks;
+@property (nonatomic) NSInteger selectedTab;
+@property (nonatomic) BOOL navigationEnabled;
+@property (nonatomic) BOOL switchingTabs;
 
 @end
 
@@ -27,14 +30,19 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    self.tabStacks = [NSMutableDictionary dictionary];
+    self.selectedTab = 0;
+    self.navigationEnabled = YES;
     [self setupBackground];
     [self setupSecondaryBar];
+    self.delegate = self;
     [self setNavigationBarHidden:YES];
-    [self pushViewController:(self.mainView = [[DOMainViewController alloc] init]) animated:NO];
-    [self setDelegate:self];
-    [self setOverrideUserInterfaceStyle:[DOGlobalAppearance interfaceStyle]];
+    self.mainView = [[DOMainViewController alloc] init];
+    [self setViewControllers:@[self.mainView] animated:NO];
+    self.tabStacks[@0] = @[self.mainView];
+    self.overrideUserInterfaceStyle = [DOGlobalAppearance interfaceStyle];
     self.view.tintColor = [DOGlobalAppearance accentColor];
-    self.view.backgroundColor = UIColor.clearColor;
+    [self updateNavigationForController:self.mainView];
 }
 
 - (void)setupBackground
@@ -52,23 +60,8 @@
     [NSLayoutConstraint activateConstraints:@[
         [self.backgroundImageView.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
         [self.backgroundImageView.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.backgroundImageView.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:-100],
-        [self.backgroundImageView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor constant:100],
-    ]];
-
-    self.backAction = [[DOModalBackAction alloc] initWithAction:^{
-        [self popViewControllerAnimated:YES];
-    }];
-    self.backAction.translatesAutoresizingMaskIntoConstraints = NO;
-    self.backAction.hidden = YES;
-    
-    [self.view insertSubview:self.backAction aboveSubview:self.backgroundImageView];
-    
-    [NSLayoutConstraint activateConstraints:@[
-        [self.backAction.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-        [self.backAction.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-        [self.backAction.topAnchor constraintEqualToAnchor:self.view.topAnchor],
-        [self.backAction.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
+        [self.backgroundImageView.topAnchor constraintEqualToAnchor:self.view.topAnchor],
+        [self.backgroundImageView.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor],
     ]];
 }
 
@@ -78,7 +71,8 @@
     bar.translatesAutoresizingMaskIntoConstraints = NO;
     bar.layer.cornerRadius = 32;
     [DOGlobalAppearance applyLiquidGlassToView:bar];
-    bar.hidden = YES;
+    bar.accessibilityIdentifier = @"DOTopLevelBar";
+    bar.hidden = NO;
     [self.view addSubview:bar];
     NSLayoutConstraint *width = [bar.widthAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.widthAnchor constant:-50];
     width.priority = UILayoutPriorityDefaultHigh;
@@ -122,37 +116,67 @@
             return result;
         };
         tab.configuration = configuration;
-        [tab addTarget:self action:@selector(selectSecondaryTab:) forControlEvents:UIControlEventTouchUpInside];
+        tab.accessibilityIdentifier = [NSString stringWithFormat:@"DOTab%ld", (long)index];
+        [tab addTarget:self action:@selector(topLevelTabPressed:) forControlEvents:UIControlEventTouchUpInside];
         [stack addArrangedSubview:tab];
         [tabs addObject:tab];
     }
     self.secondaryTabs = tabs;
 }
 
-- (void)selectSecondaryTab:(UIButton *)sender
+- (void)topLevelTabPressed:(UIButton *)sender
 {
-    if (self.transitionCoordinator) return;
-    if (sender.tag == 0) {
-        [self popToRootViewControllerAnimated:YES];
-        return;
-    }
-    Class targetClass = sender.tag == 1 ? DOSettingsController.class : DOCreditsViewController.class;
-    for (UIViewController *controller in self.viewControllers) {
-        if ([controller isKindOfClass:targetClass]) {
-            [self popToViewController:controller animated:YES];
-            return;
-        }
-    }
-    [self setViewControllers:@[self.mainView, [[targetClass alloc] init]] animated:YES];
+    [self selectTopLevelTab:sender.tag];
 }
 
-- (void)setBackgroundDimmed:(BOOL)dimmed
+- (void)selectTopLevelTab:(NSInteger)index
 {
-    [UIView animateWithDuration:0.3 animations:^{
-        self.backgroundImageView.alpha = dimmed ? 0.4 : 1;
-    }];
-    self.backgroundImageView.userInteractionEnabled = dimmed;
-    self.backAction.hidden = !dimmed;
+    if (!self.navigationEnabled || self.transitionCoordinator || index < 0 || index > 2) return;
+    if (index == self.selectedTab) {
+        [self updateNavigationForController:self.topViewController];
+        return;
+    }
+    self.tabStacks[@(self.selectedTab)] = [self.viewControllers copy];
+    NSArray<UIViewController *> *stack = self.tabStacks[@(index)];
+    if (!stack) {
+        Class target = index == 1 ? DOSettingsController.class : DOCreditsViewController.class;
+        stack = index == 0 ? @[self.mainView] : @[[[target alloc] init]];
+    }
+    self.switchingTabs = YES;
+    self.selectedTab = index;
+    [self setViewControllers:stack animated:NO];
+    self.switchingTabs = NO;
+    self.tabStacks[@(index)] = [self.viewControllers copy];
+    [self updateNavigationForController:self.topViewController];
+}
+
+- (void)setNavigationEnabled:(BOOL)enabled
+{
+    _navigationEnabled = enabled;
+    self.secondaryBar.userInteractionEnabled = enabled;
+    self.secondaryBar.hidden = !enabled;
+}
+
+- (void)updateNavigationForController:(UIViewController *)controller
+{
+    NSInteger targetTab = self.selectedTab;
+    if ([controller isKindOfClass:DOMainViewController.class]) targetTab = 0;
+    else if ([controller isKindOfClass:DOSettingsController.class]) targetTab = 1;
+    else if ([controller isKindOfClass:DOCreditsViewController.class] || [controller isKindOfClass:NSClassFromString(@"DOLicenseViewController")]) targetTab = 2;
+    self.selectedTab = targetTab;
+    BOOL result = [controller isKindOfClass:NSClassFromString(@"DOLogCrashViewController")] || [controller isKindOfClass:NSClassFromString(@"DODownloadViewController")];
+    self.secondaryBar.hidden = !self.navigationEnabled || result;
+    self.secondaryBar.userInteractionEnabled = self.navigationEnabled && !result;
+    for (UIButton *tab in self.secondaryTabs) {
+        BOOL active = tab.tag == targetTab;
+        tab.selected = active;
+        tab.backgroundColor = active ? [DOGlobalAppearance selectedColor] : UIColor.clearColor;
+        tab.layer.borderWidth = active ? 0.5 : 0;
+        tab.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
+        tab.accessibilityTraits = UIAccessibilityTraitButton | (active ? UIAccessibilityTraitSelected : 0);
+    }
+    [self.view bringSubviewToFront:self.secondaryBar];
+    [self setNeedsStatusBarAppearanceUpdate];
 }
 
 #pragma mark - Delegate
@@ -161,34 +185,28 @@
            animationControllerForOperation:(UINavigationControllerOperation)operation
                         fromViewController:(UIViewController *)fromVC
                           toViewController:(UIViewController *)toVC {
-    
-    
-    if (fromVC.class == DOMainViewController.class || toVC.class == DOMainViewController.class)
-        return [[DOModalTransitionScale alloc] initForwards: operation == UINavigationControllerOperationPush];
-    return [[DOModalTransitionPush alloc] initForwards: operation == UINavigationControllerOperationPush];
+    // UIKit owns the root frames and transition cancellation. The glass card
+    // lives inside each full-sized page and is never a navigation root frame.
+    return nil;
 }
 
 - (void)navigationController:(UINavigationController *)navigationController willShowViewController:(UIViewController *)viewController animated:(BOOL)animated
 {
     [DOGlobalAppearance styleViewController:viewController];
-    [self setBackgroundDimmed:![viewController isKindOfClass:[DOMainViewController class]]];
-    [self.backAction setIgnoreFrame:[self contentFrameForViewController:viewController]];
-    BOOL main = [viewController isKindOfClass:DOMainViewController.class];
-    BOOL result = [viewController isKindOfClass:NSClassFromString(@"DOLogCrashViewController")] || [viewController isKindOfClass:NSClassFromString(@"DODownloadViewController")];
-    self.secondaryBar.hidden = main || result;
-    NSInteger selected = 1;
-    for (UIViewController *controller in self.viewControllers) {
-        if ([controller isKindOfClass:DOCreditsViewController.class]) selected = 2;
+    [self updateNavigationForController:viewController];
+    if (animated && self.transitionCoordinator) {
+        __weak typeof(self) weakSelf = self;
+        [self.transitionCoordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+            DONavigationController *owner = weakSelf;
+            [owner updateNavigationForController:owner.topViewController];
+        }];
     }
-    for (UIButton *tab in self.secondaryTabs) {
-        BOOL active = tab.tag == selected;
-        tab.backgroundColor = active ? [DOGlobalAppearance selectedColor] : UIColor.clearColor;
-        tab.layer.borderWidth = active ? 0.5 : 0;
-        tab.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
-        tab.accessibilityTraits = UIAccessibilityTraitButton | (active ? UIAccessibilityTraitSelected : 0);
-    }
-    [self.view bringSubviewToFront:self.secondaryBar];
-    [self setNeedsStatusBarAppearanceUpdate];
+}
+
+- (void)navigationController:(UINavigationController *)navigationController didShowViewController:(UIViewController *)viewController animated:(BOOL)animated
+{
+    [self updateNavigationForController:viewController];
+    if (!self.switchingTabs) self.tabStacks[@(self.selectedTab)] = [self.viewControllers copy];
 }
 
 - (UIViewController *)childViewControllerForStatusBarStyle
@@ -206,28 +224,11 @@
     return self.visibleViewController;
 }
 
-#pragma mark - Overrides
-
-- (CGRect)contentFrameForViewController:(UIViewController *)viewController
-{
-    if ([viewController isKindOfClass:DOMainViewController.class]) return self.view.bounds;
-    CGRect safe = self.view.safeAreaLayoutGuide.layoutFrame;
-    CGFloat width = MIN(MAX(0, CGRectGetWidth(safe) - UI_MODAL_PADDING * 2), UI_IPAD_MAX_WIDTH);
-    CGFloat availableHeight = MAX(0, CGRectGetHeight(safe) - 93);
-    CGFloat height = availableHeight * 0.96;
-    return CGRectMake(CGRectGetMidX(safe) - width / 2, CGRectGetMinY(safe) + 8 + (availableHeight - height) / 2, width, height);
-}
-
 - (void)viewDidLayoutSubviews
 {
     [super viewDidLayoutSubviews];
+    [self.view sendSubviewToBack:self.backgroundImageView];
     [self.view bringSubviewToFront:self.secondaryBar];
-    UIViewController *visible = self.visibleViewController;
-    if (visible && !self.transitionCoordinator && CGAffineTransformIsIdentity(visible.view.transform)) {
-        CGRect frame = [self contentFrameForViewController:visible];
-        visible.view.frame = frame;
-        [self.backAction setIgnoreFrame:frame];
-    }
 }
 
 

@@ -40,6 +40,18 @@ jobs:
           test -s Application/Dopamine/Resources/bootstrap_1900.tar.zst
           test -s Application/Dopamine/Resources/roothideapp.deb
 
+      - name: Run native UIKit layout regression
+        timeout-minutes: 12
+        run: bash .github/ui-tests/run.sh "$RUNNER_TEMP/dopamine-ui-regression"
+
+      - name: Upload UIKit layout evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dopamine-UIKit-Layout-${{ github.sha }}
+          if-no-files-found: error
+          path: ${{ runner.temp }}/dopamine-ui-regression
+
       - name: Prepare cache keys
         id: cache-info
         run: |

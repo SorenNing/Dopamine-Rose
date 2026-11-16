@@ -43,6 +43,13 @@
 "Settings_Verbose_Logs" = "详细日志";
 "Settings_Apps_JIT" = "允许 App 使用 JIT";
 "Settings_Jetsam_Multiplier" = "Jetsam 附加内存";
+"Enable dyld patch" = "启用 dyld 补丁";
+"Dyld Patch(Spinlock Fix)" = "dyld 补丁（自旋锁修复）";
+"TrollStoreLite Fix" = "TrollStoreLite 修复";
+"Section_Boot_Logo" = "开机图标";
+"Enabled" = "启用";
+"Custom_Boot_Logo" = "自定义开机图标";
+"Select_Image" = "选择图片";
 
 // Settings Buttons
 "Button_Remove_Jailbreak" = "移除越狱";
@@ -99,6 +106,9 @@
 /*Respring_Cancel*/
 
 // Credits
+"Developers" = "开发者";
+"UI and Design" = "界面与设计";
+"Credits" = "致谢";
 "Credits_Button_Discord" = "Discord";
 "Credits_Button_License" = "许可证";
 "Credits_Button_Source_Code" = "源代码";

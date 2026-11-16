@@ -34,13 +34,7 @@
 
     UIView *container = transitionContext.containerView;
     [container addSubview:toViewController.view];
-    if ([toViewController.navigationController isKindOfClass:DONavigationController.class]) {
-        DONavigationController *navigation = (DONavigationController *)toViewController.navigationController;
-        CGRect frame = [navigation contentFrameForViewController:toViewController];
-        toViewController.view.frame = [container convertRect:frame fromView:navigation.view];
-    } else {
-        toViewController.view.frame = [transitionContext finalFrameForViewController:toViewController];
-    }
+    toViewController.view.frame = [transitionContext finalFrameForViewController:toViewController];
 
     float scaleIn = _forwards ? 0.7 : 0.9;
     float scaleOut = _forwards ? 0.9 : 0.7;
@@ -52,12 +46,15 @@
         fromViewController.view.alpha = 0;
     }];
     
-    [UIView animateWithDuration:0.6 delay:0.0 usingSpringWithDamping:0.9 initialSpringVelocity:2.0  options: UIViewAnimationOptionCurveEaseInOut animations:^{
+    [UIView animateWithDuration:[self transitionDuration:transitionContext] delay:0.0 usingSpringWithDamping:0.9 initialSpringVelocity:2.0  options: UIViewAnimationOptionCurveEaseInOut animations:^{
         toViewController.view.alpha = 1;
         toViewController.view.transform = CGAffineTransformIdentity;
         fromViewController.view.transform = CGAffineTransformScale(CGAffineTransformIdentity, scaleOut, scaleOut);
     } completion:^(BOOL finished) {
         fromViewController.view.transform = CGAffineTransformIdentity;
+        fromViewController.view.alpha = 1;
+        toViewController.view.transform = CGAffineTransformIdentity;
+        toViewController.view.alpha = 1;
         [transitionContext completeTransition:!transitionContext.transitionWasCancelled];
     }];
 }
