@@ -73,7 +73,7 @@ printf 'deviceType=%s\nruntime=%s\nudid=%s\n' "$DEVICE_TYPE" "$RUNTIME" "$UDID" 
 xcrun simctl boot "$UDID"
 python3 "$SCRIPT_DIR/verify.py" bounded 120 -- xcrun simctl bootstatus "$UDID" -b >"$OUTPUT/boot.log" 2>&1
 xcrun simctl status_bar "$UDID" override --time '9:41' --dataNetwork wifi --wifiMode active --wifiBars 3 --batteryState charged --batteryLevel 100
-python3 "$SCRIPT_DIR/verify.py" bounded 30 -- xcrun simctl install "$UDID" "$WORK/DopamineLayoutHarness.app" >"$OUTPUT/install.log" 2>&1
+python3 "$SCRIPT_DIR/verify.py" bounded 120 -- xcrun simctl install "$UDID" "$WORK/DopamineLayoutHarness.app" >"$OUTPUT/install.log" 2>&1
 : >"$OUTPUT/app.stdout.log"
 : >"$OUTPUT/app.stderr.log"
 launch_status=0
