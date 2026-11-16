@@ -89,6 +89,7 @@
 - (void)viewWillDisappear:(BOOL)animated
 {
     [super viewWillDisappear:animated];
+    if (!self.isMovingFromParentViewController && !self.navigationController.isBeingDismissed) return;
     [[UIApplication sharedApplication] performSelector:@selector(suspend)];
     [NSThread sleepForTimeInterval:0.3];
     exit(0);

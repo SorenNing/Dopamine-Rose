@@ -11,14 +11,20 @@
 #import "DOGlobalAppearance.h"
 #import "DOThemeManager.h"
 
+@interface DOJailbreakButton ()
+@property (nonatomic, strong) UILabel *progressTitle;
+@property (nonatomic, strong) DODoubleHelixIndicator *progressIndicator;
+@end
+
 @implementation DOJailbreakButton
 
 - (instancetype)initWithAction:(UIAction *)actions
 {
     if (self = [super init])
     {
+        pthread_mutex_init(&_canStartJailbreak, NULL);
         self.backgroundColor = UIColor.clearColor;
-        self.layer.cornerRadius = 22;
+        self.layer.cornerRadius = 25;
         self.layer.masksToBounds = NO;
         self.layer.cornerCurve = kCACornerCurveContinuous;
         [DOGlobalAppearance applyLiquidGlassToView:self];
@@ -28,10 +34,10 @@
         if ([DOGlobalAppearance isRoseStyle]) {
             UIButtonConfiguration *configuration = self.button.configuration;
             configuration.baseForegroundColor = [DOGlobalAppearance buttonTextColor];
-            configuration.background.backgroundColor = [DOGlobalAppearance tileColor];
-            configuration.background.cornerRadius = 18;
+            configuration.background.backgroundColor = UIColor.clearColor;
+            configuration.background.cornerRadius = 25;
             self.button.configuration = configuration;
-            self.layer.cornerRadius = 18;
+            self.layer.cornerRadius = 25;
         }
         [self.button setContentHorizontalAlignment:UIControlContentHorizontalAlignmentCenter];
         self.button.translatesAutoresizingMaskIntoConstraints = NO;
@@ -48,15 +54,12 @@
 
 - (void)expandButton:(NSArray<NSLayoutConstraint *> *)constraints
 {
-    if (self.didExpand)
-        return;
+    if (self.didExpand || !self.window) return;
 
-    //We're doing some setup, let's lock the mutex
+    // Hold preparation until package selection (if needed) completes.
     [self lockMutex];
-        
-    self.didExpand = TRUE;
-
-    UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+    self.didExpand = YES;
+    UIWindow *window = self.window;
 
     float topPadding = (window.frame.size.height * (1 - 0.74));
     topPadding += 35;
@@ -95,7 +98,7 @@
 
 - (void)setupLog: (float)topPadding
 {
-    UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *window = self.window ?: [DOGlobalAppearance activeWindow];
 
     if ([[DOUIManager sharedInstance] isDebug])
         self.logView = [[DODebugLogView alloc] init];
@@ -119,15 +122,20 @@
 
 - (void)setupPackageManagerPicker: (float)topPadding
 {
-    UIWindow *window = [[UIApplication sharedApplication] keyWindow];
+    UIWindow *window = self.window ?: [DOGlobalAppearance activeWindow];
 
     if ([[DOUIManager sharedInstance] enabledPackageManagerKeys].count > 0)
         return;
 
+    self.logView.hidden = YES;
+    __weak typeof(self) weakSelf = self;
     self.pkgManagerPickerView = [[DOPkgManagerPickerView alloc] initWithCallback:^(BOOL success) {
-        [self.pkgManagerPickerView removeFromSuperview];
-        self.logView.hidden = NO;
-        [self unlockMutex];
+        DOJailbreakButton *owner = weakSelf;
+        if (!owner || !success) return;
+        [owner.pkgManagerPickerView removeFromSuperview];
+        owner.pkgManagerPickerView = nil;
+        owner.logView.hidden = NO;
+        [owner unlockMutex];
     }];
 
     self.pkgManagerPickerView.translatesAutoresizingMaskIntoConstraints = NO;
@@ -151,9 +159,8 @@
 
 - (void)setupTitle
 {
-    UIWindow *window = [[UIApplication sharedApplication] keyWindow];
-
-    UILabel *titleLabel = [[UILabel alloc] init];
+    if (self.progressTitle) return;
+    UILabel *titleLabel = self.progressTitle = [[UILabel alloc] init];
     titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
     titleLabel.text = DOLocalizedString(@"Status_Title_Jailbreaking");
     titleLabel.textColor = [DOGlobalAppearance primaryTextColor];
@@ -163,7 +170,7 @@
     [self addSubview:titleLabel];
 
     [NSLayoutConstraint activateConstraints:@[
-        [titleLabel.centerXAnchor constraintEqualToAnchor:window.centerXAnchor constant:20],
+        [titleLabel.centerXAnchor constraintEqualToAnchor:self.centerXAnchor constant:20],
         [titleLabel.topAnchor constraintEqualToAnchor:self.topAnchor constant:20],
     ]];
 
@@ -171,7 +178,7 @@
         titleLabel.alpha = 1.0;
     }];
 
-    DODoubleHelixIndicator *indicator = [[DODoubleHelixIndicator alloc] init];
+    DODoubleHelixIndicator *indicator = self.progressIndicator = [[DODoubleHelixIndicator alloc] init];
     [self addSubview:indicator];
     indicator.translatesAutoresizingMaskIntoConstraints = NO;
 
@@ -183,8 +190,26 @@
     ]];
 }
 
+- (void)showResultTitle:(NSString *)title failed:(BOOL)failed
+{
+    if (!NSThread.isMainThread) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self showResultTitle:title failed:failed]; });
+        return;
+    }
+    if (!self.progressTitle) [self setupTitle];
+    self.progressTitle.text = title;
+    self.progressTitle.textColor = failed ? [DOGlobalAppearance accentColor] : [DOGlobalAppearance primaryTextColor];
+    self.progressIndicator.hidden = YES;
+    if (failed && [self.logView isKindOfClass:DOLyricsLogView.class]) {
+        UIView *item = ((DOLyricsLogView *)self.logView).stackView.arrangedSubviews.lastObject;
+        if ([item isKindOfClass:DOLyricsLogItemView.class]) [(DOLyricsLogItemView *)item setFailed];
+    }
+    UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, title);
+}
+
 - (void)setEnabled:(BOOL)enabled
 {
+    self.button.enabled = enabled;
     self.button.userInteractionEnabled = enabled;
     if (enabled) {
         self.alpha = 1.0;
@@ -195,17 +220,13 @@
 
 - (BOOL)isEnabled
 {
-    return self.button.userInteractionEnabled;
+    return self.button.enabled;
 }
 
 #pragma mark - Mutex
 
 -(void)lockMutex
 {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        pthread_mutex_init(&self->_canStartJailbreak, NULL);
-    });
     pthread_mutex_lock(&self->_canStartJailbreak);
 }
 

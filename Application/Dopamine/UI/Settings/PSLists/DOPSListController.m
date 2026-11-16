@@ -54,7 +54,7 @@ static void DOStylePreferenceSectionView(UIView *view)
     vc.overrideUserInterfaceStyle = [DOGlobalAppearance interfaceStyle];
     [DOGlobalAppearance styleViewController:vc];
     if ([vc isKindOfClass:DOPSListController.class]) {
-        UITableView *table = [(DOPSListController *)vc valueForKey:@"table"];
+        UITableView *table = ((DOPSListController *)vc)->_table;
         table.separatorColor = UIColor.clearColor;
         table.backgroundColor = UIColor.clearColor;
     }

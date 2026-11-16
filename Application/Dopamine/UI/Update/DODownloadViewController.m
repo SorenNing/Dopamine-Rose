@@ -16,6 +16,8 @@
 @property (strong, nonatomic) DOUpdateCircleView *circleView;
 @property (strong, nonatomic) NSString *urlString;
 @property (copy, nonatomic) void (^downloadCallback)(NSURL *file);
+@property (strong, nonatomic) NSURLSessionDownloadTask *downloadTask;
+@property (strong, nonatomic) NSTimer *progressTimer;
 
 @property (nonatomic, retain) UILabel *titleLabel;
 @property (nonatomic, retain) UILabel *descriptionLabel;
@@ -84,15 +86,46 @@
     [self startDownload];
 }
 
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    if (self.downloadTask && self.downloadTask.state == NSURLSessionTaskStateRunning) {
+        [self trackDownloadProgress:self.downloadTask];
+    }
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [self stopTrackingDownloadProgress];
+    [self.circleView.layer removeAllAnimations];
+}
+
+- (void)dealloc {
+    [_progressTimer invalidate];
+}
+
+- (void)stopTrackingDownloadProgress {
+    [self.progressTimer invalidate];
+    self.progressTimer = nil;
+}
+
 - (void)startDownload {
+    [self stopTrackingDownloadProgress];
     NSURL *url = [NSURL URLWithString:self.urlString];
     if (!url) {
         NSLog(@"Invalid URL");
         return;
     }
 
+    __weak typeof(self) weakSelf = self;
+    // Keep delivery independent of the page lifetime, as before.
+    void (^downloadCallback)(NSURL *) = [self.downloadCallback copy];
     NSURLSession *session = [NSURLSession sharedSession];
     NSURLSessionDownloadTask *downloadTask = [session downloadTaskWithURL:url completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            DODownloadViewController *strongSelf = weakSelf;
+            [strongSelf stopTrackingDownloadProgress];
+            strongSelf.downloadTask = nil;
+        });
         if (error) {
             NSLog(@"Download error: %@", error.localizedDescription);
             return;
@@ -103,7 +136,7 @@
         NSString *destinationPath = [documentsDirectory stringByAppendingPathComponent:[location lastPathComponent]];
         NSURL *destinationURL = [NSURL fileURLWithPath:destinationPath];
 
-        NSError *fileError;
+        NSError *fileError = nil;
         [[NSFileManager defaultManager] moveItemAtURL:location toURL:destinationURL error:&fileError];
         if (fileError) {
             NSLog(@"File moving error: %@", fileError.localizedDescription);
@@ -111,31 +144,40 @@
         }
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (self.downloadCallback) {
-                self.downloadCallback(destinationURL);
-                [self startBlinking];
+            DODownloadViewController *strongSelf = weakSelf;
+            strongSelf.circleView.progress = 1.0;
+            if (downloadCallback) {
+                downloadCallback(destinationURL);
+                [strongSelf startBlinking];
             }
         });
     }];
 
-    [downloadTask resume];
-
+    self.downloadTask = downloadTask;
     [self trackDownloadProgress:downloadTask];
+    [downloadTask resume];
 }
 
 - (void)trackDownloadProgress:(NSURLSessionDownloadTask *)downloadTask {
-    [NSTimer scheduledTimerWithTimeInterval:(1.0/60.0) repeats:YES block:^(NSTimer * _Nonnull timer) {
-        if (self.circleView.progress >= 0.99) {
+    [self stopTrackingDownloadProgress];
+    __weak typeof(self) weakSelf = self;
+    __weak NSURLSessionDownloadTask *weakDownloadTask = downloadTask;
+    self.progressTimer = [NSTimer scheduledTimerWithTimeInterval:(1.0/60.0) repeats:YES block:^(NSTimer * _Nonnull timer) {
+        DODownloadViewController *strongSelf = weakSelf;
+        NSURLSessionDownloadTask *task = weakDownloadTask;
+        if (!strongSelf) {
             [timer invalidate];
-            self.circleView.progress = 1.0;
+            return;
+        }
+        if (!task || task.state == NSURLSessionTaskStateCompleted || task.state == NSURLSessionTaskStateCanceling) {
+            [strongSelf stopTrackingDownloadProgress];
             return;
         }
 
-        [downloadTask countOfBytesExpectedToReceive];
-        if (downloadTask.countOfBytesExpectedToReceive > 0) {
-            float progress = (float) downloadTask.countOfBytesReceived / (float) downloadTask.countOfBytesExpectedToReceive;
-            if (self.circleView.progress < progress) {
-                self.circleView.progress += (progress - self.circleView.progress) * 0.25;
+        if (task.countOfBytesExpectedToReceive > 0) {
+            float progress = (float) task.countOfBytesReceived / (float) task.countOfBytesExpectedToReceive;
+            if (strongSelf.circleView.progress < progress) {
+                strongSelf.circleView.progress += (progress - strongSelf.circleView.progress) * 0.25;
             }
         }
     }];
@@ -144,6 +186,7 @@
 - (void)startBlinking {
     self.titleLabel.text = DOLocalizedString(@"Update_Status_Installing");
     self.descriptionLabel.text = DOLocalizedString(@"Update_Status_Subtitle_Restart_Soon");
+    if (!self.view.window) return;
     [UIView animateWithDuration:0.5 delay:0 options:UIViewAnimationOptionAutoreverse | UIViewAnimationOptionRepeat | UIViewAnimationOptionAllowUserInteraction animations:^{
         self.circleView.alpha = 0.7;
     } completion:nil];

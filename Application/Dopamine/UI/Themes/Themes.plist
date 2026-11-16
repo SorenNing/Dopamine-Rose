@@ -7,6 +7,8 @@
 		<key>name</key><string>折纸 · 白昼</string>
 		<key>image</key><string>Background_Origami</string>
 		<key>windowColor</key><string>FFDFD8CD</string>
+		<key>panelColor</key><string>4AFFFFFB</string>
+		<key>statusGreenColor</key><string>FF80A28C</string>
 		<key>actionMenuColor</key><string>9EF9F5EB</string>
 		<key>primaryTextColor</key><string>FF403C35</string>
 		<key>secondaryTextColor</key><string>FF817B70</string>
@@ -29,6 +31,8 @@
 		<key>name</key><string>琉光 · 青瓷</string>
 		<key>image</key><string>Background_Glaze</string>
 		<key>windowColor</key><string>FFC3D1C9</string>
+		<key>panelColor</key><string>4AFFFFFB</string>
+		<key>statusGreenColor</key><string>FF80A28C</string>
 		<key>actionMenuColor</key><string>A6EBF4ED</string>
 		<key>primaryTextColor</key><string>FF29433C</string>
 		<key>secondaryTextColor</key><string>FF71887F</string>
@@ -51,6 +55,8 @@
 		<key>name</key><string>砂金 · 夜潮</string>
 		<key>image</key><string>Background_Nocturne</string>
 		<key>windowColor</key><string>FF191C20</string>
+		<key>panelColor</key><string>0EE4E6E3</string>
+		<key>statusGreenColor</key><string>FF80A28C</string>
 		<key>actionMenuColor</key><string>AD202326</string>
 		<key>primaryTextColor</key><string>FFF0EDE6</string>
 		<key>secondaryTextColor</key><string>FFA4A4A0</string>
@@ -59,7 +65,7 @@
 		<key>glassColor</key><string>AD202326</string>
 		<key>tileColor</key><string>14E6E6D8</string>
 		<key>selectedColor</key><string>14E6E6D8</string>
-		<key>glassHighlightColor</key><string>13EEEEE2</string>
+		<key>glassHighlightColor</key><string>21EEEEE2</string>
 		<key>darkTheme</key><true/>
 		<key>liquidGlass</key><true/>
 		<key>glassBlurRadius</key><real>22</real>

@@ -6,6 +6,7 @@
 //
 
 #import "DOModalTransitionScale.h"
+#import "DONavigationController.h"
 
 @interface DOModalTransitionScale ()
 
@@ -31,7 +32,15 @@
     UIViewController *toViewController = [transitionContext viewControllerForKey:UITransitionContextToViewControllerKey];
     UIViewController *fromViewController = [transitionContext viewControllerForKey:UITransitionContextFromViewControllerKey];
 
-    [[transitionContext containerView] addSubview:toViewController.view];
+    UIView *container = transitionContext.containerView;
+    [container addSubview:toViewController.view];
+    if ([toViewController.navigationController isKindOfClass:DONavigationController.class]) {
+        DONavigationController *navigation = (DONavigationController *)toViewController.navigationController;
+        CGRect frame = [navigation contentFrameForViewController:toViewController];
+        toViewController.view.frame = [container convertRect:frame fromView:navigation.view];
+    } else {
+        toViewController.view.frame = [transitionContext finalFrameForViewController:toViewController];
+    }
 
     float scaleIn = _forwards ? 0.7 : 0.9;
     float scaleOut = _forwards ? 0.9 : 0.7;

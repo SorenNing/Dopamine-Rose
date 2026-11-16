@@ -18,24 +18,34 @@
 #import <mach/mach_time.h>
 #import <libjailbreak/libjailbreak.h>
 
+// New home-only captions stay local to this controller; existing actions keep their localized titles.
+static NSString *DOHomeCaption(NSString *english, NSString *chinese)
+{
+    NSString *language = NSBundle.mainBundle.preferredLocalizations.firstObject;
+    return [language hasPrefix:@"zh"] ? chinese : english;
+}
+
 @interface DOMainViewController ()
 
 @property DOJailbreakButton *jailbreakBtn;
 @property UIStackView *mainStack;
 @property UIView *contentView;
+@property UIView *brandCard;
+@property UIView *bottomBar;
+@property UIScrollView *informationScrollView;
+@property UIButton *respringButton;
+@property UIButton *userspaceButton;
 @property UILabel *appBuildInfoLabel;
 @property UILabel *appBuildTimeLabel;
 @property UILabel *systemVersionLabel;
 @property UILabel *systemUptimeLabel;
 @property NSTimer *uptimeTimer;
 @property(nonatomic) BOOL informationVisible;
+@property(nonatomic) BOOL didFade;
 @property NSArray<NSLayoutConstraint *> *jailbreakButtonConstraints;
 @property DOActionMenuButton *updateButton;
 @property(nonatomic) BOOL hideStatusBar;
 @property(nonatomic) BOOL hideHomeIndicator;
-@property (nonatomic, strong) UIScrollView *roseScrollView;
-@property (nonatomic, strong) UIView *roseFrame;
-@property (nonatomic, strong) UILabel *roseStateLabel;
 
 @end
 
@@ -46,168 +56,87 @@
     [self setupStack];
 }
 
-// 组合主页信息列、操作菜单与越狱按钮。
--(void)setupStack
+// All three themes share the approved native layout. Only the information area scrolls.
+- (void)setupStack
 {
-    if ([DOGlobalAppearance isRoseStyle]) {
-        self.overrideUserInterfaceStyle = [DOGlobalAppearance interfaceStyle];
-        self.view.backgroundColor = [DOGlobalAppearance panelColor];
-        UIImageView *background = [[UIImageView alloc] initWithImage:[DOGlobalAppearance backgroundImage]];
-        background.contentMode = UIViewContentModeScaleToFill;
-        background.translatesAutoresizingMaskIntoConstraints = NO;
-        [self.view addSubview:background];
-        [NSLayoutConstraint activateConstraints:@[
-            [background.leadingAnchor constraintEqualToAnchor:self.view.leadingAnchor],
-            [background.trailingAnchor constraintEqualToAnchor:self.view.trailingAnchor],
-            [background.topAnchor constraintEqualToAnchor:self.view.topAnchor],
-            [background.bottomAnchor constraintEqualToAnchor:self.view.bottomAnchor]
-        ]];
-        UIView *frame = [[UIView alloc] init];
-        frame.translatesAutoresizingMaskIntoConstraints = NO;
-        frame.userInteractionEnabled = NO;
-        frame.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
-        frame.layer.borderWidth = 1;
-        frame.layer.cornerRadius = 28;
-        [self.view addSubview:frame];
-        self.roseFrame = frame;
-        [DOGlobalAppearance applyLiquidGlassToView:frame];
-        [NSLayoutConstraint activateConstraints:@[
-            [frame.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
-            [frame.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-8],
-            [frame.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
-            [frame.widthAnchor constraintLessThanOrEqualToConstant:UI_IPAD_MAX_WIDTH + 48]
-        ]];
-        NSLayoutConstraint *frameWidth = [frame.widthAnchor constraintEqualToAnchor:self.view.widthAnchor constant:-28];
-        frameWidth.priority = UILayoutPriorityDefaultHigh;
-        frameWidth.active = YES;
-        UIScrollView *scroll = [[UIScrollView alloc] init];
-        scroll.translatesAutoresizingMaskIntoConstraints = NO;
-        scroll.showsVerticalScrollIndicator = NO;
-        [self.view addSubview:scroll];
-        self.roseScrollView = scroll;
-        [NSLayoutConstraint activateConstraints:@[
-            [scroll.leadingAnchor constraintEqualToAnchor:frame.leadingAnchor constant:26],
-            [scroll.trailingAnchor constraintEqualToAnchor:frame.trailingAnchor constant:-26],
-            [scroll.topAnchor constraintEqualToAnchor:frame.topAnchor constant:18],
-            [scroll.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-84]
-        ]];
-    }
-    self.contentView = [[UIView alloc] initWithFrame:self.view.bounds];
-    if (self.roseScrollView) [self.roseScrollView addSubview:self.contentView];
-    else [self.view addSubview:self.contentView];
-    UIStackView *stackView = self.mainStack = [[UIStackView alloc] init];
-    [stackView setAxis:UILayoutConstraintAxisVertical];
-    [stackView setAlignment:UIStackViewAlignmentTrailing];
-    [stackView setDistribution:UIStackViewDistributionEqualSpacing];
-    stackView.spacing = 16;
-    if (self.roseScrollView) {
-        stackView.alignment = UIStackViewAlignmentFill;
-        stackView.distribution = UIStackViewDistributionFill;
-    }
-    [stackView setTranslatesAutoresizingMaskIntoConstraints:NO];
+    self.overrideUserInterfaceStyle = [DOGlobalAppearance interfaceStyle];
+    self.view.backgroundColor = UIColor.clearColor;
+    self.view.tintColor = [DOGlobalAppearance accentColor];
 
-    if (self.roseScrollView) {
-        self.contentView.translatesAutoresizingMaskIntoConstraints = NO;
-        [NSLayoutConstraint activateConstraints:@[
-            [self.contentView.leadingAnchor constraintEqualToAnchor:self.roseScrollView.contentLayoutGuide.leadingAnchor],
-            [self.contentView.trailingAnchor constraintEqualToAnchor:self.roseScrollView.contentLayoutGuide.trailingAnchor],
-            [self.contentView.topAnchor constraintEqualToAnchor:self.roseScrollView.contentLayoutGuide.topAnchor],
-            [self.contentView.bottomAnchor constraintEqualToAnchor:self.roseScrollView.contentLayoutGuide.bottomAnchor],
-            [self.contentView.widthAnchor constraintEqualToAnchor:self.roseScrollView.frameLayoutGuide.widthAnchor]
-        ]];
-    }
+    self.brandCard = [self makeBrandCard];
+    self.bottomBar = [self makeBottomBar];
+    [self.view addSubview:self.brandCard];
+    [self.view addSubview:self.bottomBar];
+
+    self.informationScrollView = [[UIScrollView alloc] init];
+    self.informationScrollView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.informationScrollView.showsVerticalScrollIndicator = NO;
+    self.informationScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    [self.view addSubview:self.informationScrollView];
+
+    NSLayoutConstraint *pageWidth = [self.brandCard.widthAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.widthAnchor constant:-36];
+    pageWidth.priority = UILayoutPriorityDefaultHigh;
+    [NSLayoutConstraint activateConstraints:@[
+        pageWidth,
+        [self.brandCard.widthAnchor constraintLessThanOrEqualToConstant:UI_IPAD_MAX_WIDTH],
+        [self.brandCard.centerXAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.centerXAnchor],
+        [self.brandCard.topAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.topAnchor constant:8],
+        [self.brandCard.heightAnchor constraintEqualToConstant:60],
+        [self.informationScrollView.leadingAnchor constraintEqualToAnchor:self.brandCard.leadingAnchor],
+        [self.informationScrollView.trailingAnchor constraintEqualToAnchor:self.brandCard.trailingAnchor],
+        [self.informationScrollView.topAnchor constraintEqualToAnchor:self.brandCard.bottomAnchor constant:13],
+        [self.bottomBar.leadingAnchor constraintEqualToAnchor:self.brandCard.leadingAnchor constant:7],
+        [self.bottomBar.trailingAnchor constraintEqualToAnchor:self.brandCard.trailingAnchor constant:-7],
+        [self.bottomBar.heightAnchor constraintEqualToConstant:64],
+        [self.bottomBar.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-8]
+    ]];
+
+    self.contentView = [[UIView alloc] init];
+    self.contentView.translatesAutoresizingMaskIntoConstraints = NO;
+    [self.informationScrollView addSubview:self.contentView];
+    UIStackView *stackView = self.mainStack = [[UIStackView alloc] init];
+    stackView.axis = UILayoutConstraintAxisVertical;
+    stackView.alignment = UIStackViewAlignmentFill;
+    stackView.spacing = 13;
+    stackView.translatesAutoresizingMaskIntoConstraints = NO;
     [self.contentView addSubview:stackView];
     [NSLayoutConstraint activateConstraints:@[
+        [self.contentView.leadingAnchor constraintEqualToAnchor:self.informationScrollView.contentLayoutGuide.leadingAnchor],
+        [self.contentView.trailingAnchor constraintEqualToAnchor:self.informationScrollView.contentLayoutGuide.trailingAnchor],
+        [self.contentView.topAnchor constraintEqualToAnchor:self.informationScrollView.contentLayoutGuide.topAnchor],
+        [self.contentView.bottomAnchor constraintEqualToAnchor:self.informationScrollView.contentLayoutGuide.bottomAnchor],
+        [self.contentView.widthAnchor constraintEqualToAnchor:self.informationScrollView.frameLayoutGuide.widthAnchor],
         [stackView.leadingAnchor constraintEqualToAnchor:self.contentView.leadingAnchor],
         [stackView.trailingAnchor constraintEqualToAnchor:self.contentView.trailingAnchor],
         [stackView.topAnchor constraintEqualToAnchor:self.contentView.topAnchor],
-        [stackView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor],
+        [stackView.bottomAnchor constraintEqualToAnchor:self.contentView.bottomAnchor constant:-8]
     ]];
-
-    if (self.roseScrollView) {
-        UIView *spacing = [[UIView alloc] init];
-        [stackView addArrangedSubview:spacing];
-        [spacing.heightAnchor constraintEqualToConstant:18].active = YES;
-    }
-
-    //Header
-    DOHeaderView *headerView = [[DOHeaderView alloc] initWithImage: [UIImage imageNamed:@"Dopamine"] subtitles: @[
-        [DOGlobalAppearance mainSubtitleString:[[DOEnvironmentManager sharedManager] versionSupportString]],
-        [DOGlobalAppearance secondarySubtitleString:DOLocalizedString(@"Credits_Made_By")],
-    ]];
-    
-    [stackView addArrangedSubview:headerView];
-    if (self.roseScrollView) [stackView setCustomSpacing:28 afterView:headerView];
-    // 版本与注入模式、应用构建信息、运行时长共用作者行的边界与行距。
-    self.systemVersionLabel = [self addInformationRowToHeader:headerView titleKey:@"System version: %@"];
-    self.appBuildInfoLabel = [self addInformationRowToHeader:headerView titleKey:@"Build version: %@"];
-    self.appBuildTimeLabel = [self addInformationRowToHeader:headerView titleKey:@"Build time: %@"];
-    self.systemUptimeLabel = [self addInformationRowToHeader:headerView titleKey:@"System boot time: %@"];
-    NSString *issueNotice = [@"\n" stringByAppendingString:DOLocalizedString(@"If you encounter any issues, please reproduce them using the official version before reporting.")];
-    [headerView addSubtitle:[DOGlobalAppearance secondarySubtitleString:issueNotice]];
+    [stackView addArrangedSubview:[self makeInformationCard]];
     [self refreshSystemInformation];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(resumeSystemInformationUpdates) name:UIApplicationDidBecomeActiveNotification object:nil];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(stopUptimeTimer) name:UIApplicationWillResignActiveNotification object:nil];
 
-    [NSLayoutConstraint activateConstraints:@[
-        [headerView.leadingAnchor constraintEqualToAnchor:stackView.leadingAnchor constant:self.roseScrollView ? 0 : 5],
-        [headerView.trailingAnchor constraintEqualToAnchor:stackView.trailingAnchor]
-    ]];
-    
-    //Action Menu
-    DOActionMenuView *actionView = [[DOActionMenuView alloc] initWithActions:@[
-        [UIAction actionWithTitle:DOLocalizedString(@"Menu_Settings_Title") image:[UIImage systemImageNamed:@"gearshape" withConfiguration:[DOGlobalAppearance smallIconImageConfiguration]] identifier:@"settings" handler:^(__kindof UIAction * _Nonnull action) {
-            [self.navigationController pushViewController:[[DOSettingsController alloc] init] animated:YES];
-        }],
-        [UIAction actionWithTitle:DOLocalizedString(@"Menu_Restart_SpringBoard_Title") image:[UIImage systemImageNamed:@"arrow.clockwise" withConfiguration:[DOGlobalAppearance smallIconImageConfiguration]] identifier:@"respring" handler:^(__kindof UIAction * _Nonnull action) {
-            [self fadeToBlack:^{
-                [[DOEnvironmentManager sharedManager] respring];
-            }];
-        }],
-        [UIAction actionWithTitle:DOLocalizedString(@"Menu_Reboot_Userspace_Title") image:[UIImage systemImageNamed:@"arrow.clockwise.circle" withConfiguration:[DOGlobalAppearance smallIconImageConfiguration]] identifier:@"reboot-userspace" handler:^(__kindof UIAction * _Nonnull action) {
-            [self fadeToBlack:^{
-                [[DOEnvironmentManager sharedManager] rebootUserspace];
-            }];
-        }],
-        [UIAction actionWithTitle:DOLocalizedString(@"Menu_Credits_Title") image:[UIImage systemImageNamed:@"info.circle" withConfiguration:[DOGlobalAppearance smallIconImageConfiguration]] identifier:@"credits" handler:^(__kindof UIAction * _Nonnull action) {
-            [self.navigationController pushViewController:[[DOCreditsViewController alloc] init] animated:YES];
-        }]
-    ] delegate:self];
-    
-    if (self.roseScrollView) {
-        UIView *status = [[UIView alloc] init];
-        self.roseStateLabel = [[UILabel alloc] init];
-        self.roseStateLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        self.roseStateLabel.textColor = [DOGlobalAppearance primaryTextColor];
-        self.roseStateLabel.font = [UIFont systemFontOfSize:23 weight:UIFontWeightSemibold];
-        self.roseStateLabel.textAlignment = NSTextAlignmentCenter;
-        self.roseStateLabel.numberOfLines = 0;
-        self.roseStateLabel.accessibilityTraits = UIAccessibilityTraitHeader;
-        [status addSubview:self.roseStateLabel];
-        [NSLayoutConstraint activateConstraints:@[
-            [self.roseStateLabel.leadingAnchor constraintEqualToAnchor:status.leadingAnchor],
-            [self.roseStateLabel.trailingAnchor constraintEqualToAnchor:status.trailingAnchor],
-            [self.roseStateLabel.topAnchor constraintEqualToAnchor:status.topAnchor constant:16],
-            [self.roseStateLabel.bottomAnchor constraintEqualToAnchor:status.bottomAnchor constant:-16]
-        ]];
-        [stackView addArrangedSubview:status];
-        [stackView setCustomSpacing:22 afterView:status];
-    }
-    [stackView addArrangedSubview: actionView];
-    if (self.roseScrollView) [stackView setCustomSpacing:26 afterView:actionView];
-
-    [NSLayoutConstraint activateConstraints:@[
-        [actionView.leadingAnchor constraintEqualToAnchor:stackView.leadingAnchor],
-        [actionView.trailingAnchor constraintEqualToAnchor:stackView.trailingAnchor],
-    ]];
-    
-    
-    UIView *buttonPlaceHolder = [[UIView alloc] init];
-    [buttonPlaceHolder setTranslatesAutoresizingMaskIntoConstraints:NO];
-    if (!self.roseScrollView) {
-        [stackView addArrangedSubview:buttonPlaceHolder];
-        [buttonPlaceHolder.heightAnchor constraintEqualToConstant:60].active = YES;
-    }
+    // The original restart handlers and their isJailbroken gate are retained.
+    __weak typeof(self) weakSelf = self;
+    UIAction *respringAction = [UIAction actionWithTitle:DOLocalizedString(@"Menu_Restart_SpringBoard_Title") image:[UIImage systemImageNamed:@"arrow.clockwise"] identifier:@"respring" handler:^(__kindof UIAction * _Nonnull action) {
+        [weakSelf fadeToBlack:^{
+            [[DOEnvironmentManager sharedManager] respring];
+        }];
+    }];
+    UIAction *userspaceAction = [UIAction actionWithTitle:DOLocalizedString(@"Menu_Reboot_Userspace_Title") image:[UIImage systemImageNamed:@"arrow.clockwise.circle"] identifier:@"reboot-userspace" handler:^(__kindof UIAction * _Nonnull action) {
+        [weakSelf fadeToBlack:^{
+            [[DOEnvironmentManager sharedManager] rebootUserspace];
+        }];
+    }];
+    self.respringButton = [self restartCardWithAction:respringAction subtitle:DOHomeCaption(@"Refresh system interface", @"刷新系统界面")];
+    self.userspaceButton = [self restartCardWithAction:userspaceAction subtitle:DOHomeCaption(@"Reload the environment", @"重新加载环境")];
+    UIStackView *actionView = [[UIStackView alloc] initWithArrangedSubviews:@[self.respringButton, self.userspaceButton]];
+    actionView.axis = UILayoutConstraintAxisHorizontal;
+    actionView.distribution = UIStackViewDistributionFillEqually;
+    actionView.alignment = UIStackViewAlignmentFill;
+    actionView.spacing = 11;
+    [stackView addArrangedSubview:actionView];
+    [actionView.heightAnchor constraintEqualToConstant:97].active = YES;
     
     //Jailbreak Button
     BOOL isJailbroken = [[DOEnvironmentManager sharedManager] isJailbroken] || [[DOEnvironmentManager sharedManager] isJailbrokenWithOtherJailbreak];
@@ -222,7 +151,8 @@
         jailbreakButtonImage = [UIImage systemImageNamed:@"lock.slash" withConfiguration:[DOGlobalAppearance smallIconImageConfiguration]];
     
     self.jailbreakBtn = [[DOJailbreakButton alloc] initWithAction: [UIAction actionWithTitle:jailbreakButtonTitle image:jailbreakButtonImage identifier:@"jailbreak" handler:^(__kindof UIAction * _Nonnull action) {
-
+        __strong typeof(weakSelf) self = weakSelf;
+        if (!self) return;
 
 /********************************** roothide specific ************************************/
         if(otherJailbreakActived(false)) {
@@ -237,22 +167,17 @@
 /********************************** roothide specific ************************************/
 
 
-        [actionView hide];
-        // 移出缩放容器后固定动画起点，避免日志初始化布局时位置归零。
-        CGRect buttonFrame = [self.jailbreakBtn convertRect:self.jailbreakBtn.bounds toView:self.view];
-        [NSLayoutConstraint deactivateConstraints:self.jailbreakButtonConstraints];
-        [self.view addSubview:self.jailbreakBtn];
-        [NSLayoutConstraint activateConstraints:(self.jailbreakButtonConstraints = @[
-            [self.jailbreakBtn.leftAnchor constraintEqualToAnchor:self.view.leftAnchor constant:CGRectGetMinX(buttonFrame)],
-            [self.jailbreakBtn.topAnchor constraintEqualToAnchor:self.view.topAnchor constant:CGRectGetMinY(buttonFrame)],
-            [self.jailbreakBtn.widthAnchor constraintEqualToConstant:CGRectGetWidth(buttonFrame)],
-            [self.jailbreakBtn.heightAnchor constraintEqualToConstant:CGRectGetHeight(buttonFrame)]
-        ])];
-        [self.jailbreakBtn expandButton: self.jailbreakButtonConstraints];
-
+        self.informationScrollView.userInteractionEnabled = NO;
+        self.bottomBar.userInteractionEnabled = NO;
         self.updateButton.userInteractionEnabled = NO;
-        [UIView animateWithDuration:0.75 delay:0 usingSpringWithDamping:0.9 initialSpringVelocity:2.0  options: UIViewAnimationOptionCurveEaseInOut animations:^{
-            [headerView setTransform:CGAffineTransformMakeTranslation(0, -25)];
+        [self.view layoutIfNeeded];
+        [self.view bringSubviewToFront:self.jailbreakBtn];
+        [self.jailbreakBtn expandButton:self.jailbreakButtonConstraints];
+        if (!self.jailbreakBtn.didExpand) return;
+        [UIView animateWithDuration:0.75 delay:0 usingSpringWithDamping:0.9 initialSpringVelocity:2.0 options:UIViewAnimationOptionCurveEaseInOut animations:^{
+            self.informationScrollView.alpha = 0;
+            self.informationScrollView.transform = CGAffineTransformMakeTranslation(0, -25);
+            self.bottomBar.alpha = 0;
             self.updateButton.alpha = 0;
         } completion:nil];
         
@@ -260,28 +185,14 @@
         
     }]];
     self.jailbreakBtn.enabled = !isJailbroken && isSupported;
-    if (self.roseStateLabel) {
-        self.roseStateLabel.text = !isSupported ? DOLocalizedString(@"Unsupported") :
-            (isJailbroken ? DOLocalizedString(@"Status_Title_Jailbroken") : DOLocalizedString(@"Rose_Status_Not_Jailbroken"));
-    }
-
-    if (self.roseScrollView) {
-        [self.view addSubview:self.jailbreakBtn];
-        [NSLayoutConstraint activateConstraints:(self.jailbreakButtonConstraints = @[
-            [self.jailbreakBtn.leadingAnchor constraintEqualToAnchor:self.roseFrame.leadingAnchor constant:16],
-            [self.jailbreakBtn.trailingAnchor constraintEqualToAnchor:self.roseFrame.trailingAnchor constant:-16],
-            [self.jailbreakBtn.heightAnchor constraintEqualToConstant:60],
-            [self.jailbreakBtn.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-16]
-        ])];
-    } else {
-        [self.contentView addSubview:self.jailbreakBtn];
-        [NSLayoutConstraint activateConstraints:(self.jailbreakButtonConstraints = @[
-            [self.jailbreakBtn.leadingAnchor constraintEqualToAnchor:stackView.leadingAnchor],
-            [self.jailbreakBtn.trailingAnchor constraintEqualToAnchor:stackView.trailingAnchor],
-            [self.jailbreakBtn.heightAnchor constraintEqualToAnchor:buttonPlaceHolder.heightAnchor],
-            [self.jailbreakBtn.centerYAnchor constraintEqualToAnchor:buttonPlaceHolder.centerYAnchor]
-        ])];
-    }
+    [self.view addSubview:self.jailbreakBtn];
+    [NSLayoutConstraint activateConstraints:(self.jailbreakButtonConstraints = @[
+        [self.jailbreakBtn.leadingAnchor constraintEqualToAnchor:self.brandCard.leadingAnchor],
+        [self.jailbreakBtn.trailingAnchor constraintEqualToAnchor:self.brandCard.trailingAnchor],
+        [self.jailbreakBtn.heightAnchor constraintEqualToConstant:74],
+        [self.jailbreakBtn.bottomAnchor constraintEqualToAnchor:self.bottomBar.topAnchor constant:-13]
+    ])];
+    [self.informationScrollView.bottomAnchor constraintEqualToAnchor:self.jailbreakBtn.topAnchor constant:-13].active = YES;
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0), ^{
         if ([[DOUIManager sharedInstance] environmentUpdateAvailable])
@@ -299,22 +210,255 @@
     });
 }
 
-// 按安全区与内容自然尺寸计算统一比例，同步缩放文字、图标、按钮和间距。
-- (void)viewDidLayoutSubviews
+- (UIView *)glassCardWithRadius:(CGFloat)radius
 {
-    [super viewDidLayoutSubviews];
-    if (self.roseScrollView || self.jailbreakBtn.didExpand) return;
-    CGRect safeFrame = self.view.safeAreaLayoutGuide.layoutFrame;
-    BOOL isPad = UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad;
-    CGFloat width = isPad ? MIN(safeFrame.size.width * 0.8, UI_IPAD_MAX_WIDTH) : MAX(375, safeFrame.size.width) - UI_PADDING * 2;
-    CGFloat availableHeight = MIN(safeFrame.size.height - 24, self.view.bounds.size.height * ([DOGlobalAppearance isHomeButtonDevice] ? 0.78 : 0.73));
-    if (width <= 0 || availableHeight <= 0) return;
-    CGSize size = [self.mainStack systemLayoutSizeFittingSize:CGSizeMake(width, 0) withHorizontalFittingPriority:UILayoutPriorityRequired verticalFittingPriority:UILayoutPriorityFittingSizeLevel];
-    CGFloat height = MAX(size.height, availableHeight);
-    CGFloat scale = MIN(1, MIN((safeFrame.size.width - UI_PADDING * 2) / width, availableHeight / height));
-    self.contentView.bounds = CGRectMake(0, 0, width, height);
-    self.contentView.center = CGPointMake(CGRectGetMidX(safeFrame), CGRectGetMidY(safeFrame));
-    self.contentView.transform = CGAffineTransformMakeScale(scale, scale);
+    UIView *card = [[UIView alloc] init];
+    card.translatesAutoresizingMaskIntoConstraints = NO;
+    card.layer.cornerRadius = radius;
+    card.layer.cornerCurve = kCACornerCurveContinuous;
+    [DOGlobalAppearance applyLiquidGlassToView:card];
+    return card;
+}
+
+- (UILabel *)labelWithText:(NSString *)text size:(CGFloat)size weight:(UIFontWeight)weight color:(UIColor *)color
+{
+    UILabel *label = [[UILabel alloc] init];
+    label.text = text;
+    label.font = [UIFont systemFontOfSize:size weight:weight];
+    label.textColor = color;
+    label.numberOfLines = 0;
+    label.translatesAutoresizingMaskIntoConstraints = NO;
+    return label;
+}
+
+- (UIView *)makeBrandCard
+{
+    UIView *card = [self glassCardWithRadius:23];
+    UILabel *mark = [self labelWithText:@"D" size:18 weight:UIFontWeightSemibold color:[DOGlobalAppearance accentColor]];
+    mark.textAlignment = NSTextAlignmentCenter;
+    mark.backgroundColor = [DOGlobalAppearance tileColor];
+    mark.layer.cornerRadius = 11;
+    mark.layer.cornerCurve = kCACornerCurveContinuous;
+    mark.layer.masksToBounds = YES;
+    mark.layer.borderWidth = 0.5;
+    mark.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
+    UILabel *brand = [self labelWithText:@"Dopamine" size:23 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]];
+    UIStackView *group = [[UIStackView alloc] initWithArrangedSubviews:@[mark, brand]];
+    group.axis = UILayoutConstraintAxisHorizontal;
+    group.alignment = UIStackViewAlignmentCenter;
+    group.spacing = 10;
+    group.translatesAutoresizingMaskIntoConstraints = NO;
+    [card addSubview:group];
+    [NSLayoutConstraint activateConstraints:@[
+        [mark.widthAnchor constraintEqualToConstant:31],
+        [mark.heightAnchor constraintEqualToConstant:31],
+        [group.centerXAnchor constraintEqualToAnchor:card.centerXAnchor],
+        [group.centerYAnchor constraintEqualToAnchor:card.centerYAnchor],
+        [group.leadingAnchor constraintGreaterThanOrEqualToAnchor:card.leadingAnchor constant:13],
+        [group.trailingAnchor constraintLessThanOrEqualToAnchor:card.trailingAnchor constant:-13]
+    ]];
+    card.isAccessibilityElement = YES;
+    card.accessibilityLabel = @"Dopamine";
+    card.accessibilityTraits = UIAccessibilityTraitHeader;
+    return card;
+}
+
+- (UIStackView *)informationFieldWithTitleKey:(NSString *)key valueLabel:(UILabel *)valueLabel
+{
+    NSString *title = [[NSString stringWithFormat:DOLocalizedString(key), @""] stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceCharacterSet];
+    UILabel *caption = [self labelWithText:title size:10 weight:UIFontWeightRegular color:[DOGlobalAppearance secondaryTextColor]];
+    UIStackView *field = [[UIStackView alloc] initWithArrangedSubviews:@[caption, valueLabel]];
+    field.axis = UILayoutConstraintAxisVertical;
+    field.alignment = UIStackViewAlignmentFill;
+    field.spacing = 3;
+    return field;
+}
+
+- (UIButton *)restartCardWithAction:(UIAction *)action subtitle:(NSString *)subtitle
+{
+    UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+    button.layer.cornerRadius = 23;
+    [DOGlobalAppearance applyLiquidGlassToView:button];
+    [button addAction:action forControlEvents:UIControlEventTouchUpInside];
+    UIImageView *icon = [[UIImageView alloc] initWithImage:action.image];
+    icon.preferredSymbolConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular];
+    icon.tintColor = [DOGlobalAppearance accentColor];
+    icon.contentMode = UIViewContentModeScaleAspectFit;
+    icon.backgroundColor = [DOGlobalAppearance tileColor];
+    icon.layer.cornerRadius = 10;
+    icon.layer.masksToBounds = YES;
+    UILabel *title = [self labelWithText:action.title size:13 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]];
+    title.adjustsFontSizeToFitWidth = YES;
+    title.minimumScaleFactor = 0.8;
+    title.numberOfLines = 1;
+    UILabel *detail = [self labelWithText:subtitle size:10 weight:UIFontWeightRegular color:[DOGlobalAppearance secondaryTextColor]];
+    detail.numberOfLines = 1;
+    detail.adjustsFontSizeToFitWidth = YES;
+    UIStackView *content = [[UIStackView alloc] initWithArrangedSubviews:@[icon, title, detail]];
+    content.axis = UILayoutConstraintAxisVertical;
+    content.alignment = UIStackViewAlignmentLeading;
+    content.spacing = 5;
+    content.userInteractionEnabled = NO;
+    content.translatesAutoresizingMaskIntoConstraints = NO;
+    [button addSubview:content];
+    [NSLayoutConstraint activateConstraints:@[
+        [icon.widthAnchor constraintEqualToConstant:28],
+        [icon.heightAnchor constraintEqualToConstant:28],
+        [content.leadingAnchor constraintEqualToAnchor:button.leadingAnchor constant:13],
+        [content.trailingAnchor constraintEqualToAnchor:button.trailingAnchor constant:-13],
+        [content.centerYAnchor constraintEqualToAnchor:button.centerYAnchor]
+    ]];
+    button.enabled = [[DOEnvironmentManager sharedManager] isJailbroken];
+    button.alpha = button.enabled ? 1 : 0.55;
+    button.accessibilityLabel = action.title;
+    button.accessibilityHint = subtitle;
+    return button;
+}
+
+- (UIView *)makeBottomBar
+{
+    UIView *bar = [self glassCardWithRadius:32];
+    UIStackView *tabs = [[UIStackView alloc] init];
+    tabs.axis = UILayoutConstraintAxisHorizontal;
+    tabs.distribution = UIStackViewDistributionFillEqually;
+    tabs.spacing = 3;
+    tabs.translatesAutoresizingMaskIntoConstraints = NO;
+    [bar addSubview:tabs];
+    [NSLayoutConstraint activateConstraints:@[
+        [tabs.leadingAnchor constraintEqualToAnchor:bar.leadingAnchor constant:5],
+        [tabs.trailingAnchor constraintEqualToAnchor:bar.trailingAnchor constant:-5],
+        [tabs.topAnchor constraintEqualToAnchor:bar.topAnchor constant:5],
+        [tabs.bottomAnchor constraintEqualToAnchor:bar.bottomAnchor constant:-5]
+    ]];
+    NSArray<NSString *> *names = @[DOHomeCaption(@"Home", @"主页"), DOLocalizedString(@"Menu_Settings_Title"), DOHomeCaption(@"About", @"关于")];
+    NSArray<NSString *> *symbols = @[@"house", @"slider.horizontal.3", @"info.circle"];
+    __weak typeof(self) weakSelf = self;
+    for (NSUInteger index = 0; index < names.count; index++) {
+        UIButton *tab = [UIButton buttonWithType:UIButtonTypeCustom];
+        tab.layer.cornerRadius = 27;
+        tab.layer.cornerCurve = kCACornerCurveContinuous;
+        if (index == 0) {
+            tab.backgroundColor = [DOGlobalAppearance selectedColor];
+            tab.layer.borderWidth = 0.5;
+            tab.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
+            tab.accessibilityTraits |= UIAccessibilityTraitSelected;
+        }
+        UIImageView *image = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:symbols[index] withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular]]];
+        image.tintColor = [DOGlobalAppearance accentColor];
+        image.contentMode = UIViewContentModeScaleAspectFit;
+        UILabel *title = [self labelWithText:names[index] size:10 weight:UIFontWeightMedium color:[DOGlobalAppearance primaryTextColor]];
+        title.numberOfLines = 1;
+        title.textAlignment = NSTextAlignmentCenter;
+        UIStackView *content = [[UIStackView alloc] initWithArrangedSubviews:@[image, title]];
+        content.axis = UILayoutConstraintAxisVertical;
+        content.alignment = UIStackViewAlignmentCenter;
+        content.spacing = 4;
+        content.userInteractionEnabled = NO;
+        content.translatesAutoresizingMaskIntoConstraints = NO;
+        [tab addSubview:content];
+        [NSLayoutConstraint activateConstraints:@[
+            [image.heightAnchor constraintEqualToConstant:21],
+            [image.widthAnchor constraintEqualToConstant:21],
+            [content.centerXAnchor constraintEqualToAnchor:tab.centerXAnchor],
+            [content.centerYAnchor constraintEqualToAnchor:tab.centerYAnchor],
+            [content.leadingAnchor constraintGreaterThanOrEqualToAnchor:tab.leadingAnchor constant:4],
+            [content.trailingAnchor constraintLessThanOrEqualToAnchor:tab.trailingAnchor constant:-4]
+        ]];
+        tab.accessibilityLabel = names[index];
+        [tab addAction:[UIAction actionWithHandler:^(__kindof UIAction *action) {
+            DOMainViewController *owner = weakSelf;
+            if (!owner || owner.jailbreakBtn.didExpand || owner.navigationController.topViewController != owner) return;
+            if (index == 1) [owner.navigationController pushViewController:[[DOSettingsController alloc] init] animated:YES];
+            else if (index == 2) [owner.navigationController pushViewController:[[DOCreditsViewController alloc] init] animated:YES];
+        }] forControlEvents:UIControlEventTouchUpInside];
+        [tabs addArrangedSubview:tab];
+    }
+    return bar;
+}
+
+- (UIView *)makeInformationCard
+{
+    UIView *card = [self glassCardWithRadius:27];
+    UIStackView *content = [[UIStackView alloc] init];
+    content.axis = UILayoutConstraintAxisVertical;
+    content.alignment = UIStackViewAlignmentFill;
+    content.spacing = 11;
+    content.translatesAutoresizingMaskIntoConstraints = NO;
+    [card addSubview:content];
+    [NSLayoutConstraint activateConstraints:@[
+        [content.leadingAnchor constraintEqualToAnchor:card.leadingAnchor constant:17],
+        [content.trailingAnchor constraintEqualToAnchor:card.trailingAnchor constant:-17],
+        [content.topAnchor constraintEqualToAnchor:card.topAnchor constant:18],
+        [content.bottomAnchor constraintEqualToAnchor:card.bottomAnchor constant:-15]
+    ]];
+    UILabel *heading = [self labelWithText:DOHomeCaption(@"Device information", @"设备信息") size:11 weight:UIFontWeightMedium color:[DOGlobalAppearance secondaryTextColor]];
+    heading.accessibilityTraits = UIAccessibilityTraitHeader;
+    [content addArrangedSubview:heading];
+
+    UIView *details = [[UIView alloc] init];
+    details.backgroundColor = [DOGlobalAppearance informationPanelColor];
+    details.layer.cornerRadius = 19;
+    details.layer.cornerCurve = kCACornerCurveContinuous;
+    [content addArrangedSubview:details];
+    UIStackView *fields = [[UIStackView alloc] init];
+    fields.axis = UILayoutConstraintAxisVertical;
+    fields.alignment = UIStackViewAlignmentFill;
+    fields.spacing = 12;
+    fields.translatesAutoresizingMaskIntoConstraints = NO;
+    [details addSubview:fields];
+    [NSLayoutConstraint activateConstraints:@[
+        [fields.leadingAnchor constraintEqualToAnchor:details.leadingAnchor constant:13],
+        [fields.trailingAnchor constraintEqualToAnchor:details.trailingAnchor constant:-13],
+        [fields.topAnchor constraintEqualToAnchor:details.topAnchor constant:14],
+        [fields.bottomAnchor constraintEqualToAnchor:details.bottomAnchor constant:-14]
+    ]];
+    [fields addArrangedSubview:[self labelWithText:[[DOEnvironmentManager sharedManager] versionSupportString] size:12 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]]];
+    [fields addArrangedSubview:[self labelWithText:DOLocalizedString(@"Credits_Made_By") size:11 weight:UIFontWeightMedium color:[DOGlobalAppearance primaryTextColor]]];
+
+    self.systemVersionLabel = [self labelWithText:@"" size:11 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]];
+    self.appBuildInfoLabel = [self labelWithText:@"" size:11 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]];
+    self.appBuildTimeLabel = [self labelWithText:@"" size:11 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]];
+    self.systemUptimeLabel = [self labelWithText:@"" size:11 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]];
+    self.systemUptimeLabel.font = [UIFont monospacedDigitSystemFontOfSize:11 weight:UIFontWeightSemibold];
+    NSArray<UIStackView *> *rows = @[
+        [[UIStackView alloc] initWithArrangedSubviews:@[
+            [self informationFieldWithTitleKey:@"System version: %@" valueLabel:self.systemVersionLabel],
+            [self informationFieldWithTitleKey:@"Build version: %@" valueLabel:self.appBuildInfoLabel]]],
+        [[UIStackView alloc] initWithArrangedSubviews:@[
+            [self informationFieldWithTitleKey:@"Build time: %@" valueLabel:self.appBuildTimeLabel],
+            [self informationFieldWithTitleKey:@"System boot time: %@" valueLabel:self.systemUptimeLabel]]]
+    ];
+    for (UIStackView *row in rows) {
+        row.axis = UILayoutConstraintAxisHorizontal;
+        row.distribution = UIStackViewDistributionFillEqually;
+        row.alignment = UIStackViewAlignmentTop;
+        row.spacing = 10;
+        [fields addArrangedSubview:row];
+    }
+    UIView *separator = [[UIView alloc] init];
+    separator.backgroundColor = [DOGlobalAppearance glassHighlightColor];
+    [fields addArrangedSubview:separator];
+    [separator.heightAnchor constraintEqualToConstant:0.5].active = YES;
+    UILabel *notice = [self labelWithText:DOLocalizedString(@"If you encounter any issues, please reproduce them using the official version before reporting.") size:10 weight:UIFontWeightRegular color:[DOGlobalAppearance secondaryTextColor]];
+    notice.textAlignment = NSTextAlignmentCenter;
+    [fields addArrangedSubview:notice];
+
+    UIView *footer = [[UIView alloc] init];
+    UILabel *rootHide = [self labelWithText:@"RootHide" size:10 weight:UIFontWeightMedium color:[DOGlobalAppearance secondaryTextColor]];
+    rootHide.textAlignment = NSTextAlignmentCenter;
+    rootHide.backgroundColor = [DOGlobalAppearance tileColor];
+    rootHide.layer.cornerRadius = 8;
+    rootHide.layer.masksToBounds = YES;
+    [footer addSubview:rootHide];
+    [content addArrangedSubview:footer];
+    [NSLayoutConstraint activateConstraints:@[
+        [footer.heightAnchor constraintEqualToConstant:22],
+        [rootHide.leadingAnchor constraintEqualToAnchor:footer.leadingAnchor],
+        [rootHide.topAnchor constraintEqualToAnchor:footer.topAnchor],
+        [rootHide.bottomAnchor constraintEqualToAnchor:footer.bottomAnchor],
+        [rootHide.widthAnchor constraintEqualToConstant:64]
+    ]];
+    return card;
 }
 
 - (NSString *)jailbreakButtonTitle
@@ -371,16 +515,16 @@
 {
     DOEnvironmentManager *environment = [DOEnvironmentManager sharedManager];
     NSString *versionAndMode = [NSString stringWithFormat:@"%@ (%@)", environment.systemVersion ?: UIDevice.currentDevice.systemVersion, environment.injectionModeDescription];
-    self.systemVersionLabel.attributedText = [DOGlobalAppearance secondarySubtitleString:versionAndMode];
-    self.appBuildInfoLabel.attributedText = [DOGlobalAppearance secondarySubtitleString:environment.appVersion ?: DOLocalizedString(@"Unknown")];
-    self.appBuildTimeLabel.attributedText = [DOGlobalAppearance secondarySubtitleString:[self appBuildTimeDescription]];
+    self.systemVersionLabel.text = versionAndMode;
+    self.appBuildInfoLabel.text = environment.appVersion ?: DOLocalizedString(@"Unknown");
+    self.appBuildTimeLabel.text = [self appBuildTimeDescription];
     [self refreshSystemUptime];
 }
 
 // 每次直接读取系统时钟刷新时长，避免逐秒累加造成误差。
 - (void)refreshSystemUptime
 {
-    self.systemUptimeLabel.attributedText = [DOGlobalAppearance secondarySubtitleString:[self systemUptimeDescription]];
+    self.systemUptimeLabel.text = [self systemUptimeDescription];
 }
 
 // 仅在主页可见且应用活跃时每秒刷新，滚动期间也保持计时。
@@ -409,6 +553,11 @@
     [super viewWillAppear:animated];
     self.informationVisible = YES;
     [self resumeSystemInformationUpdates];
+    BOOL canRestart = [[DOEnvironmentManager sharedManager] isJailbroken];
+    self.respringButton.enabled = canRestart;
+    self.userspaceButton.enabled = canRestart;
+    self.respringButton.alpha = canRestart ? 1 : 0.55;
+    self.userspaceButton.alpha = canRestart ? 1 : 0.55;
     [self.jailbreakBtn.button setTitle:[self jailbreakButtonTitle] forState:UIControlStateNormal];
 }
 
@@ -444,22 +593,16 @@
                 workaroundMessage = [workaroundMessage stringByAppendingString:[NSString stringWithFormat:@"\n\n%@", DOLocalizedString(@"Respring_Required_Notice_A8")]];
             }
 
-            UIAlertController *contiguousMappingWorkaroundAlertController = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Respring_Required") message:workaroundMessage preferredStyle:UIAlertControllerStyleAlert];
-            
-            UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Respring_Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-                exit(0);
-            }];
-            
-            UIAlertAction *workaroundAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Apply_Workaround") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [jailbreaker applyContiguousMappingWorkaround];
-            }];
-            
-            [contiguousMappingWorkaroundAlertController addAction:cancelAction];
-            [contiguousMappingWorkaroundAlertController addAction:workaroundAction];
-            contiguousMappingWorkaroundAlertController.preferredAction = workaroundAction;
-
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self presentViewController:contiguousMappingWorkaroundAlertController animated:YES completion:nil];
+                UIAlertController *alert = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Respring_Required") message:workaroundMessage preferredStyle:UIAlertControllerStyleAlert];
+                UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Respring_Cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) { exit(0); }];
+                UIAlertAction *workaroundAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Apply_Workaround") style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+                    [jailbreaker applyContiguousMappingWorkaround];
+                }];
+                [alert addAction:cancelAction];
+                [alert addAction:workaroundAction];
+                alert.preferredAction = workaroundAction;
+                [self presentViewController:alert animated:YES completion:nil];
             });
             return;
         }
@@ -477,9 +620,11 @@
         dispatch_async(dispatch_get_main_queue(), ^{
             if (error && showLogs) {
                 [[DOUIManager sharedInstance] sendLog:[NSString stringWithFormat:@"Jailbreak failed with error: %@", error] debug:NO];
+                [self.jailbreakBtn showResultTitle:DOLocalizedString(@"Log_Error") failed:YES];
                 [self.navigationController pushViewController:[[DOLogCrashViewController alloc] initWithTitle:[error localizedDescription]] animated:YES];
             }
             else if (error && !showLogs) {
+                [self.jailbreakBtn showResultTitle:DOLocalizedString(@"Log_Error") failed:YES];
                 // Used when there is an error that is explainable in such detail that additional logs are not needed
                 UIAlertController *alertController = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Log_Error") message:[error localizedDescription] preferredStyle:UIAlertControllerStyleAlert];
                 UIAlertAction *rebootAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Reboot") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
@@ -489,6 +634,7 @@
                 [self presentViewController:alertController animated:YES completion:nil];
             }
             else if (didRemove) {
+                [self.jailbreakBtn showResultTitle:DOLocalizedString(@"Removed_Jailbreak_Alert_Title") failed:NO];
                 UIAlertController *alertController = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Removed_Jailbreak_Alert_Title") message:DOLocalizedString(@"Removed_Jailbreak_Alert_Message") preferredStyle:UIAlertControllerStyleAlert];
                 UIAlertAction *rebootAction = [UIAlertAction actionWithTitle:DOLocalizedString(@"Button_Close") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
                     exit(0);
@@ -499,6 +645,7 @@
             else {
                 // No errors
                 [[DOUIManager sharedInstance] completeJailbreak];
+                [self.jailbreakBtn showResultTitle:DOLocalizedString(@"Status_Title_Jailbroken") failed:NO];
                 [self fadeToBlack: ^{
                     [jailbreaker finalize];
                 }];
@@ -531,19 +678,8 @@
     }] chevron:NO];
 
     self.updateButton.translatesAutoresizingMaskIntoConstraints = NO;
-    if (self.roseScrollView) {
-        [self.mainStack addArrangedSubview:self.updateButton];
-        [self.updateButton.heightAnchor constraintEqualToConstant:32].active = YES;
-    } else {
-        [self.contentView addSubview:self.updateButton];
-        // 保留 RootHide 旧主题的原有更新入口位置。
-        [self.mainStack setCustomSpacing:[DOGlobalAppearance isHomeButtonDevice] ? 50 : 60 afterView:self.mainStack.arrangedSubviews[1]];
-        [NSLayoutConstraint activateConstraints:@[
-            [self.updateButton.centerXAnchor constraintEqualToAnchor:self.contentView.centerXAnchor],
-            [self.updateButton.heightAnchor constraintEqualToConstant:30],
-            [self.updateButton.bottomAnchor constraintEqualToAnchor:self.mainStack.arrangedSubviews.lastObject.topAnchor constant:[DOGlobalAppearance isHomeButtonDevice] ? -10 : -20]
-        ]];
-    }
+    [self.mainStack addArrangedSubview:self.updateButton];
+    [self.updateButton.heightAnchor constraintEqualToConstant:32].active = YES;
 
     [self.updateButton setTransform:CGAffineTransformMakeTranslation(0, 25)];
     [self.updateButton setAlpha:0];
@@ -593,14 +729,10 @@
 
 - (void)fadeToBlack:(void (^)(void))completion
 {
-    static bool didFade = false;
-    if (didFade)
-        return;
-    didFade = true;
-    UIView *mainView = self.parentViewController.view;
-    float deviceCornerRadius = [[[UIScreen mainScreen] valueForKey:@"_displayCornerRadius"] floatValue];
-
-    mainView.layer.cornerRadius = deviceCornerRadius;
+    if (self.didFade) return;
+    self.didFade = YES;
+    UIView *mainView = self.parentViewController.view ?: self.view;
+    mainView.layer.cornerRadius = mainView.safeAreaInsets.bottom > 0 ? 32 : 0;
     mainView.layer.cornerCurve = kCACornerCurveContinuous;
     mainView.layer.masksToBounds = YES;
     

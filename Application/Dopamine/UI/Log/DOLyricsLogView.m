@@ -17,7 +17,6 @@
 {
     if (self = [super init]) {
         self.backgroundColor = UIColor.clearColor;
-        [DOGlobalAppearance applyLiquidGlassToView:self];
         self.stackView = [[UIStackView alloc] init];
         self.stackView.axis = UILayoutConstraintAxisVertical;
         self.stackView.spacing = 0;
@@ -86,6 +85,10 @@
         return;
     }
     DOLyricsLogItemView *lastItemView = self.stackView.arrangedSubviews.lastObject;
+    if (!lastItemView) {
+        [self showLog:log];
+        return;
+    }
     lastItemView.label.text = log;
 }
 

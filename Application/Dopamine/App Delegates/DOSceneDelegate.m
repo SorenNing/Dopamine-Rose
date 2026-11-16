@@ -23,20 +23,31 @@
 
 + (void)relaunch
 {
-    UIWindowScene *windowScene = (UIWindowScene *)[[[UIApplication sharedApplication] connectedScenes] anyObject];
-    DOSceneDelegate *instance = (DOSceneDelegate *)windowScene.delegate;
-
+    if (!NSThread.isMainThread) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self relaunch]; });
+        return;
+    }
+    DOSceneDelegate *instance = nil;
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:UIWindowScene.class] || ![scene.delegate isKindOfClass:DOSceneDelegate.class]) continue;
+        if (scene.activationState == UISceneActivationStateForegroundActive || scene.activationState == UISceneActivationStateForegroundInactive) {
+            instance = (DOSceneDelegate *)scene.delegate;
+            break;
+        }
+    }
+    UIWindow *oldWindow = instance.window;
+    UIWindowScene *windowScene = oldWindow.windowScene;
+    if (!instance || !windowScene || oldWindow.alpha < 1) return;
     [UIView animateWithDuration:0.3 animations:^{
-        instance.window.alpha = 0;
+        oldWindow.alpha = 0;
     } completion:^(BOOL finished) {
-        UIWindow *window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene *)instance.window.windowScene];
+        UIWindow *window = [[UIWindow alloc] initWithWindowScene:windowScene];
+        window.alpha = 0;
         window.rootViewController = [[DONavigationController alloc] init];
-        [window makeKeyAndVisible];
         instance.window = window;
-        instance.window.alpha = 0;
-        [UIView animateWithDuration:0.3 animations:^{
-            instance.window.alpha = 1;
-        }];
+        [window makeKeyAndVisible];
+        oldWindow.hidden = YES;
+        [UIView animateWithDuration:0.3 animations:^{ window.alpha = 1; }];
     }];
 }
 

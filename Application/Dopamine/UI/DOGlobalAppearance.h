@@ -32,6 +32,9 @@ NS_ASSUME_NONNULL_BEGIN
 + (UIColor *)accentColor;
 + (UIColor *)separatorColor;
 + (UIColor *)panelColor;
++ (UIColor *)informationPanelColor;
++ (UIColor *)statusGreenColor;
++ (nullable UIWindow *)activeWindow;
 + (UIColor *)glassColor;
 + (UIColor *)tileColor;
 + (UIColor *)selectedColor;

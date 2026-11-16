@@ -36,7 +36,6 @@
         ]];        
         
         self.backgroundColor = UIColor.clearColor;
-        [DOGlobalAppearance applyLiquidGlassToView:self];
     }
     return self;
 }

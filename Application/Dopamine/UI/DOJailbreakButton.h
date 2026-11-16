@@ -26,6 +26,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (instancetype)initWithAction:(UIAction *)actions;
 - (void)expandButton:(NSArray<NSLayoutConstraint *> *)constraints;
+- (void)showResultTitle:(NSString *)title failed:(BOOL)failed;
 
 - (void)lockMutex;
 - (void)unlockMutex;

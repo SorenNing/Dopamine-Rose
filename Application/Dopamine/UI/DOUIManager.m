@@ -9,6 +9,7 @@
 #import "DOEnvironmentManager.h"
 #import "DOThemeManager.h"
 #import "DOTheme.h"
+#import "DOGlobalAppearance.h"
 #import "NSString+Version.h"
 #import <pthread.h>
 
@@ -250,14 +251,30 @@ static const BOOL DOVersionUpdateCheckEnabled = NO;
 
 - (void)shareLogRecordFromView:(UIView *)sourceView
 {
-    if (self.logRecord.count == 0)
+    if (!NSThread.isMainThread) {
+        dispatch_async(dispatch_get_main_queue(), ^{ [self shareLogRecordFromView:sourceView]; });
         return;
-
+    }
+    [_logLock lock];
     NSString *log = [self.logRecord componentsJoinedByString:@"\n"];
+    [_logLock unlock];
+    if (!log.length) return;
+    UIWindow *window = sourceView.window ?: [DOGlobalAppearance activeWindow];
+    UIViewController *presenter = window.rootViewController;
+    while (presenter) {
+        if (presenter.presentedViewController) presenter = presenter.presentedViewController;
+        else if ([presenter isKindOfClass:UINavigationController.class]) presenter = ((UINavigationController *)presenter).visibleViewController;
+        else if ([presenter isKindOfClass:UITabBarController.class]) presenter = ((UITabBarController *)presenter).selectedViewController;
+        else break;
+    }
+    if (!presenter || presenter.isBeingDismissed) return;
     UIActivityViewController *activityViewController = [[UIActivityViewController alloc] initWithActivityItems:@[log] applicationActivities:nil];
-    activityViewController.popoverPresentationController.sourceView = sourceView;
-    activityViewController.popoverPresentationController.sourceRect = sourceView.bounds;
-    [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:activityViewController animated:YES completion:nil];
+    activityViewController.overrideUserInterfaceStyle = [DOGlobalAppearance interfaceStyle];
+    activityViewController.view.tintColor = [DOGlobalAppearance accentColor];
+    UIView *anchor = sourceView.window == window ? sourceView : presenter.view;
+    activityViewController.popoverPresentationController.sourceView = anchor;
+    activityViewController.popoverPresentationController.sourceRect = anchor.bounds;
+    [presenter presentViewController:activityViewController animated:YES completion:nil];
 }
 
 - (void)completeJailbreak

@@ -155,6 +155,7 @@ jobs:
             fi
           done
           cmp "Application/Dopamine-roothide-${version}.ipa" "Application/Dopamine-roothide-${version}.tipa"
+          python3 .github/scripts/verify_liquid_glass.py "Application/Dopamine-roothide-${version}.tipa"
 
       - name: Upload IPA and TIPA
         uses: actions/upload-artifact@v4
@@ -164,3 +165,4 @@ jobs:
           path: |
             Application/Dopamine-roothide-*.ipa
             Application/Dopamine-roothide-*.tipa
+            Application/Dopamine-roothide-*.verification.json

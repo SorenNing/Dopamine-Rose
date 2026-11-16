@@ -21,6 +21,8 @@
         self.key = dictionary[@"key"] ?: @"default";
         self.imageName = dictionary[@"image"];
         self.windowColor = [self colorFromHexString:dictionary[@"windowColor"] ?: @"FF202124"];
+        self.panelColor = [self colorFromHexString:dictionary[@"panelColor"] ?: @"0EE4E6E3"];
+        self.statusGreenColor = [self colorFromHexString:dictionary[@"statusGreenColor"] ?: @"FF80A28C"];
         self.actionMenuColor = [self colorFromHexString:dictionary[@"actionMenuColor"] ?: @"CC202124"];
         self.blur = [dictionary[@"blur"] floatValue];
         self.titleShadow = [dictionary[@"titleShadow"] boolValue];
@@ -43,12 +45,16 @@
 
 - (UIColor *)colorFromHexString:(NSString *)hexString
 {
-    if (![hexString isKindOfClass:NSString.class] || hexString.length == 0)
-        return UIColor.clearColor;
+    if (![hexString isKindOfClass:NSString.class]) return UIColor.clearColor;
+    NSString *value = [hexString stringByTrimmingCharactersInSet:NSCharacterSet.whitespaceAndNewlineCharacterSet];
+    if ([value hasPrefix:@"#"]) value = [value substringFromIndex:1];
+    if (value.length != 6 && value.length != 8) return UIColor.clearColor;
+    NSCharacterSet *invalid = [[NSCharacterSet characterSetWithCharactersInString:@"0123456789abcdefABCDEF"] invertedSet];
+    if ([value rangeOfCharacterFromSet:invalid].location != NSNotFound) return UIColor.clearColor;
     unsigned int hexInt = 0;
-    NSScanner *scanner = [NSScanner scannerWithString:hexString];
-    [scanner scanHexInt:&hexInt];
-    CGFloat alpha = hexString.length > 6 ? ((hexInt & 0xFF000000) >> 24) / 255.0 : 1.0;
+    NSScanner *scanner = [NSScanner scannerWithString:value];
+    if (![scanner scanHexInt:&hexInt] || !scanner.isAtEnd) return UIColor.clearColor;
+    CGFloat alpha = value.length == 8 ? ((hexInt & 0xFF000000) >> 24) / 255.0 : 1.0;
     return [UIColor colorWithRed:((hexInt & 0xFF0000) >> 16) / 255.0
                            green:((hexInt & 0xFF00) >> 8) / 255.0
                             blue:(hexInt & 0xFF) / 255.0
@@ -57,8 +63,12 @@
 
 - (UIImage *)image
 {
-    if (_image == nil)
-        _image = [[UIImage imageNamed:self.imageName] imageWithBlur:self.blur];
+    if (_image == nil) {
+        NSString *assetName = self.imageName.stringByDeletingPathExtension;
+        UIImage *source = assetName.length ? [UIImage imageNamed:assetName] : nil;
+        if (!source) source = [UIImage imageNamed:@"Background_Glaze"];
+        if (source) _image = self.blur > 0 ? [source imageWithBlur:self.blur] : source;
+    }
     return _image;
 }
 

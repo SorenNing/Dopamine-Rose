@@ -6,47 +6,29 @@
 //
 
 #import "DOProgressiveBlurView.h"
-
-@interface UIBlurEffect (Private)
-- (id)effectSettings;
-@end
-@interface DOBlurEffect : UIBlurEffect
-@end
-@implementation DOBlurEffect
-- (id)effectSettings {
-    id settings = [super effectSettings];
-    [settings setValue:@(1.0) forKey:@"scale"];
-    [settings setValue:@0 forKey:@"grayscaleTintAlpha"];
-    [settings setValue:@1 forKey:@"saturationDeltaFactor"];
-    return settings;
-}
-
-@end
-
-@interface DOProgressiveBlurView ()
-
-@property (retain) id variableBlur;
-
-@end
+#import "DOGlobalAppearance.h"
 
 @implementation DOProgressiveBlurView
 
 - (instancetype)initWithGradientMask:(UIImage *)gradientMask maxBlurRadius:(CGFloat)maxBlurRadius {
-    self = [super initWithEffect:[DOBlurEffect effectWithStyle:UIBlurEffectStyleRegular]];
+    UIBlurEffectStyle style = [DOGlobalAppearance interfaceStyle] == UIUserInterfaceStyleDark
+        ? UIBlurEffectStyleSystemUltraThinMaterialDark : UIBlurEffectStyleSystemUltraThinMaterialLight;
+    self = [super initWithEffect:maxBlurRadius > 0 ? [UIBlurEffect effectWithStyle:style] : nil];
     if (self) {
-        Class CAFilter = NSClassFromString(@"CAFilter");
-        self.variableBlur = [CAFilter performSelector:NSSelectorFromString(@"filterWithType:") withObject:@"variableBlur"];
-        [self.variableBlur setValue:@(maxBlurRadius) forKey:@"inputRadius"];
-        [self.variableBlur setValue:(__bridge id)(gradientMask.CGImage) forKey:@"inputMaskImage"];
-        [self.variableBlur setValue:@YES forKey:@"inputNormalizeEdges"];
+        self.userInteractionEnabled = NO;
+        // UIKit exposes material styles, not a numeric blur radius. Keep the
+        // constructor compatible and fade the material with the supplied alpha mask.
+        UIImageView *maskView = [[UIImageView alloc] initWithImage:gradientMask];
+        maskView.contentMode = UIViewContentModeScaleToFill;
+        self.maskView = maskView;
     }
     return self;
 }
 
--(void)layoutSubviews
+- (void)layoutSubviews
 {
     [super layoutSubviews];
-    [self.subviews.firstObject.layer setValue:@[self.variableBlur] forKey:@"filters"];
+    self.maskView.frame = self.bounds;
 }
 
 @end

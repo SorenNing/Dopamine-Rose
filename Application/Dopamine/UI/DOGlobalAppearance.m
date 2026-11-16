@@ -11,6 +11,44 @@
 static NSInteger const kDOLiquidGlassEffectTag = 0xD027;
 static NSInteger const kDOLiquidGlassBackgroundTag = 0xD028;
 
+// These are public iOS 26 selectors. Runtime lookup keeps the iOS 15/16 SDK
+// fallback buildable without linking a new UIKit class into older systems.
+@protocol DOPublicGlassEffect
++ (UIVisualEffect *)effectWithStyle:(NSInteger)style;
+- (void)setTintColor:(UIColor *)color;
+@end
+
+static UIVisualEffect *DOCreateSurfaceEffect(DOTheme *theme)
+{
+    if (UIAccessibilityIsReduceTransparencyEnabled()) return nil;
+    if (@available(iOS 26.0, *)) {
+        Class glassClass = NSClassFromString(@"UIGlassEffect");
+        if ([glassClass respondsToSelector:@selector(effectWithStyle:)]) {
+            UIVisualEffect *glass = [(Class<DOPublicGlassEffect>)glassClass effectWithStyle:0];
+            if ([glass isKindOfClass:UIVisualEffect.class]) {
+                if ([glass respondsToSelector:@selector(setTintColor:)])
+                    [(id<DOPublicGlassEffect>)glass setTintColor:theme.glassColor];
+                return glass;
+            }
+        }
+    }
+    return [UIBlurEffect effectWithStyle:theme.darkTheme ? UIBlurEffectStyleSystemUltraThinMaterialDark : UIBlurEffectStyleSystemUltraThinMaterialLight];
+}
+
+@interface DOThemeEffectView : UIVisualEffectView
+@property (nonatomic, copy) NSString *appearanceKey;
+@end
+
+@implementation DOThemeEffectView
+- (void)layoutSubviews
+{
+    [super layoutSubviews];
+    self.layer.cornerRadius = self.superview.layer.cornerRadius;
+    self.layer.cornerCurve = kCACornerCurveContinuous;
+    self.layer.masksToBounds = YES;
+}
+@end
+
 @interface DOGlobalAppearance ()
 + (DOTheme *)theme;
 @end
@@ -44,25 +82,10 @@ static void DOInstallGlassBackdrop(UIView *view)
         ]];
     }
     background.image = theme.image;
-    background.alpha = theme.darkTheme ? 0.94 : 0.86;
-
-    UIVisualEffectView *effect = DOFindGlassEffect(view);
-    if (!effect) {
-        UIBlurEffectStyle style = theme.darkTheme ? UIBlurEffectStyleSystemChromeMaterialDark : UIBlurEffectStyleSystemChromeMaterialLight;
-        effect = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:style]];
-        effect.tag = kDOLiquidGlassEffectTag;
-        effect.translatesAutoresizingMaskIntoConstraints = NO;
-        effect.userInteractionEnabled = NO;
-        [view insertSubview:effect aboveSubview:background];
-        [NSLayoutConstraint activateConstraints:@[
-            [effect.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
-            [effect.trailingAnchor constraintEqualToAnchor:view.trailingAnchor],
-            [effect.topAnchor constraintEqualToAnchor:view.topAnchor],
-            [effect.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
-        ]];
-    }
-    effect.backgroundColor = theme.glassColor;
-    effect.alpha = 0.42;
+    background.alpha = 1.0;
+    background.clipsToBounds = YES;
+    background.layer.cornerRadius = view.layer.cornerRadius;
+    background.layer.cornerCurve = kCACornerCurveContinuous;
 }
 
 @implementation DOGlobalAppearance
@@ -124,6 +147,16 @@ static void DOInstallGlassBackdrop(UIView *view)
     return [self theme].windowColor;
 }
 
++ (UIColor *)informationPanelColor
+{
+    return [self theme].panelColor;
+}
+
++ (UIColor *)statusGreenColor
+{
+    return [self theme].statusGreenColor;
+}
+
 + (UIColor *)glassColor
 {
     return [self theme].glassColor;
@@ -155,8 +188,7 @@ static void DOInstallGlassBackdrop(UIView *view)
     DOTheme *theme = [self theme];
     UIVisualEffectView *effect = DOFindGlassEffect(view);
     if (!effect) {
-        UIBlurEffectStyle style = theme.darkTheme ? UIBlurEffectStyleSystemMaterialDark : UIBlurEffectStyleSystemMaterialLight;
-        effect = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:style]];
+        effect = [[DOThemeEffectView alloc] initWithEffect:nil];
         effect.tag = kDOLiquidGlassEffectTag;
         effect.translatesAutoresizingMaskIntoConstraints = NO;
         effect.userInteractionEnabled = NO;
@@ -174,8 +206,19 @@ static void DOInstallGlassBackdrop(UIView *view)
             [effect.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
         ]];
     }
-    effect.backgroundColor = theme.glassColor;
-    effect.alpha = 0.92;
+    NSString *appearanceKey = [NSString stringWithFormat:@"%@-%d", theme.key, UIAccessibilityIsReduceTransparencyEnabled()];
+    if ([effect isKindOfClass:DOThemeEffectView.class]) {
+        DOThemeEffectView *themeEffect = (DOThemeEffectView *)effect;
+        if (![themeEffect.appearanceKey isEqualToString:appearanceKey]) {
+            themeEffect.effect = DOCreateSurfaceEffect(theme);
+            themeEffect.appearanceKey = appearanceKey;
+        }
+    }
+    effect.overrideUserInterfaceStyle = [self interfaceStyle];
+    Class glassClass = NSClassFromString(@"UIGlassEffect");
+    BOOL nativeGlass = glassClass && [effect.effect isKindOfClass:glassClass];
+    effect.contentView.backgroundColor = UIAccessibilityIsReduceTransparencyEnabled() ? theme.windowColor : (nativeGlass ? UIColor.clearColor : theme.glassColor);
+    effect.alpha = 1.0;
     effect.layer.cornerRadius = view.layer.cornerRadius > 0 ? view.layer.cornerRadius : 22;
     effect.layer.cornerCurve = kCACornerCurveContinuous;
     effect.layer.masksToBounds = YES;
@@ -183,11 +226,11 @@ static void DOInstallGlassBackdrop(UIView *view)
     view.layer.cornerRadius = effect.layer.cornerRadius;
     view.layer.cornerCurve = kCACornerCurveContinuous;
     view.layer.borderWidth = 0.5;
-    view.layer.borderColor = theme.glassHighlightColor.CGColor;
-    view.layer.shadowColor = [UIColor blackColor].CGColor;
+    view.layer.borderColor = theme.separatorColor.CGColor;
+    view.layer.shadowColor = [UIColor colorWithRed:20.0/255 green:30.0/255 blue:35.0/255 alpha:1].CGColor;
     view.layer.shadowOpacity = theme.glassShadowOpacity;
     view.layer.shadowRadius = theme.glassShadowRadius;
-    view.layer.shadowOffset = CGSizeMake(0, 8);
+    view.layer.shadowOffset = CGSizeMake(0, 12);
     view.layer.masksToBounds = NO;
 }
 
@@ -197,15 +240,18 @@ static void DOInstallGlassBackdrop(UIView *view)
     viewController.overrideUserInterfaceStyle = [self interfaceStyle];
     viewController.view.tintColor = [self accentColor];
     viewController.view.backgroundColor = UIColor.clearColor;
-    DOInstallGlassBackdrop(viewController.view);
+    if (![viewController isKindOfClass:NSClassFromString(@"DOMainViewController")]) {
+        viewController.view.layer.cornerRadius = 27;
+        DOInstallGlassBackdrop(viewController.view);
+        [self applyLiquidGlassToView:viewController.view];
+    }
 }
 
 + (void)styleTableCell:(UITableViewCell *)cell
 {
     if (!cell) return;
     cell.backgroundColor = UIColor.clearColor;
-    cell.contentView.backgroundColor = UIColor.clearColor;
-    [self applyLiquidGlassToView:cell.contentView];
+    cell.contentView.backgroundColor = [self informationPanelColor];
     cell.contentView.layer.cornerRadius = 14;
     cell.contentView.layer.cornerCurve = kCACornerCurveContinuous;
     cell.tintColor = [self accentColor];
@@ -270,9 +316,24 @@ static void DOInstallGlassBackdrop(UIView *view)
     }];
 }
 
++ (UIWindow *)activeWindow
+{
+    UIWindow *fallback = nil;
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if (![scene isKindOfClass:UIWindowScene.class]) continue;
+        if (scene.activationState != UISceneActivationStateForegroundActive && scene.activationState != UISceneActivationStateForegroundInactive) continue;
+        for (UIWindow *window in ((UIWindowScene *)scene).windows) {
+            if (window.isKeyWindow) return window;
+            if (!fallback && !window.hidden && window.windowLevel == UIWindowLevelNormal) fallback = window;
+        }
+    }
+    return fallback;
+}
+
 + (BOOL)isHomeButtonDevice
 {
-    return [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone && [UIApplication.sharedApplication.keyWindow safeAreaInsets].bottom == 0;
+    UIWindow *window = [self activeWindow];
+    return UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone && window && window.safeAreaInsets.bottom == 0;
 }
 
 + (BOOL)isRTL
@@ -282,8 +343,9 @@ static void DOInstallGlassBackdrop(UIView *view)
 
 + (BOOL)isSmallDevice
 {
-    UIWindow *window = UIApplication.sharedApplication.keyWindow;
-    return window.frame.size.height < SE_PHONE_SIZE_CONST + 50;
+    UIWindow *window = [self activeWindow];
+    CGFloat height = window ? CGRectGetHeight(window.bounds) : CGRectGetHeight(UIScreen.mainScreen.bounds);
+    return height < SE_PHONE_SIZE_CONST + 50;
 }
 
 @end
