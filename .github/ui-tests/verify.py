@@ -149,11 +149,11 @@ def verify(output):
     if failures or report.get("failureCount") != 0 or len(checks) < 500:
         errors.append(f"Invalid/incomplete assertion coverage: {len(checks)} assertions, {len(failures)} failures")
     coverage = report.get("coverage", {})
-    if coverage.get("themes") != 3 or coverage.get("expectedScreenshots") != 45:
-        errors.append("Unexpected three-theme screenshot matrix")
+    if coverage.get("themes") != 4 or coverage.get("expectedScreenshots") != 68:
+        errors.append("Unexpected four-theme screenshot matrix")
     screenshots = report.get("screenshots", [])
-    if len(screenshots) != 45 or len({shot.get("file") for shot in screenshots}) != 45:
-        errors.append(f"Expected 45 unique native screenshots, got {len(screenshots)}")
+    if len(screenshots) != 68 or len({shot.get("file") for shot in screenshots}) != 68:
+        errors.append(f"Expected 68 unique native screenshots, got {len(screenshots)}")
     for shot in screenshots:
         name = shot.get("file", "")
         if Path(name).name != name or not name.endswith(".png"):

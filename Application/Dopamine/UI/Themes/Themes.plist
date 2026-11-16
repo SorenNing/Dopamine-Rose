@@ -74,5 +74,29 @@
 		<key>blur</key><real>0</real>
 		<key>titleShadow</key><false/>
 	</dict>
+	<dict>
+		<key>key</key><string>dusty-rose</string>
+		<key>name</key><string>灰粉 · 玫瑰</string>
+		<key>image</key><string>Background_DustyRose</string>
+		<key>windowColor</key><string>FFF8EDF1</string>
+		<key>panelColor</key><string>4AFFF8FA</string>
+		<key>statusGreenColor</key><string>FF80A28C</string>
+		<key>actionMenuColor</key><string>A6F8EDF1</string>
+		<key>primaryTextColor</key><string>FF3B2530</string>
+		<key>secondaryTextColor</key><string>FF7E5B68</string>
+		<key>accentColor</key><string>FF8B2C4E</string>
+		<key>separatorColor</key><string>59A98292</string>
+		<key>glassColor</key><string>A6F8EDF1</string>
+		<key>tileColor</key><string>3BFFF8FA</string>
+		<key>selectedColor</key><string>3BFFF8FA</string>
+		<key>glassHighlightColor</key><string>38FFF8FA</string>
+		<key>darkTheme</key><false/>
+		<key>liquidGlass</key><true/>
+		<key>glassBlurRadius</key><real>22</real>
+		<key>glassShadowOpacity</key><real>0.10</real>
+		<key>glassShadowRadius</key><real>30</real>
+		<key>blur</key><real>0</real>
+		<key>titleShadow</key><false/>
+	</dict>
 </array>
 </plist>

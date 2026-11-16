@@ -12,6 +12,41 @@
 #import "DOThemeManager.h"
 #import "DOUIManager.h"
 
+// UIKit can wrap transition views; find the actual sibling inside its container.
+static UIView *DOTransitionContainerChild(UIView *view, UIView *container)
+{
+    while (view && view.superview != container) view = view.superview;
+    return view;
+}
+
+static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator> coordinator, UIImageView *background)
+{
+    if (!coordinator || !background) return;
+    __block UIImageView *backdrop = nil;
+    [coordinator animateAlongsideTransition:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        UIView *container = context.containerView;
+        UIView *fromView = [context viewForKey:UITransitionContextFromViewKey] ?: [context viewControllerForKey:UITransitionContextFromViewControllerKey].view;
+        UIView *toView = [context viewForKey:UITransitionContextToViewKey] ?: [context viewControllerForKey:UITransitionContextToViewControllerKey].view;
+        UIView *from = DOTransitionContainerChild(fromView, container);
+        UIView *to = DOTransitionContainerChild(toView, container);
+        if (!from || !to || from == to || !background.superview) return;
+        NSUInteger fromIndex = [container.subviews indexOfObjectIdenticalTo:from];
+        NSUInteger toIndex = [container.subviews indexOfObjectIdenticalTo:to];
+        if (fromIndex == NSNotFound || toIndex == NSNotFound) return;
+        UIView *front = fromIndex > toIndex ? from : to;
+        backdrop = [[UIImageView alloc] initWithImage:background.image];
+        backdrop.accessibilityIdentifier = @"DOTransitionBackdrop";
+        backdrop.userInteractionEnabled = NO;
+        backdrop.backgroundColor = background.superview.backgroundColor;
+        backdrop.contentMode = background.contentMode;
+        backdrop.clipsToBounds = YES;
+        backdrop.frame = [background convertRect:background.bounds toView:container];
+        [container insertSubview:backdrop belowSubview:front];
+    } completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
+        [backdrop removeFromSuperview];
+    }];
+}
+
 @interface DONavigationController ()
 
 @property (nonatomic) UIImageView *backgroundImageView;
@@ -104,7 +139,12 @@
         tab.tag = index;
         tab.layer.cornerRadius = 27;
         tab.layer.cornerCurve = kCACornerCurveContinuous;
+        tab.clipsToBounds = YES;
+        // Selection is drawn once by updateNavigationForController:, not by
+        // UIButtonConfiguration's additional selected-state background.
+        tab.automaticallyUpdatesConfiguration = NO;
         UIButtonConfiguration *configuration = [UIButtonConfiguration plainButtonConfiguration];
+        configuration.background = [UIBackgroundConfiguration clearConfiguration];
         configuration.title = titles[index];
         configuration.image = [UIImage systemImageNamed:symbols[index] withConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular]];
         configuration.imagePlacement = NSDirectionalRectEdgeTop;
@@ -195,6 +235,7 @@
     [DOGlobalAppearance styleViewController:viewController];
     [self updateNavigationForController:viewController];
     if (animated && self.transitionCoordinator) {
+        DOInstallTransitionBackdrop(self.transitionCoordinator, self.backgroundImageView);
         __weak typeof(self) weakSelf = self;
         [self.transitionCoordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> context) {
             DONavigationController *owner = weakSelf;

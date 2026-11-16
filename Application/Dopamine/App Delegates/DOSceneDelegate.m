@@ -7,6 +7,7 @@
 
 #import "DOSceneDelegate.h"
 #import "DONavigationController.h"
+#import "DOGlobalAppearance.h"
 
 @interface DOSceneDelegate ()
 
@@ -16,6 +17,7 @@
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
     UIWindow *window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene];
+    window.backgroundColor = [DOGlobalAppearance panelColor];
     window.rootViewController = [[DONavigationController alloc] init];
     [window makeKeyAndVisible];
     self.window = window;
@@ -42,6 +44,7 @@
         oldWindow.alpha = 0;
     } completion:^(BOOL finished) {
         UIWindow *window = [[UIWindow alloc] initWithWindowScene:windowScene];
+        window.backgroundColor = [DOGlobalAppearance panelColor];
         window.alpha = 0;
         window.rootViewController = [[DONavigationController alloc] init];
         instance.window = window;

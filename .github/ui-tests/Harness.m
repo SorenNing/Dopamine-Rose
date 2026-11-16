@@ -244,7 +244,7 @@ static void DOAdvance(void)
     if (DOPublished) return;
     if (DOStepIndex >= DOSteps.count) {
         DOContext = @"completion";
-        DORecord(@"all_required_screenshots_captured", DOShots.count == 45, @{@"actual": @(DOShots.count), @"expected": @45});
+        DORecord(@"all_required_screenshots_captured", DOShots.count == 68, @{@"actual": @(DOShots.count), @"expected": @68});
         DOPublish();
         return;
     }
@@ -400,6 +400,7 @@ static void DOCheckNavigation(DONavigationController *nav, NSInteger tab)
         @{@"childRoot": DORect(rootRect), @"navigation": DORect(nav.view.bounds)});
     DORecord(@"transition_settled_without_alpha_or_transform_residue", page == nav.visibleViewController &&
         CGAffineTransformIsIdentity(page.view.transform) && page.view.alpha > 0.99 && !nav.transitionCoordinator, nil);
+    DORecord(@"transition_backdrop_removed_after_completion", !DOFind(nav.view, @"DOTransitionBackdrop"), nil);
     DORecord(@"real_top_level_capsule_visible", bar && DOVisible(bar) && bar.userInteractionEnabled, nil);
     if (!bar) return;
     CGRect barRect = [bar convertRect:bar.bounds toView:nav.view];
@@ -414,6 +415,10 @@ static void DOCheckNavigation(DONavigationController *nav, NSInteger tab)
         }
         BOOL active = (button.accessibilityTraits & UIAccessibilityTraitSelected) != 0;
         if (active) selected++;
+        UIColor *configurationFill = button.configuration.background.backgroundColor;
+        BOOL clearFill = !configurationFill || CGColorGetAlpha(configurationFill.CGColor) < 0.001;
+        DORecord(@"tab_selection_has_one_clipped_surface", button.clipsToBounds &&
+            !button.automaticallyUpdatesConfiguration && clearFill && button.layer.cornerRadius > 0, nil);
         CGRect rect = [button convertRect:button.bounds toView:bar];
         CGPoint center = [button convertPoint:CGPointMake(CGRectGetMidX(button.bounds), CGRectGetMidY(button.bounds)) toView:nav.view];
         UIView *hit = [nav.view hitTest:center withEvent:nil];
@@ -498,6 +503,13 @@ static void DONavigationCases(DOTheme *theme)
                 [nav pushViewController:detail animated:YES];
                 DORecord(@"animated_push_has_transition_coordinator", nav.transitionCoordinator != nil, nil);
             });
+            if (tab == 1 && widthNumber.integerValue == 390) {
+                DOEnqueue(0.12, ^{
+                    UIView *backdrop = DOFind(nav.view, @"DOTransitionBackdrop");
+                    DORecord(@"push_transition_has_isolating_backdrop", nav.transitionCoordinator != nil && DOVisible(backdrop), nil);
+                    DOCapture(nav.view, [NSString stringWithFormat:@"%@-390-push-transition", theme.key]);
+                });
+            }
             DOEnqueueNavigation(nav, ^{
                 DORecord(@"animated_push_finishes", DOIsSettled(nav) && nav.topViewController == detail && nav.viewControllers.count == 2, nil);
                 DOCheckNavigation(nav, tab);
@@ -515,6 +527,13 @@ static void DONavigationCases(DOTheme *theme)
                 [nav popViewControllerAnimated:YES];
                 DORecord(@"animated_pop_has_transition_coordinator", nav.transitionCoordinator != nil, nil);
             });
+            if (tab == 1 && widthNumber.integerValue == 390) {
+                DOEnqueue(0.12, ^{
+                    UIView *backdrop = DOFind(nav.view, @"DOTransitionBackdrop");
+                    DORecord(@"pop_transition_has_isolating_backdrop", nav.transitionCoordinator != nil && DOVisible(backdrop), nil);
+                    DOCapture(nav.view, [NSString stringWithFormat:@"%@-390-pop-transition", theme.key]);
+                });
+            }
             DOEnqueueNavigation(nav, ^{
                 DORecord(@"animated_pop_restores_tab_root", DOIsSettled(nav) && nav.topViewController == root && nav.viewControllers.count == 1, nil);
                 DOCheckNavigation(nav, tab);
@@ -555,7 +574,7 @@ static void DOPublish(void)
             @"screenBounds": DORect(UIScreen.mainScreen.bounds), @"screenScale": @(UIScreen.mainScreen.scale),
             @"viewports": @[@320, @390, @430], @"minimumOS": @"15.0"},
         @"coverage": @{@"production": @[@"DOGlobalAppearance.m", @"DOTheme.m", @"DONavigationController.m", @"DOModalTransitionScale.m", @"DOModalTransitionPush.m", @"DOModalBackAction.m", @"UIImage+Blur.m"],
-            @"themes": @3, @"routingPages": @[@"home", @"settings", @"about"], @"expectedScreenshots": @45,
+            @"themes": @4, @"routingPages": @[@"home", @"settings", @"about"], @"expectedScreenshots": @68,
             @"largeFont": @"AX XXXL trait plus explicit 28pt brand font override",
             @"notTested": @[@"Native Preferences/PSListController", @"jailbreak/business actions", @"complete production home/settings/about page implementations", @"physical-device rendering", @"interactive edge-swipe cancellation"]},
         @"sourceManifest": manifest};
@@ -570,7 +589,7 @@ static void DORun(void)
 {
     @try {
         DOContext = @"startup";
-        DORecord(@"three_production_theme_dictionaries_loaded", DOThemeManager.sharedInstance.themes.count == 3, nil);
+        DORecord(@"four_production_theme_dictionaries_loaded", DOThemeManager.sharedInstance.themes.count == 4, nil);
         DORecord(@"production_navigation_has_public_tested_API", [DONavigationController instancesRespondToSelector:@selector(selectTopLevelTab:)] &&
             [DONavigationController instancesRespondToSelector:@selector(setNavigationEnabled:)], nil);
         DORecord(@"production_brand_and_content_factories_present", [DOGlobalAppearance respondsToSelector:@selector(brandCardView)] &&

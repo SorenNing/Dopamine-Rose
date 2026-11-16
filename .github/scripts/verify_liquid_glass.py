@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the actual RootHide archive and the native three-theme UI resources."""
+"""Verify the actual RootHide archive and the native four-theme UI resources."""
 from pathlib import Path, PurePosixPath
 import hashlib, json, plistlib, struct, sys, zipfile
 
@@ -14,11 +14,11 @@ with zipfile.ZipFile(archive) as z:
     assert info['CFBundleShortVersionString'] == '3.0.13-30'
     assert int(info['DOBuildTimestamp']) > 0
     themes = plistlib.loads(z.read(base + 'Themes.plist'))
-    assert [t['key'] for t in themes] == ['origami', 'glaze', 'nocturne']
-    assert [t['darkTheme'] for t in themes] == [False, False, True]
-    assert [t['panelColor'] for t in themes] == ['4AFFFFFB', '4AFFFFFB', '0EE4E6E3']
+    assert [t['key'] for t in themes] == ['origami', 'glaze', 'nocturne', 'dusty-rose']
+    assert [t['darkTheme'] for t in themes] == [False, False, True, False]
+    assert [t['panelColor'] for t in themes] == ['4AFFFFFB', '4AFFFFFB', '0EE4E6E3', '4AFFF8FA']
     assert all(t['liquidGlass'] and float(t['glassBlurRadius']) == 22 for t in themes)
-    assert [t['image'] for t in themes] == ['Background_Origami', 'Background_Glaze', 'Background_Nocturne']
+    assert [t['image'] for t in themes] == ['Background_Origami', 'Background_Glaze', 'Background_Nocturne', 'Background_DustyRose']
     assert base + 'Dopamine.roothide' in names
     for n in ('libchoma.dylib', 'libxpf.dylib', 'libjailbreak.dylib', 'libroothider.dylib', 'Assets.car', 'basebin.tar', 'bootstrap_1900.tar.zst', 'roothideapp.deb'):
         assert z.getinfo(base + n).file_size > 0, n

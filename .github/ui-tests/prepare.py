@@ -72,8 +72,8 @@ def prepare(repo, output):
                 raise ValueError(f"Unstaged quoted include in {path.name}: {include}")
     themes_path = ui / "Themes/Themes.plist"
     themes = plistlib.loads(themes_path.read_bytes())
-    if not isinstance(themes, list) or len(themes) != 3:
-        raise ValueError("Expected exactly three production themes in Themes.plist")
+    if not isinstance(themes, list) or [t.get("key") for t in themes] != ["origami", "glaze", "nocturne", "dusty-rose"]:
+        raise ValueError("Expected the four approved production themes in Themes.plist")
     shutil.copyfile(themes_path, app / "Themes.plist")
     manifest["resources"].append({"path": str(themes_path.relative_to(repo)), "sha256": digest(themes_path)})
     assets = repo / "Application/Dopamine/Assets.xcassets"
@@ -81,7 +81,10 @@ def prepare(repo, output):
     for name in sorted({Path(t["image"]).stem for t in themes} | {"Background_Glaze"}):
         if not re.fullmatch(r"[A-Za-z0-9_-]+", name):
             raise ValueError(f"Unsafe asset name: {name}")
-        folder = assets / f"{name}.imageset"
+        folders = list(assets.rglob(f"{name}.imageset"))
+        if len(folders) != 1:
+            raise ValueError(f"Expected exactly one asset catalog entry for {name}: {folders}")
+        folder = folders[0]
         content = json.loads((folder / "Contents.json").read_text())
         candidates = [item for item in content["images"] if item.get("filename")]
         candidates.sort(key=lambda item: (item.get("scale") != "1x", item.get("idiom") != "universal"))
