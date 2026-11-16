@@ -30,7 +30,13 @@ with zipfile.ZipFile(archive) as z:
     assert b'_displayCornerRadius' not in executable
     assert b'_frameForViewController:' not in executable
     images = {}
-    for n in ('Dopamine', 'libchoma.dylib', 'libxpf.dylib', 'libjailbreak.dylib', 'libroothider.dylib'):
+    required_images = ['Dopamine', 'libchoma.dylib', 'libxpf.dylib', 'libjailbreak.dylib', 'libroothider.dylib']
+    for name in names:
+        if not name.startswith(base + 'Frameworks/') or name.endswith('/'):
+            continue
+        if z.read(name)[:4] in (b'\xcf\xfa\xed\xfe', b'\xca\xfe\xba\xbe'):
+            required_images.append(name[len(base):])
+    for n in required_images:
         data = z.read(base + n)
         magic = data[:4]
         if magic == b'\xcf\xfa\xed\xfe':
@@ -48,16 +54,22 @@ with zipfile.ZipFile(archive) as z:
             assert offset + size <= len(data)
             cursor = offset + 32
             signed = False
+            minimum_os = None
             for _ in range(header[4]):
                 cmd, length = struct.unpack_from('<II', data, cursor)
                 assert length >= 8 and cursor + length <= offset + 32 + header[5]
+                if cmd == 0x32:
+                    minimum_os = struct.unpack_from('<I', data, cursor + 12)[0]
+                elif cmd == 0x25:
+                    minimum_os = struct.unpack_from('<I', data, cursor + 8)[0]
                 if cmd == 0x1d:
                     start, length_sign = struct.unpack_from('<II', data, cursor + 8)
                     assert 0 < length_sign and start + length_sign <= size
                     signed = True
                 cursor += length
             assert signed, (n, 'missing signature')
-            details.append({'cpu_subtype': hex(header[2]), 'size': size})
+            assert minimum_os is not None and minimum_os <= 0x000f0000, (n, 'deployment target', hex(minimum_os or 0))
+            details.append({'cpu_subtype': hex(header[2]), 'size': size, 'minimum_os': hex(minimum_os)})
         images[n] = {'sha256': hashlib.sha256(data).hexdigest(), 'slices': details}
 result = {'archive': archive.name, 'bytes': archive.stat().st_size, 'sha256': hashlib.sha256(archive.read_bytes()).hexdigest(), 'bundle': info['CFBundleIdentifier'], 'version': info['CFBundleShortVersionString'], 'themes': [t['key'] for t in themes], 'images': images, 'device_tested': False}
 archive.with_suffix('.verification.json').write_text(json.dumps(result, indent=2) + '\n')
