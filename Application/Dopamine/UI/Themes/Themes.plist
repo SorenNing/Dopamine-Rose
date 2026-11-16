@@ -98,5 +98,30 @@
 		<key>blur</key><real>0</real>
 		<key>titleShadow</key><false/>
 	</dict>
+	<dict>
+		<key>key</key><string>liquid-glass</string>
+		<key>name</key><string>液态玻璃</string>
+		<key>image</key><string>Background_Glaze</string>
+		<key>windowColor</key><string>FFF3F0EA</string>
+		<key>panelColor</key><string>3DFFFFFF</string>
+		<key>statusGreenColor</key><string>FF6F8F80</string>
+		<key>actionMenuColor</key><string>2EFFFFFF</string>
+		<key>primaryTextColor</key><string>FF26333A</string>
+		<key>secondaryTextColor</key><string>FF65747A</string>
+		<key>accentColor</key><string>FF477A78</string>
+		<key>separatorColor</key><string>5CFFFFFF</string>
+		<key>glassColor</key><string>38FFFFFF</string>
+		<key>tileColor</key><string>24FFFFFF</string>
+		<key>selectedColor</key><string>20FFFFFF</string>
+		<key>glassHighlightColor</key><string>8AFFFFFF</string>
+		<key>darkTheme</key><false/>
+		<key>liquidGlass</key><true/>
+		<key>usesTheseus</key><true/>
+		<key>glassBlurRadius</key><real>8</real>
+		<key>glassShadowOpacity</key><real>0.14</real>
+		<key>glassShadowRadius</key><real>22</real>
+		<key>blur</key><real>0</real>
+		<key>titleShadow</key><false/>
+	</dict>
 </array>
 </plist>

@@ -40,6 +40,13 @@ jobs:
           test -s Application/Dopamine/Resources/bootstrap_1900.tar.zst
           test -s Application/Dopamine/Resources/roothideapp.deb
 
+      - name: Prepare Apple Metal toolchain
+        run: |
+          set -euo pipefail
+          xcodebuild -downloadComponent MetalToolchain
+          xcrun --sdk iphoneos metal --version
+          xcrun --sdk iphonesimulator metal --version
+
       - name: Run native UIKit layout regression
         timeout-minutes: 12
         run: bash .github/ui-tests/run.sh "$RUNNER_TEMP/dopamine-ui-regression"

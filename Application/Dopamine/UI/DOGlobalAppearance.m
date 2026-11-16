@@ -8,17 +8,12 @@
 #import "DOThemeManager.h"
 #import "DOTheme.h"
 #import <objc/runtime.h>
-#if __has_include(<Glassify/GLSGlassView.h>)
-#import <Glassify/GLSGlassView.h>
-#define DO_HAS_GLASSIFY 1
-#else
-#define DO_HAS_GLASSIFY 0
-#endif
 
 static char kDOPageContentKey;
 
 static NSInteger const kDOLiquidGlassEffectTag = 0xD027;
-static NSInteger const kDOLiquidGlassBackgroundTag = 0xD028;
+
+#import "../Theseus/DOTheseusBridge.h"
 
 // These are public iOS 26 selectors. Runtime lookup keeps the iOS 15/16 SDK
 // fallback buildable without linking a new UIKit class into older systems.
@@ -58,41 +53,6 @@ static UIVisualEffect *DOCreateSurfaceEffect(DOTheme *theme)
 }
 @end
 
-#if DO_HAS_GLASSIFY
-@interface DOGlassifyEffectView : GLSGlassView
-@property (nonatomic, copy) NSString *appearanceKey;
-@end
-
-@implementation DOGlassifyEffectView
-- (instancetype)init
-{
-    if ((self = [super initWithFrame:CGRectZero])) {
-        self.tag = kDOLiquidGlassEffectTag;
-        self.translatesAutoresizingMaskIntoConstraints = NO;
-        self.userInteractionEnabled = NO;
-        self.contentVibrancy = NO;
-        self.frost = GLSGlassFrostReduced;
-        self.style = GLSGlassStyleClear;
-        self.tracksBackdropMotion = NO;
-    }
-    return self;
-}
-- (void)layoutSubviews
-{
-    [super layoutSubviews];
-    UIView *host = self.superview;
-    self.cornerRadius = host.layer.cornerRadius > 0 ? host.layer.cornerRadius : 22;
-    [self setNeedsBackdropUpdate];
-}
-- (void)didMoveToWindow
-{
-    [super didMoveToWindow];
-    self.backdropSourceView = self.superview;
-    [self setNeedsBackdropUpdate];
-}
-@end
-#endif
-
 @interface DOGlobalAppearance ()
 + (DOTheme *)theme;
 @end
@@ -101,10 +61,8 @@ static UIView *DOFindGlassEffect(UIView *view)
 {
     for (UIView *subview in view.subviews) {
         if (subview.tag != kDOLiquidGlassEffectTag) continue;
-#if DO_HAS_GLASSIFY
-        if ([subview isKindOfClass:GLSGlassView.class]) return subview;
-#endif
-        if ([subview isKindOfClass:UIVisualEffectView.class]) return subview;
+        if ([subview isKindOfClass:UIVisualEffectView.class] ||
+            [subview isKindOfClass:NSClassFromString(@"DOTheseusGlassView")]) return subview;
     }
     return nil;
 }
@@ -262,22 +220,19 @@ static UIView *DOFindGlassEffect(UIView *view)
     DOTheme *theme = [self theme];
     BOOL reduced = UIAccessibilityIsReduceTransparencyEnabled();
     UIView *effect = DOFindGlassEffect(view);
+    Class theseusClass = NSClassFromString(@"DOTheseusGlassView");
+    BOOL useTheseus = theme.usesTheseus && !reduced;
+    NSAssert(!theme.usesTheseus || theseusClass, @"The liquid-glass theme requires its real Theseus renderer");
+    if (effect && useTheseus != [effect isKindOfClass:theseusClass]) {
+        [effect removeFromSuperview];
+        effect = nil;
+    }
     if (!effect) {
-#if DO_HAS_GLASSIFY
-        effect = [[DOGlassifyEffectView alloc] init];
-#else
-        effect = [[DOThemeEffectView alloc] initWithEffect:nil];
-#endif
+        effect = useTheseus ? [[theseusClass alloc] initWithFrame:CGRectZero] : [[DOThemeEffectView alloc] initWithEffect:nil];
         effect.tag = kDOLiquidGlassEffectTag;
         effect.translatesAutoresizingMaskIntoConstraints = NO;
         effect.userInteractionEnabled = NO;
-        UIView *background = [view viewWithTag:kDOLiquidGlassBackgroundTag];
-        NSUInteger insertIndex = 0;
-        if (background) {
-            NSUInteger backgroundIndex = [view.subviews indexOfObject:background];
-            if (backgroundIndex != NSNotFound) insertIndex = MIN(backgroundIndex + 1, view.subviews.count);
-        }
-        [view insertSubview:effect atIndex:insertIndex];
+        [view insertSubview:effect atIndex:0];
         [NSLayoutConstraint activateConstraints:@[
             [effect.leadingAnchor constraintEqualToAnchor:view.leadingAnchor],
             [effect.trailingAnchor constraintEqualToAnchor:view.trailingAnchor],
@@ -285,22 +240,15 @@ static UIView *DOFindGlassEffect(UIView *view)
             [effect.bottomAnchor constraintEqualToAnchor:view.bottomAnchor]
         ]];
     }
+    CGFloat cornerRadius = view.layer.cornerRadius > 0 ? view.layer.cornerRadius : 22;
     NSString *appearanceKey = [NSString stringWithFormat:@"%@-%d", theme.key, reduced];
-#if DO_HAS_GLASSIFY
-    if ([effect isKindOfClass:DOGlassifyEffectView.class]) {
-        DOGlassifyEffectView *glass = (DOGlassifyEffectView *)effect;
-        glass.appearanceKey = appearanceKey;
-        glass.style = GLSGlassStyleClear;
-        glass.frost = GLSGlassFrostReduced;
-        glass.glassTintColor = reduced ? nil : theme.glassColor;
-        glass.glassEnabled = !reduced;
-        glass.adaptsColorScheme = YES;
-        glass.contentVibrancy = NO;
-        glass.backdropSourceView = view.superview ?: view.window;
-        glass.tracksBackdropMotion = NO;
-    } else
-#endif
-    if ([effect isKindOfClass:DOThemeEffectView.class]) {
+    if (useTheseus) {
+        UIView<DOTheseusGlassSurface> *glass = (UIView<DOTheseusGlassSurface> *)effect;
+        [glass configureWithCornerRadius:cornerRadius tintColor:reduced ? theme.windowColor : theme.glassColor tintIntensity:reduced ? 1.0 : 0.72];
+        UIView *source = view.window.rootViewController.view ?: view.superview ?: view.window;
+        [glass setCaptureSourceView:source];
+        glass.backgroundColor = reduced ? theme.windowColor : UIColor.clearColor;
+    } else if ([effect isKindOfClass:DOThemeEffectView.class]) {
         DOThemeEffectView *themeEffect = (DOThemeEffectView *)effect;
         if (![themeEffect.appearanceKey isEqualToString:appearanceKey]) {
             themeEffect.effect = DOCreateSurfaceEffect(theme);
@@ -313,14 +261,14 @@ static UIView *DOFindGlassEffect(UIView *view)
     effect.alpha = 1.0;
     effect.layer.cornerRadius = view.layer.cornerRadius > 0 ? view.layer.cornerRadius : 22;
     effect.layer.cornerCurve = kCACornerCurveContinuous;
-    effect.layer.masksToBounds = YES;
+    effect.layer.masksToBounds = !useTheseus;
     view.backgroundColor = reduced ? theme.windowColor : UIColor.clearColor;
     view.layer.cornerRadius = effect.layer.cornerRadius;
     view.layer.cornerCurve = kCACornerCurveContinuous;
-    view.layer.borderWidth = 0.5;
+    view.layer.borderWidth = useTheseus ? 0 : 0.5;
     view.layer.borderColor = theme.separatorColor.CGColor;
     view.layer.shadowColor = [UIColor colorWithRed:20.0/255 green:30.0/255 blue:35.0/255 alpha:1].CGColor;
-    view.layer.shadowOpacity = theme.glassShadowOpacity;
+    view.layer.shadowOpacity = useTheseus ? 0 : theme.glassShadowOpacity;
     view.layer.shadowRadius = theme.glassShadowRadius;
     view.layer.shadowOffset = CGSizeMake(0, 12);
     view.layer.masksToBounds = NO;
@@ -419,6 +367,27 @@ static UIView *DOFindGlassEffect(UIView *view)
     return card;
 }
 
++ (void)styleSwitch:(UISwitch *)toggle
+{
+    toggle.thumbTintColor = UIColor.whiteColor;
+    if ([self theme].usesTheseus) {
+        Class overlayClass = NSClassFromString(@"DOTheseusSwitchOverlay");
+        NSAssert(overlayClass, @"Theseus switch bridge missing");
+        UIView *overlay = [toggle viewWithTag:0xD029];
+        if (!overlay) {
+            overlay = [(id<DOTheseusSwitchFactory>)[overlayClass alloc] initWithSwitch:toggle];
+            overlay.tag = 0xD029;
+            [toggle addSubview:overlay];
+        }
+        overlay.frame = toggle.bounds;
+        [overlay setNeedsLayout];
+        [toggle bringSubviewToFront:overlay];
+    } else {
+        toggle.onTintColor = [self accentColor];
+        toggle.thumbTintColor = UIColor.whiteColor;
+    }
+}
+
 + (void)styleTableCell:(UITableViewCell *)cell
 {
     if (!cell) return;
@@ -434,9 +403,7 @@ static UIView *DOFindGlassEffect(UIView *view)
     cell.textLabel.textColor = cell.userInteractionEnabled ? [self primaryTextColor] : [self secondaryTextColor];
     cell.detailTextLabel.textColor = [self secondaryTextColor];
     if ([cell.accessoryView isKindOfClass:UISwitch.class]) {
-        UISwitch *toggle = (UISwitch *)cell.accessoryView;
-        toggle.onTintColor = [self accentColor];
-        toggle.thumbTintColor = UIColor.whiteColor;
+        [self styleSwitch:(UISwitch *)cell.accessoryView];
     }
     DORowSurfaceView *selected = [[DORowSurfaceView alloc] init];
     selected.fillView.backgroundColor = plain ? UIColor.clearColor : [self selectedColor];

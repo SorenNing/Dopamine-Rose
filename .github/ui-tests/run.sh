@@ -55,11 +55,19 @@ SDK="$(cat "$WORK/sdk.txt")"
 xcrun --sdk iphonesimulator --show-sdk-version >"$OUTPUT/sdk-version.txt"
 ARCH="$(uname -m)"
 case "$ARCH" in arm64|x86_64) ;; *) printf 'Unsupported simulator host architecture: %s\n' "$ARCH" >&2; exit 2 ;; esac
+xcrun --sdk iphonesimulator metal -target air64-apple-ios15.0-simulator -c "$WORK/src/TheseusShaders.metal" -o "$WORK/Theseus.air" >"$OUTPUT/metal.log" 2>&1
+xcrun --sdk iphonesimulator metallib "$WORK/Theseus.air" -o "$WORK/DopamineLayoutHarness.app/default.metallib" >>"$OUTPUT/metal.log" 2>&1
+xcrun --sdk iphonesimulator swiftc -swift-version 5 -sdk "$SDK" -target "$ARCH-apple-ios15.0-simulator" \
+    -parse-as-library -module-name DopamineTheseus -emit-library -static -o "$WORK/libDopamineTheseus.a" "$WORK/src/"*.swift \
+    >"$OUTPUT/swift.log" 2>&1 || { cat "$OUTPUT/swift.log" >&2; exit 1; }
 xcrun --sdk iphonesimulator clang -isysroot "$SDK" -target "$ARCH-apple-ios15.0-simulator" \
     -mios-simulator-version-min=15.0 -fobjc-arc -fblocks -O0 -g \
     -Wall -Wextra -Wno-unused-parameter -Werror=implicit-function-declaration \
     -I"$WORK/src" "$WORK/src/"*.m \
     -framework Foundation -framework UIKit -framework QuartzCore -framework CoreGraphics -framework CoreImage \
+    -Wl,-force_load,"$WORK/libDopamineTheseus.a" -framework Metal -framework MetalKit -framework IOSurface -framework Accelerate -framework CoreVideo \
+    -L"$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator" -L/usr/lib/swift -lswiftCore \
+    -Wl,-rpath,/usr/lib/swift \
     -o "$WORK/DopamineLayoutHarness.app/DopamineLayoutHarness" >"$OUTPUT/compile.log" 2>&1 || {
         cat "$OUTPUT/compile.log" >&2; exit 1;
     }

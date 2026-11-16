@@ -1,4 +1,6 @@
-# Dopamine RootHide: four-theme native UI
+# Dopamine RootHide: five-theme native UI
+
+The fifth selectable theme is **液态玻璃** (`liquid-glass`). It uses the pinned original Theseus material, tab bar/drag lens and switch; the old renderer has been removed. See [Theseus integration](Application/Dopamine/Theseus/INTEGRATION.md). The first four palettes remain unchanged and Glaze remains the default. The native harness now compiles the actual Swift and Metal sources and checks all five themes with 85 screenshots. Physical-device visual verification remains outstanding.
 
 RootHide baseline: `3.x_roothide_AI_review_fix` (`3ac500e9d95553c2ffd651894315d79b31ee8aed`), version `3.0.13-30`, bundle `cn.zqbb.dopaRH`. Existing RootHide payloads and jailbreak implementation are retained.
 

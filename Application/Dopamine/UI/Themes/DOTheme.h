@@ -33,6 +33,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, retain) UIColor *glassHighlightColor;
 @property (nonatomic, assign) BOOL darkTheme;
 @property (nonatomic, assign) BOOL liquidGlass;
+@property (nonatomic, assign) BOOL usesTheseus;
 @property (nonatomic, assign) CGFloat glassBlurRadius;
 @property (nonatomic, assign) CGFloat glassShadowOpacity;
 @property (nonatomic, assign) CGFloat glassShadowRadius;

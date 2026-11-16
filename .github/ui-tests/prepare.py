@@ -40,6 +40,22 @@ def prepare(repo, output):
             shutil.copyfile(path, target)
             assert digest(target) == digest(path), f"Source copy differs: {path}"
             manifest[section].append({"path": str(path.relative_to(repo)), "sha256": digest(path)})
+    bridge_header = repo / "Application/Dopamine/Theseus/DOTheseusBridge.h"
+    (output / "Theseus").mkdir(exist_ok=True)
+    shutil.copyfile(bridge_header, output / "Theseus/DOTheseusBridge.h")
+    (src / "Theseus").mkdir(exist_ok=True)
+    shutil.copyfile(bridge_header, src / "Theseus/DOTheseusBridge.h")
+    manifest["production_headers"].append({"path": str(bridge_header.relative_to(repo)), "sha256": digest(bridge_header)})
+    swift_paths = sorted((repo / "Application/Dopamine/Theseus").rglob("*.swift"))
+    swift_paths = [p for p in swift_paths if p.name != "Package.swift"]
+    manifest["production_swift"] = []
+    for path in swift_paths:
+        shutil.copyfile(path, src / path.name)
+        manifest["production_swift"].append({"path": str(path.relative_to(repo)), "sha256": digest(path)})
+    assert len(swift_paths) == 35, len(swift_paths)
+    shader = repo / "Application/Dopamine/Theseus/Sources/Theseus/Shaders/TheseusShaders.metal"
+    shutil.copyfile(shader, src / shader.name)
+    manifest["production_metal"] = [{"path": str(shader.relative_to(repo)), "sha256": digest(shader)}]
     # Quoted includes must resolve in the temporary flat directory, never beside business .m files.
     shims = {
         "DOMainViewController.h": '#import <UIKit/UIKit.h>\n#import "DOSettingsController.h"\n#import "DOCreditsViewController.h"\n@interface DOMainViewController : UIViewController\n@end\n',
@@ -68,12 +84,12 @@ def prepare(repo, output):
     # Every include in these copied translation units must be satisfiable from SDK or staging.
     for path in sources:
         for include in re.findall(r'^\s*#(?:import|include)\s+"([^"]+)"', path.read_text(), re.M):
-            if not (src / include).is_file():
+            if not (src / include).is_file() and not (src / "UI" / include).resolve().is_file():
                 raise ValueError(f"Unstaged quoted include in {path.name}: {include}")
     themes_path = ui / "Themes/Themes.plist"
     themes = plistlib.loads(themes_path.read_bytes())
-    if not isinstance(themes, list) or [t.get("key") for t in themes] != ["origami", "glaze", "nocturne", "dusty-rose"]:
-        raise ValueError("Expected the four approved production themes in Themes.plist")
+    if not isinstance(themes, list) or [t.get("key") for t in themes] != ["origami", "glaze", "nocturne", "dusty-rose", "liquid-glass"]:
+        raise ValueError("Expected the five approved production themes in Themes.plist")
     shutil.copyfile(themes_path, app / "Themes.plist")
     manifest["resources"].append({"path": str(themes_path.relative_to(repo)), "sha256": digest(themes_path)})
     assets = repo / "Application/Dopamine/Assets.xcassets"

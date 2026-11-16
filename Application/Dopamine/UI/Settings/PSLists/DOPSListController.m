@@ -13,8 +13,7 @@ static void DOStylePreferenceControls(UIView *view)
 {
     if ([view isKindOfClass:UISwitch.class]) {
         UISwitch *toggle = (UISwitch *)view;
-        toggle.onTintColor = [DOGlobalAppearance accentColor];
-        toggle.thumbTintColor = UIColor.whiteColor;
+        [DOGlobalAppearance styleSwitch:toggle];
     } else if ([view isKindOfClass:UITextField.class]) {
         UITextField *textField = (UITextField *)view;
         textField.textColor = [DOGlobalAppearance primaryTextColor];

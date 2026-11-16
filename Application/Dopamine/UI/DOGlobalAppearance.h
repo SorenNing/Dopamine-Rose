@@ -41,6 +41,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (UIColor *)glassHighlightColor;
 + (UIColor *)buttonTextColor;
 + (void)styleTableCell:(UITableViewCell *)cell;
++ (void)styleSwitch:(UISwitch *)toggle;
 + (void)applyLiquidGlassToView:(UIView *)view;
 + (void)styleViewController:(UIViewController *)viewController;
 + (UIView *)contentViewForController:(UIViewController *)viewController;

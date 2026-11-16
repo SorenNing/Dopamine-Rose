@@ -11,8 +11,7 @@ Dopamine.ipa: build/Build/Products/Debug-iphoneos/Dopamine.app
 	rm -rf build/Build/Products/Debug-iphoneos/Dopamine.app/Frameworks/palera1n.framework
 	@echo Ad-Hoc signing Dopamine
 	xattr -rc build/Build/Products/Debug-iphoneos/Dopamine.app
-	ldid -SDopamine/Dopamine.entitlements build/Build/Products/Debug-iphoneos/Dopamine.app/Dopamine
-	ldid -s build/Build/Products/Debug-iphoneos/Dopamine.app
+	python3 ../.github/scripts/sign_app.py build/Build/Products/Debug-iphoneos/Dopamine.app Dopamine/Dopamine.entitlements
 	rm -rf Payload Dopamine.ipa
 	mkdir Payload
 	cp -r build/Build/Products/Debug-iphoneos/Dopamine.app Payload/Dopamine.app
