@@ -6,6 +6,8 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+@class DOTheme;
+
 NS_ASSUME_NONNULL_BEGIN
 
 #define UI_IPAD_MAX_WIDTH 600
@@ -30,8 +32,14 @@ NS_ASSUME_NONNULL_BEGIN
 + (UIUserInterfaceStyle)interfaceStyle;
 + (UIImage *)backgroundImage;
 + (void)registerBackgroundImageView:(UIImageView *)view;
++ (void)registerTextRoot:(UIView *)view;
++ (void)preserveSemanticTextInView:(UIView *)view;
++ (void)clearSemanticTextInView:(UIView *)view;
++ (void)setGlobalFontColor:(nullable UIColor *)color forTheme:(DOTheme *)theme;
 + (UIColor *)primaryTextColor;
 + (UIColor *)secondaryTextColor;
++ (UIColor *)linkColor;
++ (UIColor *)controlColor;
 + (UIColor *)accentColor;
 + (UIColor *)separatorColor;
 + (UIColor *)panelColor;

@@ -6,7 +6,7 @@ This is the complete RootHide repository, not an Apelin tweak. The root Makefile
 
 This workspace has no Apelin external package script. Do not invent a replacement .deb or rewrite the jailbreak build just to make Apelin's build button work.
 
-- `.github/ui-tests/run.sh` requires macOS, Xcode and an installed iPhone Simulator runtime. It stages seven byte-identical production Objective-C files using `prepare.py`, then exercises four themes with 68 screenshot cases. The fixtures replace business actions, so passing the harness does not verify jailbreak operations.
+- `.github/ui-tests/run.sh` requires macOS, Xcode and an installed iPhone Simulator runtime. It stages eight byte-identical production Objective-C files using `prepare.py`, then exercises four themes with 68 screenshot cases. The fixtures replace business actions, so passing the harness does not verify jailbreak operations.
 - `.github/scripts/verify_themes.py <archive.ipa-or-tipa>` validates an actual archive's four-theme resources, identity, RootHide payload, Mach-O signature commands and deployment targets. Synthetic fixtures only test the validator itself.
 - Python syntax can be checked with `ast.parse`, Bash syntax with `bash -n`, and whitespace with `git diff --check` without Xcode.
 - On a device with a prepared Clang/iPhoneOS SDK, `prepare.py` can stage sources into a temporary directory inside the workspace. Run `clang -arch arm64 -fsyntax-only -fobjc-arc -fblocks -I<staged-src> <staged-src>/*.m` for a limited syntax check. This does not link or run the app.

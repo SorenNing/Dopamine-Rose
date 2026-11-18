@@ -41,6 +41,18 @@
         configuration.baseForegroundColor = [DOGlobalAppearance accentColor];
         configuration.image = action.image;
         configuration.imagePadding = 10;
+        // Destructive actions keep their action color; ordinary row titles
+        // share the global text role without recoloring their symbols.
+        if (![[specifier propertyForKey:@"action"] isEqualToString:@"removeJailbreakPressed"]) {
+            configuration.titleTextAttributesTransformer = ^NSDictionary *(NSDictionary *attributes) {
+                NSMutableDictionary *result = attributes.mutableCopy;
+                result[NSForegroundColorAttributeName] = [DOGlobalAppearance primaryTextColor];
+                return result;
+            };
+        } else {
+            configuration.baseForegroundColor = UIColor.systemRedColor;
+            [DOGlobalAppearance preserveSemanticTextInView:button];
+        }
         configuration.contentInsets = NSDirectionalEdgeInsetsMake(0, 20, 0, 20);
         configuration.attributedTitle = [[NSAttributedString alloc] initWithString:action.title attributes:@{
             NSFontAttributeName: [UIFont systemFontOfSize:15 weight:UIFontWeightMedium]

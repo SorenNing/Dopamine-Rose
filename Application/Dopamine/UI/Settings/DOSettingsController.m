@@ -25,7 +25,8 @@
 #import "DOTransparencyCell.h"
 #import "DOGlobalAppearance.h"
 
-@interface DOSettingsController () <PHPickerViewControllerDelegate>
+@interface DOSettingsController () <PHPickerViewControllerDelegate, UIColorPickerViewControllerDelegate>
+@property (nonatomic, strong) DOTheme *fontPickerTheme;
 @property (nonatomic, copy) NSString *backgroundPickerThemeKey;
 @property (nonatomic) BOOL backgroundImportInProgress;
 
@@ -64,6 +65,10 @@
 
 - (void)presentViewController:(UIViewController *)viewControllerToPresent animated:(BOOL)animated completion:(void (^)(void))completion
 {
+    if ([viewControllerToPresent isKindOfClass:UIColorPickerViewController.class]) {
+        [super presentViewController:viewControllerToPresent animated:animated completion:completion];
+        return;
+    }
     if ([DOGlobalAppearance isRoseStyle]) {
         viewControllerToPresent.overrideUserInterfaceStyle = [DOGlobalAppearance interfaceStyle];
         viewControllerToPresent.view.tintColor = [DOGlobalAppearance accentColor];
@@ -444,6 +449,16 @@
         resetBackgroundSpecifier.identifier = @"restoreThemeBackground";
         [specifiers addObject:resetBackgroundSpecifier];
 
+        PSSpecifier *fontColorSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Global_Font_Color") target:self set:nil get:nil detail:nil cell:PSButtonCell edit:nil];
+        fontColorSpecifier.buttonAction = @selector(selectGlobalFontColorPressed);
+        fontColorSpecifier.identifier = @"globalFontColor";
+        [specifiers addObject:fontColorSpecifier];
+        PSSpecifier *resetFontColorSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Restore_Theme_Font_Color") target:self set:nil get:nil detail:nil cell:PSButtonCell edit:nil];
+        resetFontColorSpecifier.buttonAction = @selector(resetGlobalFontColorPressed);
+        resetFontColorSpecifier.identifier = @"restoreThemeFontColor";
+        [specifiers addObject:resetFontColorSpecifier];
+        [themingGroupSpecifier setProperty:DOLocalizedString(@"Global_Font_Color_Hint") forKey:@"footerText"];
+
         PSSpecifier *bootlogoGropSpecifier = [PSSpecifier emptyGroupSpecifier];
         bootlogoGropSpecifier.name = DOLocalizedString(@"Section_Boot_Logo");
         [specifiers addObject:bootlogoGropSpecifier];
@@ -721,6 +736,36 @@
     picker.delegate = self;
     picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
     [self presentViewController:picker animated:YES completion:nil];
+}
+
+#pragma mark - Global Font Color
+
+- (void)selectGlobalFontColorPressed
+{
+    if (self.presentedViewController) return;
+    self.fontPickerTheme = DOThemeManager.sharedInstance.enabledTheme;
+    UIColorPickerViewController *picker = [UIColorPickerViewController new];
+    picker.title = DOLocalizedString(@"Global_Font_Color");
+    picker.supportsAlpha = NO;
+    picker.selectedColor = [self.fontPickerTheme.primaryTextColor colorWithAlphaComponent:1];
+    picker.delegate = self;
+    [self presentViewController:picker animated:YES completion:nil];
+}
+
+- (void)colorPickerViewControllerDidSelectColor:(UIColorPickerViewController *)viewController
+{
+    if (self.fontPickerTheme) [DOGlobalAppearance setGlobalFontColor:viewController.selectedColor forTheme:self.fontPickerTheme];
+}
+
+- (void)colorPickerViewControllerDidFinish:(UIColorPickerViewController *)viewController
+{
+    [self colorPickerViewControllerDidSelectColor:viewController];
+    self.fontPickerTheme = nil;
+}
+
+- (void)resetGlobalFontColorPressed
+{
+    [DOGlobalAppearance setGlobalFontColor:nil forTheme:DOThemeManager.sharedInstance.enabledTheme];
 }
 
 #pragma mark - Global Background Picker

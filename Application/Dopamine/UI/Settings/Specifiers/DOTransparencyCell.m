@@ -44,7 +44,7 @@
     _valueLabel = [[UILabel alloc] init];
     _valueLabel.translatesAutoresizingMaskIntoConstraints = NO;
     _valueLabel.textAlignment = NSTextAlignmentRight;
-    _valueLabel.textColor = [DOGlobalAppearance accentColor];
+    _valueLabel.textColor = [DOGlobalAppearance primaryTextColor];
     _valueLabel.font = [UIFont systemFontOfSize:13 weight:UIFontWeightSemibold];
     _valueLabel.accessibilityIdentifier = @"DOTransparencyValue";
 

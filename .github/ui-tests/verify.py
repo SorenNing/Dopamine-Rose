@@ -148,6 +148,19 @@ def verify(output):
     failures = [item for item in checks if item.get("passed") is not True]
     if failures or report.get("failureCount") != 0 or len(checks) < 500:
         errors.append(f"Invalid/incomplete assertion coverage: {len(checks)} assertions, {len(failures)} failures")
+    font_assertions = {
+        "font_live_primary_secondary_switch_and_plain_button",
+        "font_rich_links_and_configuration_title",
+        "font_preserves_icons_semantics_and_unregistered_system_views",
+        "font_rgb_written_to_preferences_file", "font_theme_isolation",
+        "font_second_change_keeps_secondary_role_and_semantic_collision",
+        "font_restore_primary_secondary_control_and_rich_text",
+        "font_reused_semantic_label_can_become_ordinary",
+    }
+    for theme in ("origami", "glaze", "nocturne", "dusty-rose"):
+        present = {item.get("assertion") for item in checks if item.get("case") == theme and item.get("passed") is True}
+        if font_assertions - present:
+            errors.append(f"Missing font-color coverage for {theme}: {sorted(font_assertions - present)}")
     coverage = report.get("coverage", {})
     if coverage.get("themes") != 4 or coverage.get("expectedScreenshots") != 68:
         errors.append("Unexpected four-theme screenshot matrix")

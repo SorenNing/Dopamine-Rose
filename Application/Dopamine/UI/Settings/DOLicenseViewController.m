@@ -73,6 +73,7 @@
     self.license.font = [UIFont systemFontOfSize:14];
     self.license.textColor = [DOGlobalAppearance primaryTextColor];
     self.license.tintColor = [DOGlobalAppearance accentColor];
+    self.license.linkTextAttributes = @{NSForegroundColorAttributeName:[DOGlobalAppearance linkColor]};
     self.license.indicatorStyle = [DOGlobalAppearance interfaceStyle] == UIUserInterfaceStyleDark ? UIScrollViewIndicatorStyleWhite : UIScrollViewIndicatorStyleBlack;
     self.license.backgroundColor = [UIColor clearColor];
     self.selectedLicense = 0;

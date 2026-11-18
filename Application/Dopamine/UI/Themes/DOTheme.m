@@ -5,12 +5,54 @@
 
 #import "DOTheme.h"
 #import "UIImage+Blur.h"
+#import "DOPreferenceManager.h"
+#import <math.h>
 
 @interface DOTheme ()
 @property (nonatomic, retain) NSString *imageName;
 @end
 
 @implementation DOTheme
+
+@synthesize primaryTextColor = _primaryTextColor;
+@synthesize secondaryTextColor = _secondaryTextColor;
+
+- (NSString *)fontColorPreferenceKey
+{
+    return [@"globalFontColor." stringByAppendingString:self.key];
+}
+
+- (UIColor *)customFontColor
+{
+    id saved = [DOPreferenceManager.sharedManager preferenceValueForKey:self.fontColorPreferenceKey];
+    if (![saved isKindOfClass:NSArray.class] || [saved count] != 3) return nil;
+    for (id component in saved) {
+        if (![component isKindOfClass:NSNumber.class] || !isfinite([component doubleValue]) || [component doubleValue] < 0 || [component doubleValue] > 1) return nil;
+    }
+    return [UIColor colorWithRed:[saved[0] doubleValue] green:[saved[1] doubleValue] blue:[saved[2] doubleValue] alpha:1];
+}
+
+- (void)setCustomFontColor:(UIColor *)color
+{
+    CGFloat red, green, blue, alpha;
+    if (color && [color getRed:&red green:&green blue:&blue alpha:&alpha]) {
+        [DOPreferenceManager.sharedManager setPreferenceValue:@[@(red), @(green), @(blue)] forKey:self.fontColorPreferenceKey];
+    } else if (!color) {
+        [DOPreferenceManager.sharedManager removePreferenceValueForKey:self.fontColorPreferenceKey];
+    }
+}
+
+- (UIColor *)primaryTextColor
+{
+    return self.customFontColor ?: _primaryTextColor;
+}
+
+- (UIColor *)secondaryTextColor
+{
+    UIColor *custom = self.customFontColor;
+    // Keep the chosen hue while retaining a quieter secondary text hierarchy.
+    return custom ? [custom colorWithAlphaComponent:0.72] : _secondaryTextColor;
+}
 
 - (id)initWithDictionary:(NSDictionary *)dictionary
 {

@@ -171,3 +171,7 @@
 "Custom_Global_Background" = "自訂全域背景";
 "Restore_Theme_Background" = "恢復主題預設背景";
 "Background_Import_Failed" = "無法讀取或儲存背景，請換一張圖片重試。";
+
+"Global_Font_Color" = "自訂全域字體顏色";
+"Restore_Theme_Font_Color" = "恢復主題預設字體顏色";
+"Global_Font_Color_Hint" = "各主題獨立儲存，立即套用至文字、連結與開關；警告與錯誤保留語意色。";

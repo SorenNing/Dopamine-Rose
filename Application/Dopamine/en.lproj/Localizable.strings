@@ -169,3 +169,7 @@
 "Custom_Global_Background" = "Custom Global Background";
 "Restore_Theme_Background" = "Restore Theme Default Background";
 "Background_Import_Failed" = "Unable to load or save this background. Please try another image.";
+
+"Global_Font_Color" = "Custom Global Font Color";
+"Restore_Theme_Font_Color" = "Restore Theme Default Font Color";
+"Global_Font_Color_Hint" = "Saved separately for each theme. Applies immediately to text, links and switches; warning and error colors stay unchanged.";

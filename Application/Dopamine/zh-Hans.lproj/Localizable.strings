@@ -168,3 +168,7 @@
 "Custom_Global_Background" = "自定义全局背景";
 "Restore_Theme_Background" = "恢复主题默认背景";
 "Background_Import_Failed" = "无法读取或保存背景，请换一张图片重试。";
+
+"Global_Font_Color" = "自定义全局字体颜色";
+"Restore_Theme_Font_Color" = "恢复主题默认字体颜色";
+"Global_Font_Color_Hint" = "按主题独立保存，立即应用于文字、链接和开关；警告与错误保留语义色。";

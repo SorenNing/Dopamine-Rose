@@ -35,7 +35,7 @@
         chevronImage = [chevronImage imageWithConfiguration:[UIImageSymbolConfiguration configurationWithPointSize:16 weight:UIImageSymbolWeightRegular]];
         UIImageView *chevronView = [[UIImageView alloc] initWithImage:chevronImage];
         chevronView.translatesAutoresizingMaskIntoConstraints = NO;
-        chevronView.tintColor = [DOGlobalAppearance secondaryTextColor];
+        chevronView.tintColor = [DOGlobalAppearance accentColor];
         [button addSubview:chevronView];
         [NSLayoutConstraint activateConstraints:@[
             [chevronView.trailingAnchor constraintEqualToAnchor:button.trailingAnchor constant:-10],

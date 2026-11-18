@@ -6,6 +6,7 @@
 #import "DOGlobalAppearance.h"
 #import "DOThemeManager.h"
 #import "DONavigationController.h"
+#import "DOPreferenceManager.h"
 
 static NSMutableArray<NSDictionary *> *DOChecks;
 static NSMutableArray<NSDictionary *> *DOShots;
@@ -638,7 +639,7 @@ static void DOPublish(void)
         @"environment": @{@"platform": @"iOS Simulator", @"systemVersion": UIDevice.currentDevice.systemVersion,
             @"screenBounds": DORect(UIScreen.mainScreen.bounds), @"screenScale": @(UIScreen.mainScreen.scale),
             @"viewports": @[@320, @390, @430], @"minimumOS": @"15.0"},
-        @"coverage": @{@"production": @[@"DOGlobalAppearance.m", @"DOTheme.m", @"DONavigationController.m", @"DOModalTransitionScale.m", @"DOModalTransitionPush.m", @"DOModalBackAction.m", @"UIImage+Blur.m"],
+        @"coverage": @{@"production": @[@"DOGlobalAppearance.m", @"DOPreferenceManager.m", @"DOTheme.m", @"DONavigationController.m", @"DOModalTransitionScale.m", @"DOModalTransitionPush.m", @"DOModalBackAction.m", @"UIImage+Blur.m"],
             @"themes": @4, @"routingPages": @[@"home", @"settings", @"about"], @"expectedScreenshots": @68,
             @"largeFont": @"AX XXXL trait plus explicit 28pt brand font override",
             @"notTested": @[@"Native Preferences/PSListController", @"jailbreak/business actions", @"complete production home/settings/about page implementations", @"physical-device rendering", @"interactive edge-swipe cancellation"]},
@@ -648,6 +649,52 @@ static void DOPublish(void)
     NSString *documents = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject;
     BOOL saved = json && [json writeToFile:[documents stringByAppendingPathComponent:@"report.json"] atomically:YES];
     NSLog(@"HARNESS_COMPLETE passed=%d failures=%ld screenshots=%lu reportSaved=%d %@", failures == 0, (long)failures, (unsigned long)DOShots.count, saved, error ?: @"");
+}
+
+static void DOFontColorCases(DOTheme *theme)
+{
+    [DOGlobalAppearance setGlobalFontColor:nil forTheme:theme];
+    UIColor *original = theme.primaryTextColor, *secondary = theme.secondaryTextColor;
+    UIColor *chosen = [UIColor colorWithRed:0.21 green:0.44 blue:0.67 alpha:1];
+    UIColor *accent = theme.accentColor;
+    UIView *root = [UIView new];
+    UILabel *label = [UILabel new]; label.text = @"Body"; label.textColor = original; [root addSubview:label];
+    UILabel *detail = [UILabel new]; detail.textColor = secondary; [root addSubview:detail];
+    UILabel *warning = [UILabel new]; warning.textColor = chosen;
+    [DOGlobalAppearance preserveSemanticTextInView:warning]; [root addSubview:warning];
+    UITextView *rich = [UITextView new];
+    rich.attributedText = [[NSAttributedString alloc] initWithString:@"Link body" attributes:@{NSForegroundColorAttributeName:original, NSFontAttributeName:[UIFont boldSystemFontOfSize:17]}];
+    [root addSubview:rich];
+    UIButton *button = [UIButton buttonWithConfiguration:[DOGlobalAppearance defaultButtonConfiguration] primaryAction:nil];
+    [root addSubview:button];
+    UIButton *plain = [UIButton buttonWithType:UIButtonTypeCustom];
+    [plain setTitleColor:original forState:UIControlStateNormal]; [root addSubview:plain];
+    UISwitch *toggle = [UISwitch new]; [root addSubview:toggle];
+    UIImageView *icon = [UIImageView new]; icon.tintColor = accent; [root addSubview:icon];
+    UILabel *system = [UILabel new]; system.textColor = original; // Unregistered system subtree.
+    [DOGlobalAppearance registerTextRoot:root];
+    [DOGlobalAppearance setGlobalFontColor:chosen forTheme:theme];
+    DORecord(@"font_live_primary_secondary_switch_and_plain_button", [label.textColor isEqual:chosen] && [detail.textColor isEqual:[chosen colorWithAlphaComponent:0.72]] && [toggle.onTintColor isEqual:chosen] && [[plain titleColorForState:UIControlStateNormal] isEqual:chosen], nil);
+    NSDictionary *attributes = [rich.attributedText attributesAtIndex:0 effectiveRange:nil];
+    NSDictionary *buttonAttributes = button.configuration.titleTextAttributesTransformer(@{});
+    DORecord(@"font_rich_links_and_configuration_title", [attributes[NSForegroundColorAttributeName] isEqual:chosen] && attributes[NSFontAttributeName] != nil && [rich.linkTextAttributes[NSForegroundColorAttributeName] isEqual:chosen] && [buttonAttributes[NSForegroundColorAttributeName] isEqual:chosen], nil);
+    DORecord(@"font_preserves_icons_semantics_and_unregistered_system_views", [icon.tintColor isEqual:accent] && [warning.textColor isEqual:chosen] && [system.textColor isEqual:original], nil);
+    DOPreferenceManager *reloaded = [DOPreferenceManager new];
+    NSString *key = [@"globalFontColor." stringByAppendingString:theme.key];
+    DORecord(@"font_rgb_written_to_preferences_file", [[reloaded preferenceValueForKey:key] isEqual:[DOPreferenceManager.sharedManager preferenceValueForKey:key]], nil);
+    for (DOTheme *other in DOThemeManager.sharedInstance.themes) {
+        if (other == theme) continue;
+        DORecord(@"font_theme_isolation", other.customFontColor == nil, @{@"other":other.key});
+    }
+    [DOGlobalAppearance setGlobalFontColor:UIColor.systemRedColor forTheme:theme];
+    DORecord(@"font_second_change_keeps_secondary_role_and_semantic_collision", [detail.textColor isEqual:[theme.customFontColor colorWithAlphaComponent:0.72]] && [warning.textColor isEqual:chosen], nil);
+    [DOGlobalAppearance setGlobalFontColor:nil forTheme:theme];
+    DORecord(@"font_restore_primary_secondary_control_and_rich_text", [label.textColor isEqual:original] && [detail.textColor isEqual:secondary] && [toggle.onTintColor isEqual:accent] && [[rich.attributedText attribute:NSForegroundColorAttributeName atIndex:0 effectiveRange:nil] isEqual:original] && theme.customFontColor == nil, nil);
+    [DOGlobalAppearance clearSemanticTextInView:warning]; warning.textColor = original;
+    [DOGlobalAppearance registerTextRoot:root];
+    [DOGlobalAppearance setGlobalFontColor:chosen forTheme:theme];
+    DORecord(@"font_reused_semantic_label_can_become_ordinary", [warning.textColor isEqual:chosen], nil);
+    [DOGlobalAppearance setGlobalFontColor:nil forTheme:theme];
 }
 
 static void DORun(void)
@@ -665,6 +712,7 @@ static void DORun(void)
             DOEnqueue(0, ^{
                 DOThemeManager.sharedInstance.selectedIndex = index;
                 DOContext = theme.key;
+                DOFontColorCases(theme);
                 DORecord(@"production_theme_raster_loaded_by_production_image_method", theme.image.CGImage != NULL, @{@"theme": theme.key});
             });
             DOBrandCases(theme);

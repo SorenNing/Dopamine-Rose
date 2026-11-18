@@ -23,6 +23,8 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) float blur;
 @property (nonatomic, assign) BOOL titleShadow;
 
+// RGB override is stored independently for each theme; nil restores the palette.
+@property (nonatomic, strong, nullable) UIColor *customFontColor;
 @property (nonatomic, retain) UIColor *primaryTextColor;
 @property (nonatomic, retain) UIColor *secondaryTextColor;
 @property (nonatomic, retain) UIColor *accentColor;

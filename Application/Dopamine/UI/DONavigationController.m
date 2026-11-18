@@ -82,6 +82,8 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
     self.navigationEnabled = YES;
     [self setupBackground];
     [self setupSecondaryBar];
+    [DOGlobalAppearance registerTextRoot:self.secondaryBar];
+    [DOGlobalAppearance registerTextRoot:self.navigationBar];
     self.delegate = self;
     [self setNavigationBarHidden:YES];
     self.mainView = [[DOMainViewController alloc] init];

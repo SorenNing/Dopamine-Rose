@@ -73,7 +73,7 @@ static void DOStylePreferenceSectionView(UIView *view)
         table.separatorColor = UIColor.clearColor;
         table.backgroundColor = UIColor.clearColor;
     }
-    [UISwitch appearanceWhenContainedInInstancesOfClasses:@[[vc class]]].onTintColor = [DOGlobalAppearance accentColor];
+    [UISwitch appearanceWhenContainedInInstancesOfClasses:@[[vc class]]].onTintColor = [DOGlobalAppearance controlColor];
 }
 
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath

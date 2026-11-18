@@ -13,8 +13,11 @@
 
 static char kDOPageContentKey;
 static char kDOSurfaceColorKey;
+static char kDOSemanticTextKey;
+static char kDOTextRolesKey;
 static NSHashTable<UIImageView *> *DOBackgroundViews;
 static NSHashTable<UIView *> *DOSurfaceViews;
+static NSHashTable<UIView *> *DOTextRoots;
 static NSHashTable<UIVisualEffectView *> *DOIndependentEffects;
 
 static NSInteger const kDOThemeEffectTag = 0xD027;
@@ -137,11 +140,131 @@ static void DORefreshSurfaces(void)
     for (UIVisualEffectView *effect in DOIndependentEffects.allObjects) effect.alpha = opacity;
 }
 
+// Registered app roots only: never walk presented system controllers or
+// mutate inherited tint (which would also recolor unrelated symbols).
+static NSString *DOTextRole(UIColor *color, UIColor *primary, UIColor *secondary)
+{
+    if ([color isEqual:primary]) return @"primary";
+    if ([color isEqual:secondary]) return @"secondary";
+    if ([color isEqual:[DOGlobalAppearance accentColor]]) return @"link";
+    if ([color isEqual:UIColor.whiteColor]) return @"button";
+    return nil;
+}
+
+static UIColor *DOColorForTextRole(NSString *role)
+{
+    if ([role isEqualToString:@"primary"]) return [DOGlobalAppearance primaryTextColor];
+    if ([role isEqualToString:@"secondary"]) return [DOGlobalAppearance secondaryTextColor];
+    if ([role isEqualToString:@"link"]) return [DOGlobalAppearance linkColor];
+    if ([role isEqualToString:@"button"]) return [DOGlobalAppearance buttonTextColor];
+    return nil;
+}
+
+static UIColor *DORefreshTextRole(UIView *view, NSString *slot, UIColor *color, UIColor *primary, UIColor *secondary)
+{
+    NSMutableDictionary *roles = objc_getAssociatedObject(view, &kDOTextRolesKey);
+    if (!roles) {
+        roles = [NSMutableDictionary new];
+        objc_setAssociatedObject(view, &kDOTextRolesKey, roles, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    }
+    NSDictionary *previous = roles[slot];
+    NSString *role = [previous[@"color"] isEqual:color] ? previous[@"role"] : DOTextRole(color, primary, secondary);
+    UIColor *result = DOColorForTextRole(role) ?: color;
+    if (role && result) roles[slot] = @{@"role":role, @"color":result};
+    else [roles removeObjectForKey:slot];
+    return result;
+}
+
+static NSAttributedString *DORecoloredString(NSAttributedString *text, UIColor *primary, UIColor *secondary)
+{
+    if (!text.length) return text;
+    NSMutableAttributedString *result = text.mutableCopy;
+    [text enumerateAttributesInRange:NSMakeRange(0, text.length) options:0 usingBlock:^(NSDictionary *attributes, NSRange range, BOOL *stop) {
+        UIColor *value = attributes[NSForegroundColorAttributeName];
+        NSString *role = attributes[@"DOTextColorRole"] ?: DOTextRole(value, primary, secondary);
+        UIColor *replacement = DOColorForTextRole(role);
+        if (replacement) {
+            [result addAttribute:NSForegroundColorAttributeName value:replacement range:range];
+            [result addAttribute:@"DOTextColorRole" value:role range:range];
+        }
+    }];
+    return result;
+}
+
+static void DORefreshText(UIView *view, UIColor *primary, UIColor *secondary)
+{
+    if ([objc_getAssociatedObject(view, &kDOSemanticTextKey) boolValue]) return;
+    if ([view isKindOfClass:UISwitch.class]) [DOGlobalAppearance styleSwitch:(UISwitch *)view];
+    if ([view isKindOfClass:UILabel.class]) {
+        UILabel *label = (UILabel *)view;
+        NSAttributedString *text = DORecoloredString(label.attributedText, primary, secondary);
+        label.textColor = DORefreshTextRole(view, @"text", label.textColor, primary, secondary);
+        if (text) label.attributedText = text;
+    } else if ([view isKindOfClass:UITextView.class]) {
+        UITextView *textView = (UITextView *)view;
+        NSRange selection = textView.selectedRange;
+        CGPoint offset = textView.contentOffset;
+        NSAttributedString *text = DORecoloredString(textView.attributedText, primary, secondary);
+        textView.textColor = DORefreshTextRole(view, @"text", textView.textColor, primary, secondary);
+        NSMutableDictionary *links = textView.linkTextAttributes.mutableCopy ?: [NSMutableDictionary new];
+        links[NSForegroundColorAttributeName] = [DOGlobalAppearance linkColor];
+        textView.linkTextAttributes = links;
+        if (text) textView.attributedText = text;
+        textView.selectedRange = selection;
+        textView.contentOffset = offset;
+    } else if ([view isKindOfClass:UITextField.class]) {
+        UITextField *field = (UITextField *)view;
+        field.textColor = DORefreshTextRole(view, @"text", field.textColor, primary, secondary);
+        field.attributedPlaceholder = DORecoloredString(field.attributedPlaceholder, primary, secondary);
+    }
+    if ([view isKindOfClass:UIButton.class]) {
+        UIButton *button = (UIButton *)view;
+        for (NSNumber *state in @[@(UIControlStateNormal), @(UIControlStateHighlighted), @(UIControlStateDisabled), @(UIControlStateSelected)]) {
+            UIColor *color = [button titleColorForState:state.unsignedIntegerValue];
+            if (color) [button setTitleColor:DORefreshTextRole(view, state.stringValue, color, primary, secondary) forState:state.unsignedIntegerValue];
+            NSAttributedString *title = [button attributedTitleForState:state.unsignedIntegerValue];
+            if (title) [button setAttributedTitle:DORecoloredString(title, primary, secondary) forState:state.unsignedIntegerValue];
+        }
+        UIButtonConfiguration *configuration = button.configuration;
+        if (configuration && !configuration.titleTextAttributesTransformer) {
+            // Change the title only; baseForegroundColor also drives the image.
+            configuration.titleTextAttributesTransformer = ^NSDictionary *(NSDictionary *attributes) {
+                NSMutableDictionary *result = attributes.mutableCopy;
+                result[NSForegroundColorAttributeName] = [DOGlobalAppearance buttonTextColor];
+                return result;
+            };
+            button.configuration = configuration;
+        }
+        [button setNeedsUpdateConfiguration];
+    }
+    if ([view isKindOfClass:UINavigationBar.class]) {
+        UINavigationBar *bar = (UINavigationBar *)view;
+        NSMutableDictionary *title = bar.titleTextAttributes.mutableCopy ?: [NSMutableDictionary new];
+        title[NSForegroundColorAttributeName] = [DOGlobalAppearance primaryTextColor];
+        bar.titleTextAttributes = title;
+        bar.largeTitleTextAttributes = title;
+        for (NSString *key in @[@"standardAppearance", @"scrollEdgeAppearance", @"compactAppearance", @"compactScrollEdgeAppearance"]) {
+            UINavigationBarAppearance *appearance = [[bar valueForKey:key] copy];
+            if (!appearance) continue;
+            appearance.titleTextAttributes = title;
+            appearance.largeTitleTextAttributes = title;
+            for (UIBarButtonItemAppearance *item in @[appearance.buttonAppearance, appearance.doneButtonAppearance, appearance.backButtonAppearance]) {
+                item.normal.titleTextAttributes = title;
+                item.highlighted.titleTextAttributes = title;
+                item.disabled.titleTextAttributes = @{NSForegroundColorAttributeName:[DOGlobalAppearance secondaryTextColor]};
+            }
+            [bar setValue:appearance forKey:key];
+        }
+    }
+    for (UIView *child in view.subviews) DORefreshText(child, primary, secondary);
+}
+
 @implementation DOGlobalAppearance
 
 + (void)initialize
 {
     if (self != DOGlobalAppearance.class) return;
+    DOTextRoots = [NSHashTable weakObjectsHashTable];
     DOBackgroundViews = [NSHashTable weakObjectsHashTable];
     [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(refreshBackgrounds:) name:@"DOThemeBackgroundDidChange" object:nil];
     DOSurfaceViews = [NSHashTable weakObjectsHashTable];
@@ -219,6 +342,40 @@ static void DORefreshSurfaces(void)
     return [[self panelColor] colorWithAlphaComponent:alpha];
 }
 
++ (void)registerTextRoot:(UIView *)view
+{
+    [DOTextRoots addObject:view];
+    DORefreshText(view, [self primaryTextColor], [self secondaryTextColor]);
+}
+
++ (void)preserveSemanticTextInView:(UIView *)view
+{
+    objc_setAssociatedObject(view, &kDOSemanticTextKey, @YES, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
++ (void)clearSemanticTextInView:(UIView *)view
+{
+    objc_setAssociatedObject(view, &kDOSemanticTextKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(view, &kDOTextRolesKey, nil, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
++ (void)setGlobalFontColor:(UIColor *)color forTheme:(DOTheme *)theme
+{
+    NSAssert(NSThread.isMainThread, @"Font appearance changes must run on the main thread");
+    UIColor *primary = theme.primaryTextColor;
+    UIColor *secondary = theme.secondaryTextColor;
+    theme.customFontColor = color;
+    if (![theme.key isEqualToString:[self theme].key]) return;
+    NSArray<UIView *> *roots = DOTextRoots.allObjects;
+    for (UIView *root in roots) {
+        BOOL nested = NO;
+        for (UIView *other in roots) {
+            if (other != root && [root isDescendantOfView:other]) { nested = YES; break; }
+        }
+        if (!nested) DORefreshText(root, primary, secondary);
+    }
+}
+
 + (UIColor *)primaryTextColor
 {
     return [self theme].primaryTextColor;
@@ -227,6 +384,16 @@ static void DORefreshSurfaces(void)
 + (UIColor *)secondaryTextColor
 {
     return [self theme].secondaryTextColor;
+}
+
++ (UIColor *)linkColor
+{
+    return [self theme].customFontColor ?: [self accentColor];
+}
+
++ (UIColor *)controlColor
+{
+    return [self theme].customFontColor ?: [self accentColor];
 }
 
 + (UIColor *)accentColor
@@ -276,6 +443,7 @@ static void DORefreshSurfaces(void)
 
 + (UIColor *)buttonTextColor
 {
+    if ([self theme].customFontColor) return [self primaryTextColor];
     return [self theme].darkTheme ? UIColor.whiteColor : [self primaryTextColor];
 }
 
@@ -347,6 +515,7 @@ static void DORefreshSurfaces(void)
 + (void)styleViewController:(UIViewController *)viewController
 {
     if (!viewController.isViewLoaded) return;
+    [self registerTextRoot:viewController.view];
     viewController.overrideUserInterfaceStyle = [self interfaceStyle];
     viewController.view.tintColor = [self accentColor];
     viewController.view.backgroundColor = UIColor.clearColor;
@@ -369,6 +538,7 @@ static void DORefreshSurfaces(void)
     mark.text = @"D";
     mark.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
     mark.textColor = [self accentColor];
+    [self preserveSemanticTextInView:mark];
     mark.textAlignment = NSTextAlignmentCenter;
     [self bindSurfaceColor:@selector(tileColor) toView:mark];
     mark.layer.cornerRadius = 11;
@@ -417,7 +587,7 @@ static void DORefreshSurfaces(void)
 
 + (void)styleSwitch:(UISwitch *)toggle
 {
-    toggle.onTintColor = [self accentColor];
+    toggle.onTintColor = [self controlColor];
     toggle.thumbTintColor = UIColor.whiteColor;
 }
 

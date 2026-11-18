@@ -66,7 +66,7 @@
     self.changelog.font = [UIFont systemFontOfSize:16];
     self.changelog.textColor = [DOGlobalAppearance primaryTextColor];
     self.changelog.tintColor = [DOGlobalAppearance accentColor];
-    self.changelog.linkTextAttributes = @{NSForegroundColorAttributeName: [DOGlobalAppearance accentColor]};
+    self.changelog.linkTextAttributes = @{NSForegroundColorAttributeName: [DOGlobalAppearance linkColor]};
     self.changelog.backgroundColor = [UIColor clearColor];
     self.changelog.translatesAutoresizingMaskIntoConstraints = NO;
     self.changelog.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;

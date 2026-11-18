@@ -198,7 +198,9 @@
     }
     if (!self.progressTitle) [self setupTitle];
     self.progressTitle.text = title;
-    self.progressTitle.textColor = failed ? [DOGlobalAppearance accentColor] : [DOGlobalAppearance primaryTextColor];
+    self.progressTitle.textColor = failed ? UIColor.systemRedColor : [DOGlobalAppearance primaryTextColor];
+    if (failed) [DOGlobalAppearance preserveSemanticTextInView:self.progressTitle];
+    else [DOGlobalAppearance clearSemanticTextInView:self.progressTitle];
     self.progressIndicator.hidden = YES;
     if (failed && [self.logView isKindOfClass:DOLyricsLogView.class]) {
         UIView *item = ((DOLyricsLogView *)self.logView).stackView.arrangedSubviews.lastObject;
