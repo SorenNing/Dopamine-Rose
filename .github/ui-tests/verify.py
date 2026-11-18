@@ -170,7 +170,7 @@ def verify(output):
             errors.append(str(error))
     manifest = report.get("sourceManifest", {})
     disk_manifest = json.loads((output / "source-manifest.json").read_text())
-    if manifest != disk_manifest or len(manifest.get("production_sources", [])) != 7:
+    if manifest != disk_manifest or len(manifest.get("production_sources", [])) != 8:
         errors.append("Compiled production-source manifest mismatch")
     hits = []
     for log_name in ("app.stdout.log", "app.stderr.log", "simulator.log"):
