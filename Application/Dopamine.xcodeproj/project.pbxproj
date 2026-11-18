@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		D0F9E32BD8FB85BDDAB9F62D /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F8AFC0AB82536450E02150 /* Metal.framework */; };
 		D0F9B201FE5BF044CF87729D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F8D925CAA658E855A9E6F8 /* QuartzCore.framework */; };
 		D0F9AB7532C69A346A0E1656 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D0F833FF5CDD943372BC2E3E /* CoreGraphics.framework */; };
 		A25990010000000000000001 /* DORuntimeConfiguration.m in Sources */ = {isa = PBXBuildFile; fileRef = A25990010000000000000002 /* DORuntimeConfiguration.m */; };
@@ -256,46 +255,6 @@
 		8CF3E8662F72D57800931CA8 /* DarkSword.m in Sources */ = {isa = PBXBuildFile; fileRef = 8CF3E85B2F72D50200931CA8 /* DarkSword.m */; };
 		8CF3E8672F72DD9400931CA8 /* DarkSword.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8CF3E8582F72D45800931CA8 /* DarkSword.framework */; };
 		8CF3E8682F72DD9400931CA8 /* DarkSword.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8CF3E8582F72D45800931CA8 /* DarkSword.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		3BAFCA83DA51F40DDC8D9730 /* DOTheseusBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97D9854CB4803BB03A86FB84 /* DOTheseusBridge.swift */; };
-		8CEA589C23551BC9C23E2014 /* TheseusGestureDeformer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9A3EBC4790BD5AC1E3721DD /* TheseusGestureDeformer.swift */; };
-		160AF54F56FAA803E88A7B1D /* TheseusStretchAnimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A68C3EA1E792B3CDB016BE4A /* TheseusStretchAnimator.swift */; };
-		2DA7B198FD3BDD6CF3D53C1C /* TheseusLensMaterial.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA5B5B4C6A6BD5F873B20451 /* TheseusLensMaterial.swift */; };
-		464627C9D8DBB790BC740B20 /* TheseusSlider.swift in Sources */ = {isa = PBXBuildFile; fileRef = DABEED3A12614F5FF8CF3E57 /* TheseusSlider.swift */; };
-		7ABB48661BB8D3B5477BF65F /* TheseusSwitch.swift in Sources */ = {isa = PBXBuildFile; fileRef = C052B734D6E41F992B57D6C6 /* TheseusSwitch.swift */; };
-		57E8E4E94CC1E41EF8B6FAF0 /* TheseusTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = CBFC7473F2C41816F07026C0 /* TheseusTabBar.swift */; };
-		7DE56962B67EC20F7FB0A6DF /* TheseusCapability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F82B7765759A754C61E0EA /* TheseusCapability.swift */; };
-		969DF594D2DB9A0EF341DB6A /* TheseusConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE08DE38D598E9C7B5D13006 /* TheseusConfiguration.swift */; };
-		F2D2E26681E2F6D4D67D457E /* TheseusMaterialModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DD2A0DA0E4DAB520EC939CF /* TheseusMaterialModel.swift */; };
-		F16F65C94B367AA421296460 /* TheseusSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 336AC4E2A1905908D266B804 /* TheseusSettings.swift */; };
-		0632379ABA2CFE3474480B1D /* TheseusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57875B5052A6FE5C8E7A0804 /* TheseusView.swift */; };
-		E0D751C5CB6FB5DEC2A0528A /* CapsuleEnds.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A5E65454F0D4E816D0E137 /* CapsuleEnds.swift */; };
-		D78039FCC2784B2D55F9EC5E /* DisplayLinkDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9755D25EDC624274C602DD0 /* DisplayLinkDriver.swift */; };
-		1708F26577E4D48CF7A61B10 /* FlexGlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18F0574BF5F99687F3107A1C /* FlexGlow.swift */; };
-		73372B46F62EE026EC720D30 /* GlassKnobShadowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7141719E9A9CC4E77A1EDBC1 /* GlassKnobShadowView.swift */; };
-		60B473D725A6335B605E08C9 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020B57569D65FC1D4F3A7785 /* HapticManager.swift */; };
-		B7A1EA332B1AC4005BFF0537 /* KnobGlassMorph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D947D28DE07C72E81053916 /* KnobGlassMorph.swift */; };
-		6AF32DB05E62C21404B6DF25 /* KnobGlassMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8483F744FDE292959204FB89 /* KnobGlassMotion.swift */; };
-		54EA36F8E066FB4ADE452086 /* LayoutTransition.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE8895C49B3A0A483B113144 /* LayoutTransition.swift */; };
-		99D06C992CBF1CD1B2A7F4B9 /* LensMorph.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596B65A72BB31AB4078A39B3 /* LensMorph.swift */; };
-		60527F5F74E104EA316117BA /* NativeLens26.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ADF407CF3C923D8E2398DF9 /* NativeLens26.swift */; };
-		37EF38DC3D317F3F3DEB155D /* PixelAlignment.swift in Sources */ = {isa = PBXBuildFile; fileRef = C60E00E48C87AC4A25D72BAA /* PixelAlignment.swift */; };
-		C71B1AAE98D4DB0F7B5D34B9 /* SimpleLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20C6B9998D9571803FCC277F /* SimpleLayer.swift */; };
-		6A37782013702E5B425EFBEB /* BackgroundCaptureDraw.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A528DD23173087253CDD9D2 /* BackgroundCaptureDraw.swift */; };
-		5C3278E2AB53CF022C1580C1 /* BlurKernelCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07EBA44FB1FBD33F2917576A /* BlurKernelCalculator.swift */; };
-		8C0902EC75849B3B84D700DE /* CaptureCompensation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79081DD5C240B355AB1BE6E1 /* CaptureCompensation.swift */; };
-		17BECCC798A1A8BFA2C3CB66 /* CaptureEdges.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DD07C37B789AE68CFB14AAE /* CaptureEdges.swift */; };
-		E7CA3FF38BEE7DA67288EB19 /* MetalContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE12CE46790715CF2CB0364A /* MetalContext.swift */; };
-		96B4BFAD0AE088BE87C2A6D2 /* ShaderTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69C04395D83FE21EF6429AAF /* ShaderTypes.swift */; };
-		434DF600FA22E6B899725673 /* TheseusRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B263498C3EFB9748E91094 /* TheseusRenderer.swift */; };
-		965603D132783AA934FB82D5 /* TheseusTextureCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF52B12EC7C8FD06C1E9866D /* TheseusTextureCache.swift */; };
-		5A1B130A4B77E89412C25593 /* ViewLayerCapture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DBC58656033258144064E5D /* ViewLayerCapture.swift */; };
-		CC6299AEAA32927FC92EE1A7 /* VisualEffectFallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 346B15028E3876A119FDDA86 /* VisualEffectFallback.swift */; };
-		C093BD50BDA0D76A959C2D87 /* TheseusShaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = F64099F79A7372B6DFC77AC1 /* TheseusShaders.metal */; };
-		C311B593CE2F114D7927B563 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80F8A47264FB74C1298C8CFF /* MetalKit.framework */; };
-		4D974C777892F6D3E7107727 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EF46E9386C3A05B910C7BF3B /* IOSurface.framework */; };
-		64155404C1F907EE310772FC /* Accelerate.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0EE7BDA27C0CA4313DAEA1D5 /* Accelerate.framework */; };
-		83D80874A1A717AFBE499B34 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8AD9CA0DD4CAF8DB3954AA01 /* CoreVideo.framework */; };
-		BB6CC79679E08DEB37FC8B84 /* TheseusBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0D79FD9EA95D62500D0A37F /* TheseusBundle.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -429,7 +388,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		D0F8AFC0AB82536450E02150 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		D0F8D925CAA658E855A9E6F8 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		D0F833FF5CDD943372BC2E3E /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
         A25990010000000000000002 /* DORuntimeConfiguration.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DORuntimeConfiguration.m; sourceTree = "<group>"; };
@@ -745,50 +703,6 @@
 		8CF3E85B2F72D50200931CA8 /* DarkSword.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DarkSword.m; sourceTree = "<group>"; };
 		8CF3E85E2F72D51200931CA8 /* DarkSword.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DarkSword.h; sourceTree = "<group>"; };
 		C075B0CB2B8F2BCE009A26BB /* th */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
-		97D9854CB4803BB03A86FB84 /* DOTheseusBridge.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/DOTheseusBridge.swift"; sourceTree = SOURCE_ROOT; };
-		A9A3EBC4790BD5AC1E3721DD /* TheseusGestureDeformer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Animation/TheseusGestureDeformer.swift"; sourceTree = SOURCE_ROOT; };
-		A68C3EA1E792B3CDB016BE4A /* TheseusStretchAnimator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Animation/TheseusStretchAnimator.swift"; sourceTree = SOURCE_ROOT; };
-		FA5B5B4C6A6BD5F873B20451 /* TheseusLensMaterial.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Components/TheseusLensMaterial.swift"; sourceTree = SOURCE_ROOT; };
-		DABEED3A12614F5FF8CF3E57 /* TheseusSlider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Components/TheseusSlider.swift"; sourceTree = SOURCE_ROOT; };
-		C052B734D6E41F992B57D6C6 /* TheseusSwitch.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Components/TheseusSwitch.swift"; sourceTree = SOURCE_ROOT; };
-		CBFC7473F2C41816F07026C0 /* TheseusTabBar.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Components/TheseusTabBar.swift"; sourceTree = SOURCE_ROOT; };
-		04F82B7765759A754C61E0EA /* TheseusCapability.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Core/TheseusCapability.swift"; sourceTree = SOURCE_ROOT; };
-		BE08DE38D598E9C7B5D13006 /* TheseusConfiguration.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Core/TheseusConfiguration.swift"; sourceTree = SOURCE_ROOT; };
-		5DD2A0DA0E4DAB520EC939CF /* TheseusMaterialModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Core/TheseusMaterialModel.swift"; sourceTree = SOURCE_ROOT; };
-		336AC4E2A1905908D266B804 /* TheseusSettings.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Core/TheseusSettings.swift"; sourceTree = SOURCE_ROOT; };
-		57875B5052A6FE5C8E7A0804 /* TheseusView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Core/TheseusView.swift"; sourceTree = SOURCE_ROOT; };
-		87A5E65454F0D4E816D0E137 /* CapsuleEnds.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/CapsuleEnds.swift"; sourceTree = SOURCE_ROOT; };
-		B9755D25EDC624274C602DD0 /* DisplayLinkDriver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/DisplayLinkDriver.swift"; sourceTree = SOURCE_ROOT; };
-		18F0574BF5F99687F3107A1C /* FlexGlow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/FlexGlow.swift"; sourceTree = SOURCE_ROOT; };
-		7141719E9A9CC4E77A1EDBC1 /* GlassKnobShadowView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/GlassKnobShadowView.swift"; sourceTree = SOURCE_ROOT; };
-		020B57569D65FC1D4F3A7785 /* HapticManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/HapticManager.swift"; sourceTree = SOURCE_ROOT; };
-		4D947D28DE07C72E81053916 /* KnobGlassMorph.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/KnobGlassMorph.swift"; sourceTree = SOURCE_ROOT; };
-		8483F744FDE292959204FB89 /* KnobGlassMotion.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/KnobGlassMotion.swift"; sourceTree = SOURCE_ROOT; };
-		EE8895C49B3A0A483B113144 /* LayoutTransition.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/LayoutTransition.swift"; sourceTree = SOURCE_ROOT; };
-		596B65A72BB31AB4078A39B3 /* LensMorph.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/LensMorph.swift"; sourceTree = SOURCE_ROOT; };
-		4ADF407CF3C923D8E2398DF9 /* NativeLens26.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/NativeLens26.swift"; sourceTree = SOURCE_ROOT; };
-		C60E00E48C87AC4A25D72BAA /* PixelAlignment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/PixelAlignment.swift"; sourceTree = SOURCE_ROOT; };
-		20C6B9998D9571803FCC277F /* SimpleLayer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Internal/SimpleLayer.swift"; sourceTree = SOURCE_ROOT; };
-		0A528DD23173087253CDD9D2 /* BackgroundCaptureDraw.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/BackgroundCaptureDraw.swift"; sourceTree = SOURCE_ROOT; };
-		07EBA44FB1FBD33F2917576A /* BlurKernelCalculator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/BlurKernelCalculator.swift"; sourceTree = SOURCE_ROOT; };
-		79081DD5C240B355AB1BE6E1 /* CaptureCompensation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/CaptureCompensation.swift"; sourceTree = SOURCE_ROOT; };
-		7DD07C37B789AE68CFB14AAE /* CaptureEdges.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/CaptureEdges.swift"; sourceTree = SOURCE_ROOT; };
-		BE12CE46790715CF2CB0364A /* MetalContext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/MetalContext.swift"; sourceTree = SOURCE_ROOT; };
-		69C04395D83FE21EF6429AAF /* ShaderTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/ShaderTypes.swift"; sourceTree = SOURCE_ROOT; };
-		C2B263498C3EFB9748E91094 /* TheseusRenderer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/TheseusRenderer.swift"; sourceTree = SOURCE_ROOT; };
-		AF52B12EC7C8FD06C1E9866D /* TheseusTextureCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/TheseusTextureCache.swift"; sourceTree = SOURCE_ROOT; };
-		4DBC58656033258144064E5D /* ViewLayerCapture.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/ViewLayerCapture.swift"; sourceTree = SOURCE_ROOT; };
-		346B15028E3876A119FDDA86 /* VisualEffectFallback.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Sources/Theseus/Rendering/VisualEffectFallback.swift"; sourceTree = SOURCE_ROOT; };
-		F64099F79A7372B6DFC77AC1 /* TheseusShaders.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = "Dopamine/Theseus/Sources/Theseus/Shaders/TheseusShaders.metal"; sourceTree = SOURCE_ROOT; };
-		80F8A47264FB74C1298C8CFF /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
-		EF46E9386C3A05B910C7BF3B /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = System/Library/Frameworks/IOSurface.framework; sourceTree = SDKROOT; };
-		0EE7BDA27C0CA4313DAEA1D5 /* Accelerate.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Accelerate.framework; path = System/Library/Frameworks/Accelerate.framework; sourceTree = SDKROOT; };
-		8AD9CA0DD4CAF8DB3954AA01 /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
-		C0D79FD9EA95D62500D0A37F /* TheseusBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/TheseusBundle.swift"; sourceTree = SOURCE_ROOT; };
-		A8A6CCDF90E736B5EA3C32C8 /* DOTheseusBridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Dopamine/Theseus/DOTheseusBridge.h"; sourceTree = SOURCE_ROOT; };
-		4A4E8994E9FCF1808423FF97 /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Dopamine/Theseus/Package.swift"; sourceTree = SOURCE_ROOT; };
-		F188A6067E629A5C298B3744 /* LICENSE */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Dopamine/Theseus/LICENSE"; sourceTree = SOURCE_ROOT; };
-		9E884A57600CDCABE8E02353 /* NOTICE */ = {isa = PBXFileReference; lastKnownFileType = text; path = "Dopamine/Theseus/NOTICE"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -901,11 +815,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C311B593CE2F114D7927B563 /* MetalKit.framework in Frameworks */,
-				4D974C777892F6D3E7107727 /* IOSurface.framework in Frameworks */,
-				64155404C1F907EE310772FC /* Accelerate.framework in Frameworks */,
-				83D80874A1A717AFBE499B34 /* CoreVideo.framework in Frameworks */,
-				D0F9E32BD8FB85BDDAB9F62D /* Metal.framework in Frameworks */,
 				D0F9B201FE5BF044CF87729D /* QuartzCore.framework in Frameworks */,
 				D0F9AB7532C69A346A0E1656 /* CoreGraphics.framework in Frameworks */,
 				8C029F6B2B4E320E0071DE58 /* libz.tbd in Frameworks */,
@@ -1193,11 +1102,6 @@
 		8C029F642B4E2E7D0071DE58 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				80F8A47264FB74C1298C8CFF /* MetalKit.framework */,
-				EF46E9386C3A05B910C7BF3B /* IOSurface.framework */,
-				0EE7BDA27C0CA4313DAEA1D5 /* Accelerate.framework */,
-				8AD9CA0DD4CAF8DB3954AA01 /* CoreVideo.framework */,
-				D0F8AFC0AB82536450E02150 /* Metal.framework */,
 				D0F8D925CAA658E855A9E6F8 /* QuartzCore.framework */,
 				D0F833FF5CDD943372BC2E3E /* CoreGraphics.framework */,
 				2F11A32A301C007500C1C9F0 /* IOKit.framework */,
@@ -1455,7 +1359,6 @@
 		8C7198172ABF0E82003C6658 /* Dopamine */ = {
 			isa = PBXGroup;
 			children = (
-				7BFADB998701524F8293ACC2 /* Theseus */,
 				8CB94F012B59E16D0098BAFD /* Resources */,
 				8C46D71D2B588857002899DB /* Headers */,
 				8C7198332ABF133D003C6658 /* App Delegates */,
@@ -1475,11 +1378,6 @@
 		8C7198322ABF130A003C6658 /* Exploits */ = {
 			isa = PBXGroup;
 			children = (
-				C0D79FD9EA95D62500D0A37F /* TheseusBundle.swift */,
-				A8A6CCDF90E736B5EA3C32C8 /* DOTheseusBridge.h */,
-				4A4E8994E9FCF1808423FF97 /* Package.swift */,
-				F188A6067E629A5C298B3744 /* LICENSE */,
-				9E884A57600CDCABE8E02353 /* NOTICE */,
 				3165CFDC3020A547002737DA /* Titan */,
 				2F11A320301BFE5200C1C9F0 /* momentarius */,
 				8CF3E8352F72D44700931CA8 /* DarkSword */,
@@ -1572,49 +1470,6 @@
 			);
 			path = DarkSword;
 			sourceTree = "<group>";
-		};
-		7BFADB998701524F8293ACC2 /* Theseus */ = {
-			isa = PBXGroup;
-			children = (
-				97D9854CB4803BB03A86FB84 /* DOTheseusBridge.swift */,
-				A9A3EBC4790BD5AC1E3721DD /* TheseusGestureDeformer.swift */,
-				A68C3EA1E792B3CDB016BE4A /* TheseusStretchAnimator.swift */,
-				FA5B5B4C6A6BD5F873B20451 /* TheseusLensMaterial.swift */,
-				DABEED3A12614F5FF8CF3E57 /* TheseusSlider.swift */,
-				C052B734D6E41F992B57D6C6 /* TheseusSwitch.swift */,
-				CBFC7473F2C41816F07026C0 /* TheseusTabBar.swift */,
-				04F82B7765759A754C61E0EA /* TheseusCapability.swift */,
-				BE08DE38D598E9C7B5D13006 /* TheseusConfiguration.swift */,
-				5DD2A0DA0E4DAB520EC939CF /* TheseusMaterialModel.swift */,
-				336AC4E2A1905908D266B804 /* TheseusSettings.swift */,
-				57875B5052A6FE5C8E7A0804 /* TheseusView.swift */,
-				87A5E65454F0D4E816D0E137 /* CapsuleEnds.swift */,
-				B9755D25EDC624274C602DD0 /* DisplayLinkDriver.swift */,
-				18F0574BF5F99687F3107A1C /* FlexGlow.swift */,
-				7141719E9A9CC4E77A1EDBC1 /* GlassKnobShadowView.swift */,
-				020B57569D65FC1D4F3A7785 /* HapticManager.swift */,
-				4D947D28DE07C72E81053916 /* KnobGlassMorph.swift */,
-				8483F744FDE292959204FB89 /* KnobGlassMotion.swift */,
-				EE8895C49B3A0A483B113144 /* LayoutTransition.swift */,
-				596B65A72BB31AB4078A39B3 /* LensMorph.swift */,
-				4ADF407CF3C923D8E2398DF9 /* NativeLens26.swift */,
-				C60E00E48C87AC4A25D72BAA /* PixelAlignment.swift */,
-				20C6B9998D9571803FCC277F /* SimpleLayer.swift */,
-				0A528DD23173087253CDD9D2 /* BackgroundCaptureDraw.swift */,
-				07EBA44FB1FBD33F2917576A /* BlurKernelCalculator.swift */,
-				79081DD5C240B355AB1BE6E1 /* CaptureCompensation.swift */,
-				7DD07C37B789AE68CFB14AAE /* CaptureEdges.swift */,
-				BE12CE46790715CF2CB0364A /* MetalContext.swift */,
-				69C04395D83FE21EF6429AAF /* ShaderTypes.swift */,
-				C2B263498C3EFB9748E91094 /* TheseusRenderer.swift */,
-				AF52B12EC7C8FD06C1E9866D /* TheseusTextureCache.swift */,
-				4DBC58656033258144064E5D /* ViewLayerCapture.swift */,
-				346B15028E3876A119FDDA86 /* VisualEffectFallback.swift */,
-				F64099F79A7372B6DFC77AC1 /* TheseusShaders.metal */,
-			);
-			name = Theseus;
-			path = Dopamine/Theseus;
-			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -2428,42 +2283,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BB6CC79679E08DEB37FC8B84 /* TheseusBundle.swift in Sources */,
-				3BAFCA83DA51F40DDC8D9730 /* DOTheseusBridge.swift in Sources */,
-				8CEA589C23551BC9C23E2014 /* TheseusGestureDeformer.swift in Sources */,
-				160AF54F56FAA803E88A7B1D /* TheseusStretchAnimator.swift in Sources */,
-				2DA7B198FD3BDD6CF3D53C1C /* TheseusLensMaterial.swift in Sources */,
-				464627C9D8DBB790BC740B20 /* TheseusSlider.swift in Sources */,
-				7ABB48661BB8D3B5477BF65F /* TheseusSwitch.swift in Sources */,
-				57E8E4E94CC1E41EF8B6FAF0 /* TheseusTabBar.swift in Sources */,
-				7DE56962B67EC20F7FB0A6DF /* TheseusCapability.swift in Sources */,
-				969DF594D2DB9A0EF341DB6A /* TheseusConfiguration.swift in Sources */,
-				F2D2E26681E2F6D4D67D457E /* TheseusMaterialModel.swift in Sources */,
-				F16F65C94B367AA421296460 /* TheseusSettings.swift in Sources */,
-				0632379ABA2CFE3474480B1D /* TheseusView.swift in Sources */,
-				E0D751C5CB6FB5DEC2A0528A /* CapsuleEnds.swift in Sources */,
-				D78039FCC2784B2D55F9EC5E /* DisplayLinkDriver.swift in Sources */,
-				1708F26577E4D48CF7A61B10 /* FlexGlow.swift in Sources */,
-				73372B46F62EE026EC720D30 /* GlassKnobShadowView.swift in Sources */,
-				60B473D725A6335B605E08C9 /* HapticManager.swift in Sources */,
-				B7A1EA332B1AC4005BFF0537 /* KnobGlassMorph.swift in Sources */,
-				6AF32DB05E62C21404B6DF25 /* KnobGlassMotion.swift in Sources */,
-				54EA36F8E066FB4ADE452086 /* LayoutTransition.swift in Sources */,
-				99D06C992CBF1CD1B2A7F4B9 /* LensMorph.swift in Sources */,
-				60527F5F74E104EA316117BA /* NativeLens26.swift in Sources */,
-				37EF38DC3D317F3F3DEB155D /* PixelAlignment.swift in Sources */,
-				C71B1AAE98D4DB0F7B5D34B9 /* SimpleLayer.swift in Sources */,
-				6A37782013702E5B425EFBEB /* BackgroundCaptureDraw.swift in Sources */,
-				5C3278E2AB53CF022C1580C1 /* BlurKernelCalculator.swift in Sources */,
-				8C0902EC75849B3B84D700DE /* CaptureCompensation.swift in Sources */,
-				17BECCC798A1A8BFA2C3CB66 /* CaptureEdges.swift in Sources */,
-				E7CA3FF38BEE7DA67288EB19 /* MetalContext.swift in Sources */,
-				96B4BFAD0AE088BE87C2A6D2 /* ShaderTypes.swift in Sources */,
-				434DF600FA22E6B899725673 /* TheseusRenderer.swift in Sources */,
-				965603D132783AA934FB82D5 /* TheseusTextureCache.swift in Sources */,
-				5A1B130A4B77E89412C25593 /* ViewLayerCapture.swift in Sources */,
-				CC6299AEAA32927FC92EE1A7 /* VisualEffectFallback.swift in Sources */,
-				C093BD50BDA0D76A959C2D87 /* TheseusShaders.metal in Sources */,
 				8C609C9E2C19B4270023DD12 /* NSString+Version.m in Sources */,
 				042479A62B66916B0082581B /* DOHeaderCell.m in Sources */,
 				8C6599DD2C555A71000FF57F /* DOPSJetsamListItemsController.h in Sources */,
@@ -3302,9 +3121,6 @@
 				);
 				MARKETING_VERSION = 3.0.13;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.zqbb.dopaRH;
-				SWIFT_VERSION = 5.0;
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				SWIFT_OBJC_INTERFACE_HEADER_NAME = "Dopamine-Swift.h";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -3345,9 +3161,6 @@
 				);
 				MARKETING_VERSION = 3.0.13;
 				PRODUCT_BUNDLE_IDENTIFIER = cn.zqbb.dopaRH;
-				SWIFT_VERSION = 5.0;
-				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
-				SWIFT_OBJC_INTERFACE_HEADER_NAME = "Dopamine-Swift.h";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";

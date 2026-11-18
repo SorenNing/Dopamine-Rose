@@ -149,11 +149,11 @@ def verify(output):
     if failures or report.get("failureCount") != 0 or len(checks) < 500:
         errors.append(f"Invalid/incomplete assertion coverage: {len(checks)} assertions, {len(failures)} failures")
     coverage = report.get("coverage", {})
-    if coverage.get("themes") != 5 or coverage.get("expectedScreenshots") != 85:
-        errors.append("Unexpected five-theme screenshot matrix")
+    if coverage.get("themes") != 4 or coverage.get("expectedScreenshots") != 68:
+        errors.append("Unexpected four-theme screenshot matrix")
     screenshots = report.get("screenshots", [])
-    if len(screenshots) != 85 or len({shot.get("file") for shot in screenshots}) != 85:
-        errors.append(f"Expected 85 unique native screenshots, got {len(screenshots)}")
+    if len(screenshots) != 68 or len({shot.get("file") for shot in screenshots}) != 68:
+        errors.append(f"Expected 68 unique native screenshots, got {len(screenshots)}")
     for shot in screenshots:
         name = shot.get("file", "")
         if Path(name).name != name or not name.endswith(".png"):
@@ -172,8 +172,6 @@ def verify(output):
     disk_manifest = json.loads((output / "source-manifest.json").read_text())
     if manifest != disk_manifest or len(manifest.get("production_sources", [])) != 7:
         errors.append("Compiled production-source manifest mismatch")
-    if len(manifest.get("production_swift", [])) != 35 or len(manifest.get("production_metal", [])) != 1:
-        errors.append("Missing actual Theseus Swift/Metal production coverage")
     hits = []
     for log_name in ("app.stdout.log", "app.stderr.log", "simulator.log"):
         path = output / log_name

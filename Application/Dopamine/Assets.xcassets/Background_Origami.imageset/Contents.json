@@ -1,19 +1,8 @@
 {
   "images": [
     {
-      "filename": "Background_Origami-1x.png",
-      "idiom": "universal",
-      "scale": "1x"
-    },
-    {
-      "filename": "Background_Origami-2x.png",
-      "idiom": "universal",
-      "scale": "2x"
-    },
-    {
-      "filename": "Background_Origami-3x.png",
-      "idiom": "universal",
-      "scale": "3x"
+      "filename": "origami.jpg",
+      "idiom": "universal"
     }
   ],
   "info": {

@@ -6,7 +6,6 @@
 #import "DOGlobalAppearance.h"
 #import "DOThemeManager.h"
 #import "DONavigationController.h"
-#import "Theseus/DOTheseusBridge.h"
 
 static NSMutableArray<NSDictionary *> *DOChecks;
 static NSMutableArray<NSDictionary *> *DOShots;
@@ -299,7 +298,7 @@ static void DOAdvance(void)
     if (DOPublished) return;
     if (DOStepIndex >= DOSteps.count) {
         DOContext = @"completion";
-        DORecord(@"all_required_screenshots_captured", DOShots.count == 85, @{@"actual": @(DOShots.count), @"expected": @85});
+        DORecord(@"all_required_screenshots_captured", DOShots.count == 68, @{@"actual": @(DOShots.count), @"expected": @68});
         DOPublish();
         return;
     }
@@ -460,25 +459,10 @@ static void DOCheckNavigation(DONavigationController *nav, NSInteger tab)
     if (!bar) return;
     CGRect barRect = [bar convertRect:bar.bounds toView:nav.view];
     CGRect safe = nav.view.safeAreaLayoutGuide.layoutFrame;
-    DORecord(@"navigation_capsule_inside_safe_area", DOContains(safe, barRect) && fabs(barRect.size.height-(DOThemeManager.sharedInstance.enabledTheme.usesTheseus ? 63 : 64))<1 &&
+    DORecord(@"navigation_capsule_inside_safe_area", DOContains(safe, barRect) && fabs(barRect.size.height-64)<1 &&
         fabs(CGRectGetMaxY(barRect)-(CGRectGetMaxY(safe)-8))<1, @{@"bar": DORect(barRect), @"safeArea": DORect(safe)});
-    BOOL isTheseus = DOThemeManager.sharedInstance.enabledTheme.usesTheseus;
     NSInteger selected = 0;
-    if (isTheseus) {
-        UIView *stock = DOFind(bar, @"DOStockTheseusTabBar");
-        NSArray *items = stock.accessibilityElements;
-        DORecord(@"real_theseus_tab_component_and_three_items", stock && [NSStringFromClass(stock.class) containsString:@"TheseusTabBar"] && items.count == 3, nil);
-        DORecord(@"theseus_selection_matches_actual_page", [(id<DOTheseusTabSurface>)bar selectedIndex] == tab, @{@"expected": @(tab)});
-        for (NSInteger index = 0; index < 3; index++) {
-            UIView *item = index < items.count ? items[index] : nil;
-            BOOL active = (item.accessibilityTraits & UIAccessibilityTraitSelected) != 0;
-            if (active) selected++;
-            CGRect rect = [item convertRect:item.bounds toView:bar];
-            DORecord(@"theseus_item_visible_with_valid_selection", item && DOVisible(item) && active == (index == tab) && rect.size.width >= 44 && rect.size.height >= 44, @{@"rect": DORect(rect), @"index": @(index)});
-            DORecord(@"theseus_theme_has_no_legacy_selection_pills", !DOFind(bar, [NSString stringWithFormat:@"DOTabPill%ld", (long)index]), nil);
-        }
-        DORecord(@"theseus_actual_glass_surface_linked", DODescendants(page.view, NSClassFromString(@"DOTheseusGlassView")).count > 0, nil);
-    } else for (NSInteger index = 0; index < 3; index++) {
+    for (NSInteger index = 0; index < 3; index++) {
         UIButton *button = (UIButton *)DOFind(bar, [NSString stringWithFormat:@"DOTab%ld", (long)index]);
         if (!button) {
             for (UIButton *candidate in DODescendants(bar, UIButton.class)) if (candidate.tag == index) { button = candidate; break; }
@@ -626,17 +610,13 @@ static void DONavigationCases(DOTheme *theme)
             DORecord(@"disabled_navigation_hides_bar_and_blocks_switch", DOFind(nav.view, @"DOTopLevelBar").hidden && nav.topViewController == beforeDisable, nil);
             [nav setNavigationEnabled:YES];
             UIButton *homeButton = (UIButton *)DOFind(nav.view, @"DOTab0");
-            if (theme.usesTheseus) {
-                UIView *stock = DOFind(nav.view, @"DOStockTheseusTabBar");
-                UIView *item = stock.accessibilityElements.firstObject;
-                DORecord(@"theseus_original_accessibility_action_routes_selection", [item accessibilityActivate], nil);
-            } else [homeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
+            [homeButton sendActionsForControlEvents:UIControlEventTouchUpInside];
         });
         DOEnqueueNavigation(nav, ^{
             UIButton *homeButton = (UIButton *)DOFind(nav.view, @"DOTab0");
-            DORecord(@"real_tab_control_action_routes_home", DOIsSettled(nav) && (homeButton || theme.usesTheseus) && [nav.topViewController isKindOfClass:DOMainViewController.class], nil);
+            DORecord(@"real_tab_control_action_routes_home", DOIsSettled(nav) && homeButton && [nav.topViewController isKindOfClass:DOMainViewController.class], nil);
             DOCheckNavigation(nav, 0);
-            BOOL last = DOThemeManager.sharedInstance.selectedIndex == DOThemeManager.sharedInstance.themes.count-1 && widthNumber.integerValue == 430;
+            BOOL last = DOThemeManager.sharedInstance.selectedIndex == (NSInteger)DOThemeManager.sharedInstance.themes.count-1 && widthNumber.integerValue == 430;
             if (!last) {
                 [nav willMoveToParentViewController:nil]; [nav.view removeFromSuperview]; [nav removeFromParentViewController];
             }
@@ -658,7 +638,7 @@ static void DOPublish(void)
             @"screenBounds": DORect(UIScreen.mainScreen.bounds), @"screenScale": @(UIScreen.mainScreen.scale),
             @"viewports": @[@320, @390, @430], @"minimumOS": @"15.0"},
         @"coverage": @{@"production": @[@"DOGlobalAppearance.m", @"DOTheme.m", @"DONavigationController.m", @"DOModalTransitionScale.m", @"DOModalTransitionPush.m", @"DOModalBackAction.m", @"UIImage+Blur.m"],
-            @"themes": @5, @"routingPages": @[@"home", @"settings", @"about"], @"expectedScreenshots": @85,
+            @"themes": @4, @"routingPages": @[@"home", @"settings", @"about"], @"expectedScreenshots": @68,
             @"largeFont": @"AX XXXL trait plus explicit 28pt brand font override",
             @"notTested": @[@"Native Preferences/PSListController", @"jailbreak/business actions", @"complete production home/settings/about page implementations", @"physical-device rendering", @"interactive edge-swipe cancellation"]},
         @"sourceManifest": manifest};
@@ -673,13 +653,13 @@ static void DORun(void)
 {
     @try {
         DOContext = @"startup";
-        DORecord(@"five_production_theme_dictionaries_loaded", DOThemeManager.sharedInstance.themes.count == 5, nil);
+        DORecord(@"four_production_theme_dictionaries_loaded", DOThemeManager.sharedInstance.themes.count == 4, nil);
         DORecord(@"production_navigation_has_public_tested_API", [DONavigationController instancesRespondToSelector:@selector(selectTopLevelTab:)] &&
             [DONavigationController instancesRespondToSelector:@selector(setNavigationEnabled:)], nil);
         DORecord(@"production_brand_and_content_factories_present", [DOGlobalAppearance respondsToSelector:@selector(brandCardView)] &&
             [DOGlobalAppearance respondsToSelector:@selector(contentViewForController:)], nil);
         DOSteps = [NSMutableArray array]; DOStepIndex = 0;
-        for (NSInteger index = 0; index < DOThemeManager.sharedInstance.themes.count; index++) {
+        for (NSInteger index = 0; index < (NSInteger)DOThemeManager.sharedInstance.themes.count; index++) {
             DOTheme *theme = DOThemeManager.sharedInstance.themes[index];
             DOEnqueue(0, ^{
                 DOThemeManager.sharedInstance.selectedIndex = index;

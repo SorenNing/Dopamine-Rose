@@ -209,7 +209,7 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
     card.translatesAutoresizingMaskIntoConstraints = NO;
     card.layer.cornerRadius = radius;
     card.layer.cornerCurve = kCACornerCurveContinuous;
-    [DOGlobalAppearance applyLiquidGlassToView:card];
+    [DOGlobalAppearance applyThemeSurfaceToView:card];
     return card;
 }
 
@@ -239,7 +239,7 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
 {
     UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
     button.layer.cornerRadius = 23;
-    [DOGlobalAppearance applyLiquidGlassToView:button];
+    [DOGlobalAppearance applyThemeSurfaceToView:button];
     [button addAction:action forControlEvents:UIControlEventTouchUpInside];
     UIImageView *icon = [[UIImageView alloc] initWithImage:action.image];
     icon.preferredSymbolConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular];

@@ -27,7 +27,7 @@
     self = [super init];
     if (self) {
         self.backgroundColor = UIColor.clearColor;
-        [DOGlobalAppearance applyLiquidGlassToView:self];
+        [DOGlobalAppearance applyThemeSurfaceToView:self];
         self.layer.cornerRadius = 18;
         self.layer.cornerCurve = kCACornerCurveContinuous;
         self.hapticGenerator = [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleLight];

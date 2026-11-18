@@ -21,10 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface DOGlobalAppearance : NSObject
 
-// Kept as a source-compatible alias for older UI units. The redesigned app
-// always routes these calls through the active Liquid Glass theme.
+// Shared native layout compatibility flag for older UI units.
 + (BOOL)isRoseStyle;
-+ (BOOL)isLiquidGlassStyle;
 + (UIUserInterfaceStyle)interfaceStyle;
 + (UIImage *)backgroundImage;
 + (UIColor *)primaryTextColor;
@@ -42,7 +40,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (UIColor *)buttonTextColor;
 + (void)styleTableCell:(UITableViewCell *)cell;
 + (void)styleSwitch:(UISwitch *)toggle;
-+ (void)applyLiquidGlassToView:(UIView *)view;
++ (void)applyThemeSurfaceToView:(UIView *)view;
 + (void)styleViewController:(UIViewController *)viewController;
 + (UIView *)contentViewForController:(UIViewController *)viewController;
 + (UIView *)brandCardView;

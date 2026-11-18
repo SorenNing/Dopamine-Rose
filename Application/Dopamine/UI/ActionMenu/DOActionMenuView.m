@@ -22,7 +22,7 @@
         self.layer.cornerRadius = 18;
         self.layer.masksToBounds = NO;
         self.layer.cornerCurve = kCACornerCurveContinuous;
-        [DOGlobalAppearance applyLiquidGlassToView:self];
+        [DOGlobalAppearance applyThemeSurfaceToView:self];
     }
     return self;
 }

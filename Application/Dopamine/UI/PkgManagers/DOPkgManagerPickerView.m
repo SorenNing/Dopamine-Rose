@@ -122,7 +122,7 @@
     configuration.baseForegroundColor = [DOGlobalAppearance buttonTextColor];
     self.continueAction.configuration = configuration;
     self.continueAction.backgroundColor = UIColor.clearColor;
-    [DOGlobalAppearance applyLiquidGlassToView:self.continueAction];
+    [DOGlobalAppearance applyThemeSurfaceToView:self.continueAction];
     self.continueAction.alpha = selected.count == 0 ? 0.45 : 1.0;
 }
 

@@ -12,7 +12,6 @@
 #import "DOThemeManager.h"
 #import "DOUIManager.h"
 
-#import "../Theseus/DOTheseusBridge.h"
 
 // UIKit can wrap transition views; find the actual sibling inside its container.
 static UIView *DOTransitionContainerChild(UIView *view, UIView *container)
@@ -114,13 +113,10 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
 
 - (void)setupSecondaryBar
 {
-    BOOL usesTheseus = DOThemeManager.sharedInstance.enabledTheme.usesTheseus;
-    Class barClass = usesTheseus ? NSClassFromString(@"DOTheseusTabBar") : UIView.class;
-    NSAssert(barClass, @"The Theseus theme must link its real Swift bridge");
-    UIView *bar = self.secondaryBar = [[barClass alloc] initWithFrame:CGRectZero];
+    UIView *bar = self.secondaryBar = [[UIView alloc] initWithFrame:CGRectZero];
     bar.translatesAutoresizingMaskIntoConstraints = NO;
     bar.layer.cornerRadius = 32;
-    if (!usesTheseus) [DOGlobalAppearance applyLiquidGlassToView:bar];
+    [DOGlobalAppearance applyThemeSurfaceToView:bar];
     bar.accessibilityIdentifier = @"DOTopLevelBar";
     bar.hidden = NO;
     [self.view addSubview:bar];
@@ -131,17 +127,8 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
         [bar.widthAnchor constraintLessThanOrEqualToConstant:UI_IPAD_MAX_WIDTH - 14],
         [bar.centerXAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.centerXAnchor],
         [bar.bottomAnchor constraintEqualToAnchor:self.view.safeAreaLayoutGuide.bottomAnchor constant:-8],
-        [bar.heightAnchor constraintEqualToConstant:usesTheseus ? 63 : 64]
+        [bar.heightAnchor constraintEqualToConstant:64]
     ]];
-    if (usesTheseus) {
-        BOOL chinese = [NSBundle.mainBundle.preferredLocalizations.firstObject hasPrefix:@"zh"];
-        NSArray *titles = @[chinese ? @"主页" : @"Home", DOLocalizedString(@"Menu_Settings_Title"), chinese ? @"关于" : @"About"];
-        [(id<DOTheseusTabSurface>)bar configureWithTitles:titles symbolNames:@[@"house", @"slider.horizontal.3", @"info.circle"] selectedIndex:self.selectedTab];
-        [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(theseusTabSelected:) name:@"DOTheseusTabBarSelection" object:bar];
-        self.secondaryTabs = @[];
-        self.secondarySelectionPills = @[];
-        return;
-    }
     UIStackView *stack = [[UIStackView alloc] init];
     stack.axis = UILayoutConstraintAxisHorizontal;
     stack.distribution = UIStackViewDistributionFillEqually;
@@ -226,18 +213,6 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
     self.secondarySelectionPills = pills;
 }
 
-- (void)theseusTabSelected:(NSNotification *)note
-{
-    if (note.object != self.secondaryBar) return;
-    [self selectTopLevelTab:[note.userInfo[@"index"] integerValue]];
-    [(id<DOTheseusTabSurface>)self.secondaryBar setSelectedIndex:self.selectedTab animated:YES];
-}
-
-- (void)dealloc
-{
-    [NSNotificationCenter.defaultCenter removeObserver:self];
-}
-
 - (void)topLevelTabPressed:(UIButton *)sender
 {
     [self selectTopLevelTab:sender.tag];
@@ -269,8 +244,6 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
     _navigationEnabled = enabled;
     self.secondaryBar.userInteractionEnabled = enabled;
     self.secondaryBar.hidden = !enabled;
-    if ([self.secondaryBar respondsToSelector:@selector(setRenderingActive:)])
-        [(id<DOTheseusTabSurface>)self.secondaryBar setRenderingActive:enabled];
 }
 
 - (void)updateNavigationForController:(UIViewController *)controller
@@ -283,12 +256,6 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
     BOOL result = [controller isKindOfClass:NSClassFromString(@"DOLogCrashViewController")] || [controller isKindOfClass:NSClassFromString(@"DODownloadViewController")];
     self.secondaryBar.hidden = !self.navigationEnabled || result;
     self.secondaryBar.userInteractionEnabled = self.navigationEnabled && !result;
-    if ([self.secondaryBar respondsToSelector:@selector(setSelectedIndex:animated:)]) {
-        id<DOTheseusTabSurface> bar = (id<DOTheseusTabSurface>)self.secondaryBar;
-        [bar setRenderingActive:!self.secondaryBar.hidden];
-        [bar setSelectedIndex:targetTab animated:YES];
-        [bar invalidateBackdrop];
-    }
     for (UIButton *tab in self.secondaryTabs) {
         BOOL active = tab.tag == targetTab;
         // The separate rounded sibling is the only selected surface.

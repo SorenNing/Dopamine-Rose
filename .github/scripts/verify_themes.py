@@ -14,23 +14,22 @@ with zipfile.ZipFile(archive) as z:
     assert info['CFBundleShortVersionString'] == '3.0.13-30'
     assert int(info['DOBuildTimestamp']) > 0
     themes = plistlib.loads(z.read(base + 'Themes.plist'))
-    assert [t['key'] for t in themes] == ['origami', 'glaze', 'nocturne', 'dusty-rose', 'liquid-glass']
-    assert [t['darkTheme'] for t in themes] == [False, False, True, False, False]
-    assert [t['panelColor'] for t in themes[:4]] == ['4AFFFFFB', '4AFFFFFB', '0EE4E6E3', '4AFFF8FA']
-    assert all(t['liquidGlass'] and float(t['glassBlurRadius']) == 22 for t in themes[:4])
-    assert [t['image'] for t in themes[:4]] == ['Background_Origami', 'Background_Glaze', 'Background_Nocturne', 'Background_DustyRose']
-    assert themes[4]['name'] == '液态玻璃' and themes[4]['usesTheseus'] is True
-    assert z.read(base + 'default.metallib')[:4] == b'MTLB'
+    assert [t['key'] for t in themes] == ['origami', 'glaze', 'nocturne', 'dusty-rose']
+    assert [t['darkTheme'] for t in themes] == [False, False, True, False]
+    assert [t['panelColor'] for t in themes] == ['4AFFFFFB', '4AFFFFFB', '0EE4E6E3', '4AFFF8FA']
+    assert [t['image'] for t in themes] == ['Background_Origami', 'Background_Glaze', 'Background_Nocturne', 'Background_DustyRose']
+    assert all(not {'liquidGlass', 'usesTheseus', 'glassBlurRadius'} & t.keys() for t in themes)
+    assert base + 'default.metallib' not in names
     assert base + 'Dopamine.roothide' in names
     for n in ('libchoma.dylib', 'libxpf.dylib', 'libjailbreak.dylib', 'libroothider.dylib', 'Assets.car', 'basebin.tar', 'bootstrap_1900.tar.zst', 'roothideapp.deb'):
         assert z.getinfo(base + n).file_size > 0, n
     assert base + 'bootstrap_1800.tar.zst' not in names
     assert not any('/palera1n.framework/' in n for n in names)
     executable = z.read(base + info['CFBundleExecutable'])
-    for marker in (b'brandCardView', b'contentViewForController:', b'makeInformationCard', b'restartCardWithAction:subtitle:', b'showResultTitle:failed:', b'selectTopLevelTab:', b'UIGlassEffect'):
+    for marker in (b'brandCardView', b'contentViewForController:', b'makeInformationCard', b'restartCardWithAction:subtitle:', b'showResultTitle:failed:', b'selectTopLevelTab:'):
         assert marker in executable, marker
     for marker in (b'DOTheseusGlassView', b'DOTheseusTabBar', b'configureWithTitles:symbolNames:selectedIndex:'):
-        assert marker in executable, marker
+        assert marker not in executable, marker
     assert b'GLSGlassView' not in executable
     assert b'_displayCornerRadius' not in executable
     assert b'_frameForViewController:' not in executable

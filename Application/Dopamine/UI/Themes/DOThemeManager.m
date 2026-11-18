@@ -37,9 +37,6 @@
             // migrated rather than leaving a partially styled legacy screen.
             [preferences setPreferenceValue:@"glaze" forKey:@"theme"];
         }
-        // Retain the marker for old installations, but it no longer controls
-        // whether the redesign is installed.
-        [preferences setPreferenceValue:@YES forKey:@"liquidGlassUIInitialized"];
     }
     return self;
 }

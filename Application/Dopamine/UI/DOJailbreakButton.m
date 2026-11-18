@@ -27,7 +27,7 @@
         self.layer.cornerRadius = 25;
         self.layer.masksToBounds = NO;
         self.layer.cornerCurve = kCACornerCurveContinuous;
-        [DOGlobalAppearance applyLiquidGlassToView:self];
+        [DOGlobalAppearance applyThemeSurfaceToView:self];
         self.translatesAutoresizingMaskIntoConstraints = NO;
 
         self.button = [DOActionMenuButton buttonWithAction:actions chevron:NO];

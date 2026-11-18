@@ -40,13 +40,6 @@ jobs:
           test -s Application/Dopamine/Resources/bootstrap_1900.tar.zst
           test -s Application/Dopamine/Resources/roothideapp.deb
 
-      - name: Prepare Apple Metal toolchain
-        run: |
-          set -euo pipefail
-          xcodebuild -downloadComponent MetalToolchain
-          xcrun --sdk iphoneos metal --version
-          xcrun --sdk iphonesimulator metal --version
-
       - name: Run native UIKit layout regression
         timeout-minutes: 18
         run: bash .github/ui-tests/run.sh "$RUNNER_TEMP/dopamine-ui-regression"
@@ -174,7 +167,7 @@ jobs:
             fi
           done
           cmp "Application/Dopamine-roothide-${version}.ipa" "Application/Dopamine-roothide-${version}.tipa"
-          python3 .github/scripts/verify_liquid_glass.py "Application/Dopamine-roothide-${version}.tipa"
+          python3 .github/scripts/verify_themes.py "Application/Dopamine-roothide-${version}.tipa"
 
       - name: Upload IPA and TIPA
         uses: actions/upload-artifact@v4

@@ -35,9 +35,6 @@
         self.selectedColor = [self colorFromHexString:dictionary[@"selectedColor"] ?: @"14E6E6D8"];
         self.glassHighlightColor = [self colorFromHexString:dictionary[@"glassHighlightColor"] ?: @"13EEEEEE"];
         self.darkTheme = [dictionary[@"darkTheme"] boolValue];
-        self.liquidGlass = dictionary[@"liquidGlass"] ? [dictionary[@"liquidGlass"] boolValue] : YES;
-        self.usesTheseus = [dictionary[@"usesTheseus"] boolValue];
-        self.glassBlurRadius = dictionary[@"glassBlurRadius"] ? [dictionary[@"glassBlurRadius"] doubleValue] : 22.0;
         self.glassShadowOpacity = dictionary[@"glassShadowOpacity"] ? [dictionary[@"glassShadowOpacity"] doubleValue] : 0.10;
         self.glassShadowRadius = dictionary[@"glassShadowRadius"] ? [dictionary[@"glassShadowRadius"] doubleValue] : 30.0;
     }
