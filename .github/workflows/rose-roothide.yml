@@ -1,6 +1,9 @@
 name: Build Dopamine Rose RootHide
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
