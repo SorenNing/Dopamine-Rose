@@ -59,6 +59,7 @@ static void DOAwaitStep(NSDictionary *step, CFTimeInterval deadline, NSInteger q
     return manager;
 }
 - (DOTheme *)enabledTheme { return self.themes[self.selectedIndex]; }
+- (UIImage *)backgroundImageForTheme:(DOTheme *)theme { return theme.image; }
 @end
 
 NSString *DOLocalizedString(NSString *key)

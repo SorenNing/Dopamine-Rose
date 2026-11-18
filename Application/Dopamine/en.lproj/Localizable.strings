@@ -162,3 +162,10 @@
 "Build time: %@" = "Build time: %@";
 
 "Rose_Status_Not_Jailbroken" = "Not jailbroken";
+
+// Interface transparency
+"Interface_Transparency" = "Interface transparency";
+"Interface_Transparency_Hint" = "Drag right for a more transparent interface. Default: 50%.";
+"Custom_Global_Background" = "Custom Global Background";
+"Restore_Theme_Background" = "Restore Theme Default Background";
+"Background_Import_Failed" = "Unable to load or save this background. Please try another image.";

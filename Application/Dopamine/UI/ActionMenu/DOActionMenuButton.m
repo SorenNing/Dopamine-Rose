@@ -21,6 +21,8 @@
 +(DOActionMenuButton*)buttonWithAction:(UIAction *)action chevron:(BOOL)chevron
 {
     DOActionMenuButton *button = [DOActionMenuButton buttonWithConfiguration:[DOGlobalAppearance defaultButtonConfiguration] primaryAction:action];
+    button.layer.cornerRadius = 18;
+    [DOGlobalAppearance bindSurfaceColor:@selector(tileColor) toView:button];
     [button.titleLabel setAdjustsFontSizeToFitWidth:YES];
     [button setContentHorizontalAlignment:UIControlContentHorizontalAlignmentLeft];
 

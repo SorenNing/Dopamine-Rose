@@ -8,6 +8,8 @@
 #import "DOSettingsController.h"
 #import <objc/runtime.h>
 #import <Photos/Photos.h>
+#import <PhotosUI/PhotosUI.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <libjailbreak/util.h>
 #import "DOUIManager.h"
 #import "DOPkgManagerPickerViewController.h"
@@ -20,9 +22,12 @@
 #import "DOSceneDelegate.h"
 #import "DOPSJetsamListItemsController.h"
 #import "DOButtonCell.h"
+#import "DOTransparencyCell.h"
 #import "DOGlobalAppearance.h"
 
-@interface DOSettingsController ()
+@interface DOSettingsController () <PHPickerViewControllerDelegate>
+@property (nonatomic, copy) NSString *backgroundPickerThemeKey;
+@property (nonatomic) BOOL backgroundImportInProgress;
 
 @end
 
@@ -419,6 +424,26 @@
         [themeSpecifier setProperty:@"themeNames" forKey:@"titlesDataSource"];
         [specifiers addObject:themeSpecifier];
 
+        PSSpecifier *transparencySpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Interface_Transparency") target:self set:defSetter get:defGetter detail:nil cell:PSStaticTextCell edit:nil];
+        [transparencySpecifier setProperty:@"Interface_Transparency" forKey:@"title"];
+        [transparencySpecifier setProperty:[DOTransparencyCell class] forKey:@"cellClass"];
+        [transparencySpecifier setProperty:@"interfaceTransparency" forKey:@"key"];
+        [transparencySpecifier setProperty:@50 forKey:@"default"];
+        [transparencySpecifier setProperty:@112 forKey:@"height"];
+        [transparencySpecifier setProperty:@YES forKey:@"enabled"];
+        [specifiers addObject:transparencySpecifier];
+
+        PSSpecifier *backgroundSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Custom_Global_Background") target:self set:nil get:nil detail:nil cell:PSButtonCell edit:nil];
+        backgroundSpecifier.buttonAction = @selector(selectGlobalBackgroundPressed);
+        [backgroundSpecifier setProperty:@YES forKey:@"enabled"];
+        backgroundSpecifier.identifier = @"customGlobalBackground";
+        [specifiers addObject:backgroundSpecifier];
+        PSSpecifier *resetBackgroundSpecifier = [PSSpecifier preferenceSpecifierNamed:DOLocalizedString(@"Restore_Theme_Background") target:self set:nil get:nil detail:nil cell:PSButtonCell edit:nil];
+        resetBackgroundSpecifier.buttonAction = @selector(resetGlobalBackgroundPressed);
+        [resetBackgroundSpecifier setProperty:@YES forKey:@"enabled"];
+        resetBackgroundSpecifier.identifier = @"restoreThemeBackground";
+        [specifiers addObject:resetBackgroundSpecifier];
+
         PSSpecifier *bootlogoGropSpecifier = [PSSpecifier emptyGroupSpecifier];
         bootlogoGropSpecifier.name = DOLocalizedString(@"Section_Boot_Logo");
         [specifiers addObject:bootlogoGropSpecifier];
@@ -696,6 +721,65 @@
     picker.delegate = self;
     picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
     [self presentViewController:picker animated:YES completion:nil];
+}
+
+#pragma mark - Global Background Picker
+
+- (void)showBackgroundError
+{
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:DOLocalizedString(@"Error") message:DOLocalizedString(@"Background_Import_Failed") preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:DOLocalizedString(@"OK") style:UIAlertActionStyleDefault handler:nil]];
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)selectGlobalBackgroundPressed
+{
+    if (self.backgroundImportInProgress || self.presentedViewController) return;
+    self.backgroundPickerThemeKey = DOThemeManager.sharedInstance.enabledTheme.key;
+    PHPickerConfiguration *configuration = [[PHPickerConfiguration alloc] init];
+    configuration.filter = PHPickerFilter.imagesFilter;
+    configuration.selectionLimit = 1;
+    PHPickerViewController *picker = [[PHPickerViewController alloc] initWithConfiguration:configuration];
+    picker.delegate = self;
+    [self presentViewController:picker animated:YES completion:nil];
+}
+
+- (void)picker:(PHPickerViewController *)picker didFinishPicking:(NSArray<PHPickerResult *> *)results
+{
+    NSString *themeKey = [self.backgroundPickerThemeKey copy];
+    self.backgroundPickerThemeKey = nil;
+    NSItemProvider *provider = results.firstObject.itemProvider;
+    if (!provider) {
+        [picker dismissViewControllerAnimated:YES completion:nil];
+        return;
+    }
+    self.backgroundImportInProgress = YES;
+    [picker dismissViewControllerAnimated:YES completion:^{
+        [provider loadFileRepresentationForTypeIdentifier:UTTypeImage.identifier completionHandler:^(NSURL *url, NSError *loadError) {
+            // The provider URL is valid only inside this callback, which runs off-main.
+            NSError *error = loadError;
+            BOOL success = url && themeKey && [DOThemeManager.sharedInstance importBackgroundFromURL:url themeKey:themeKey error:&error];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                self.backgroundImportInProgress = NO;
+                if (!success) [self showBackgroundError];
+            });
+        }];
+    }];
+}
+
+- (void)resetGlobalBackgroundPressed
+{
+    if (self.backgroundImportInProgress) return;
+    NSString *key = DOThemeManager.sharedInstance.enabledTheme.key;
+    self.backgroundImportInProgress = YES;
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        NSError *error = nil;
+        BOOL success = [DOThemeManager.sharedInstance resetBackgroundForThemeKey:key error:&error];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            self.backgroundImportInProgress = NO;
+            if (!success) [self showBackgroundError];
+        });
+    });
 }
 
 #pragma mark - Boot Logo Picker

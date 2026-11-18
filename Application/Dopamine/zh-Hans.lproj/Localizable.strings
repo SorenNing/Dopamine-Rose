@@ -161,3 +161,10 @@
 "Build time: %@" = "编译时间：%@";
 
 "Rose_Status_Not_Jailbroken" = "尚未越狱";
+
+// Interface transparency
+"Interface_Transparency" = "界面透明度";
+"Interface_Transparency_Hint" = "向右拖动更透明，默认 50%。";
+"Custom_Global_Background" = "自定义全局背景";
+"Restore_Theme_Background" = "恢复主题默认背景";
+"Background_Import_Failed" = "无法读取或保存背景，请换一张图片重试。";

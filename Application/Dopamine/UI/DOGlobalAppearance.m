@@ -7,11 +7,33 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import "DOThemeManager.h"
 #import "DOTheme.h"
+#import "DOPreferenceManager.h"
 #import <objc/runtime.h>
+#import <math.h>
 
 static char kDOPageContentKey;
+static char kDOSurfaceColorKey;
+static NSHashTable<UIImageView *> *DOBackgroundViews;
+static NSHashTable<UIView *> *DOSurfaceViews;
+static NSHashTable<UIVisualEffectView *> *DOIndependentEffects;
 
 static NSInteger const kDOThemeEffectTag = 0xD027;
+
+static CGFloat DOInterfaceTransparency(void)
+{
+    id saved = [[DOPreferenceManager sharedManager] preferenceValueForKey:@"interfaceTransparency"];
+    if (![saved isKindOfClass:NSNumber.class] || !isfinite([saved doubleValue])) return 0.5;
+    return MAX(0.0, MIN(100.0, [saved doubleValue])) / 100.0;
+}
+
+static UIColor *DOAdjustedSurfaceColor(UIColor *color, BOOL reduced)
+{
+    if (reduced) return [color colorWithAlphaComponent:1];
+    CGFloat red = 0, green = 0, blue = 0, alpha = 0;
+    if (![color getRed:&red green:&green blue:&blue alpha:&alpha]) return color;
+    CGFloat retainedAlpha = 1.0 - DOInterfaceTransparency();
+    return [UIColor colorWithRed:red green:green blue:blue alpha:retainedAlpha];
+}
 
 static UIVisualEffect *DOCreateSurfaceEffect(DOTheme *theme)
 {
@@ -99,8 +121,66 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
 }
 @end
 
+static void DORefreshSurfaces(void)
+{
+    for (UIView *view in DOSurfaceViews.allObjects) {
+        NSString *name = objc_getAssociatedObject(view, &kDOSurfaceColorKey);
+        if (name) {
+            SEL selector = NSSelectorFromString(name);
+            UIColor *(*colorIMP)(id, SEL) = (void *)[DOGlobalAppearance methodForSelector:selector];
+            view.backgroundColor = colorIMP(DOGlobalAppearance.class, selector);
+        } else {
+            [DOGlobalAppearance applyThemeSurfaceToView:view];
+        }
+    }
+    CGFloat opacity = UIAccessibilityIsReduceTransparencyEnabled() ? 0 : 1 - DOInterfaceTransparency();
+    for (UIVisualEffectView *effect in DOIndependentEffects.allObjects) effect.alpha = opacity;
+}
+
 @implementation DOGlobalAppearance
 
++ (void)initialize
+{
+    if (self != DOGlobalAppearance.class) return;
+    DOBackgroundViews = [NSHashTable weakObjectsHashTable];
+    [NSNotificationCenter.defaultCenter addObserver:self selector:@selector(refreshBackgrounds:) name:@"DOThemeBackgroundDidChange" object:nil];
+    DOSurfaceViews = [NSHashTable weakObjectsHashTable];
+    DOIndependentEffects = [NSHashTable weakObjectsHashTable];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(refreshTransparency:) name:UIAccessibilityReduceTransparencyStatusDidChangeNotification object:nil];
+}
+
++ (void)refreshTransparency:(NSNotification *)notification
+{
+    if (!NSThread.isMainThread) {
+        dispatch_async(dispatch_get_main_queue(), ^{ DORefreshSurfaces(); });
+        return;
+    }
+    DORefreshSurfaces();
+}
+
++ (CGFloat)interfaceTransparency { return DOInterfaceTransparency() * 100; }
+
++ (void)setInterfaceTransparency:(CGFloat)percentage
+{
+    if (!isfinite(percentage)) percentage = 50;
+    percentage = MAX(0, MIN(100, round(percentage)));
+    [[DOPreferenceManager sharedManager] setPreferenceValue:@(percentage) forKey:@"interfaceTransparency"];
+    [self refreshTransparency:nil];
+}
+
++ (void)bindSurfaceColor:(SEL)colorSelector toView:(UIView *)view
+{
+    objc_setAssociatedObject(view, &kDOSurfaceColorKey, NSStringFromSelector(colorSelector), OBJC_ASSOCIATION_COPY_NONATOMIC);
+    [DOSurfaceViews addObject:view];
+    UIColor *(*colorIMP)(id, SEL) = (void *)[self methodForSelector:colorSelector];
+    view.backgroundColor = colorIMP(self, colorSelector);
+}
+
++ (void)registerTransparencyEffect:(UIVisualEffectView *)effect
+{
+    [DOIndependentEffects addObject:effect];
+    effect.alpha = UIAccessibilityIsReduceTransparencyEnabled() ? 0 : 1 - DOInterfaceTransparency();
+}
 + (DOTheme *)theme
 {
     return [DOThemeManager.sharedInstance enabledTheme];
@@ -117,9 +197,21 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
     return [self theme].darkTheme ? UIUserInterfaceStyleDark : UIUserInterfaceStyleLight;
 }
 
++ (void)registerBackgroundImageView:(UIImageView *)view
+{
+    [DOBackgroundViews addObject:view];
+    view.image = [self backgroundImage];
+}
+
++ (void)refreshBackgrounds:(NSNotification *)notification
+{
+    UIImage *image = [self backgroundImage];
+    for (UIImageView *view in DOBackgroundViews.allObjects) view.image = image;
+}
+
 + (UIImage *)backgroundImage
 {
-    return [self theme].image;
+    return [DOThemeManager.sharedInstance backgroundImageForTheme:[self theme]];
 }
 
 + (UIColor *)windowColorWithAlpha:(float)alpha
@@ -154,7 +246,7 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
 
 + (UIColor *)informationPanelColor
 {
-    return [self theme].panelColor;
+    return DOAdjustedSurfaceColor([self theme].panelColor, UIAccessibilityIsReduceTransparencyEnabled());
 }
 
 + (UIColor *)statusGreenColor
@@ -164,17 +256,17 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
 
 + (UIColor *)glassColor
 {
-    return [self theme].glassColor;
+    return DOAdjustedSurfaceColor([self theme].glassColor, UIAccessibilityIsReduceTransparencyEnabled());
 }
 
 + (UIColor *)tileColor
 {
-    return [self theme].tileColor;
+    return DOAdjustedSurfaceColor([self theme].tileColor, UIAccessibilityIsReduceTransparencyEnabled());
 }
 
 + (UIColor *)selectedColor
 {
-    return [self theme].selectedColor;
+    return DOAdjustedSurfaceColor([self theme].selectedColor, UIAccessibilityIsReduceTransparencyEnabled());
 }
 
 + (UIColor *)glassHighlightColor
@@ -190,6 +282,7 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
 + (void)applyThemeSurfaceToView:(UIView *)view
 {
     if (!view) return;
+    [DOSurfaceViews addObject:view];
     DOTheme *theme = [self theme];
     BOOL reduced = UIAccessibilityIsReduceTransparencyEnabled();
     DOThemeEffectView *effect = DOFindSurfaceEffect(view);
@@ -211,12 +304,13 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
         effect.effect = DOCreateSurfaceEffect(theme);
         effect.appearanceKey = appearanceKey;
     }
-    effect.contentView.backgroundColor = reduced ? theme.windowColor : theme.glassColor;
-    effect.alpha = 1.0;
+    effect.contentView.backgroundColor = reduced ? [theme.windowColor colorWithAlphaComponent:1] : theme.glassColor;
+    // This effect contains only its tint; foreground content is a sibling.
+    effect.alpha = reduced ? 1.0 : 1.0 - DOInterfaceTransparency();
     effect.layer.cornerRadius = view.layer.cornerRadius > 0 ? view.layer.cornerRadius : 22;
     effect.layer.cornerCurve = kCACornerCurveContinuous;
     effect.layer.masksToBounds = YES;
-    view.backgroundColor = reduced ? theme.windowColor : UIColor.clearColor;
+    view.backgroundColor = reduced ? [theme.windowColor colorWithAlphaComponent:1] : UIColor.clearColor;
     view.layer.cornerRadius = effect.layer.cornerRadius;
     view.layer.cornerCurve = kCACornerCurveContinuous;
     view.layer.borderWidth = 0.5;
@@ -276,7 +370,7 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
     mark.font = [UIFont systemFontOfSize:18 weight:UIFontWeightSemibold];
     mark.textColor = [self accentColor];
     mark.textAlignment = NSTextAlignmentCenter;
-    mark.backgroundColor = [self tileColor];
+    [self bindSurfaceColor:@selector(tileColor) toView:mark];
     mark.layer.cornerRadius = 11;
     mark.layer.cornerCurve = kCACornerCurveContinuous;
     mark.clipsToBounds = YES;
@@ -336,7 +430,8 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
     cell.contentView.layer.cornerRadius = 0;
     BOOL plain = [cell isKindOfClass:NSClassFromString(@"DOHeaderCell")] || [cell isKindOfClass:NSClassFromString(@"DOCreditsCell")];
     DORowSurfaceView *row = [cell.backgroundView isKindOfClass:DORowSurfaceView.class] ? (DORowSurfaceView *)cell.backgroundView : [[DORowSurfaceView alloc] init];
-    row.fillView.backgroundColor = plain ? UIColor.clearColor : [self tileColor];
+    if (!plain) [self bindSurfaceColor:@selector(tileColor) toView:row.fillView];
+    else row.fillView.backgroundColor = UIColor.clearColor;
     cell.backgroundView = row;
     cell.tintColor = [self accentColor];
     cell.textLabel.textColor = cell.userInteractionEnabled ? [self primaryTextColor] : [self secondaryTextColor];
@@ -345,7 +440,8 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
         [self styleSwitch:(UISwitch *)cell.accessoryView];
     }
     DORowSurfaceView *selected = [[DORowSurfaceView alloc] init];
-    selected.fillView.backgroundColor = plain ? UIColor.clearColor : [self selectedColor];
+    if (!plain) [self bindSurfaceColor:@selector(selectedColor) toView:selected.fillView];
+    else selected.fillView.backgroundColor = UIColor.clearColor;
     cell.selectedBackgroundView = selected;
 }
 
@@ -359,7 +455,7 @@ static DOThemeEffectView *DOFindSurfaceEffect(UIView *view)
     UIButtonConfiguration *configuration = [UIButtonConfiguration plainButtonConfiguration];
     configuration.imagePadding = 10;
     configuration.baseForegroundColor = [self primaryTextColor];
-    configuration.background.backgroundColor = [self tileColor];
+    configuration.background.backgroundColor = UIColor.clearColor;
     configuration.background.cornerRadius = 18;
     configuration.titleTextAttributesTransformer = ^NSDictionary<NSAttributedStringKey,id> *(NSDictionary<NSAttributedStringKey,id> *attributes) {
         NSMutableDictionary *result = attributes.mutableCopy;

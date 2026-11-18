@@ -245,7 +245,7 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
     icon.preferredSymbolConfiguration = [UIImageSymbolConfiguration configurationWithPointSize:20 weight:UIImageSymbolWeightRegular];
     icon.tintColor = [DOGlobalAppearance accentColor];
     icon.contentMode = UIViewContentModeScaleAspectFit;
-    icon.backgroundColor = [DOGlobalAppearance tileColor];
+    [DOGlobalAppearance bindSurfaceColor:@selector(tileColor) toView:icon];
     icon.layer.cornerRadius = 10;
     icon.layer.masksToBounds = YES;
     UILabel *title = [self labelWithText:action.title size:13 weight:UIFontWeightSemibold color:[DOGlobalAppearance primaryTextColor]];
@@ -296,7 +296,7 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
     [content addArrangedSubview:heading];
 
     UIView *details = [[UIView alloc] init];
-    details.backgroundColor = [DOGlobalAppearance informationPanelColor];
+    [DOGlobalAppearance bindSurfaceColor:@selector(informationPanelColor) toView:details];
     details.layer.cornerRadius = 19;
     details.layer.cornerCurve = kCACornerCurveContinuous;
     [content addArrangedSubview:details];
@@ -346,7 +346,7 @@ static NSString *DOHomeCaption(NSString *english, NSString *chinese)
     UIView *footer = [[UIView alloc] init];
     UILabel *rootHide = [self labelWithText:@"RootHide" size:10 weight:UIFontWeightMedium color:[DOGlobalAppearance secondaryTextColor]];
     rootHide.textAlignment = NSTextAlignmentCenter;
-    rootHide.backgroundColor = [DOGlobalAppearance tileColor];
+    [DOGlobalAppearance bindSurfaceColor:@selector(tileColor) toView:rootHide];
     rootHide.layer.cornerRadius = 8;
     rootHide.layer.masksToBounds = YES;
     [footer addSubview:rootHide];

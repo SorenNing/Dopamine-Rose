@@ -16,6 +16,7 @@
     self = [super initWithEffect:maxBlurRadius > 0 ? [UIBlurEffect effectWithStyle:style] : nil];
     if (self) {
         self.userInteractionEnabled = NO;
+        if (maxBlurRadius > 0) [DOGlobalAppearance registerTransparencyEffect:self];
         // UIKit exposes material styles, not a numeric blur radius. Keep the
         // constructor compatible and fade the material with the supplied alpha mask.
         UIImageView *maskView = [[UIImageView alloc] initWithImage:gradientMask];

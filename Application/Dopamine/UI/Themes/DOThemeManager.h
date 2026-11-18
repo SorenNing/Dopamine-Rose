@@ -21,6 +21,10 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray*)getAvailableThemeNames;
 - (DOTheme*)getThemeForKey:(NSString*)key;
 - (DOTheme*)enabledTheme;
+- (UIImage *)backgroundImageForTheme:(DOTheme *)theme;
+// Called on a background queue while the provider's temporary URL is valid.
+- (BOOL)importBackgroundFromURL:(NSURL *)url themeKey:(NSString *)key error:(NSError **)error;
+- (BOOL)resetBackgroundForThemeKey:(NSString *)key error:(NSError **)error;
 
 @end
 

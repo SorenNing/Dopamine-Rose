@@ -22,9 +22,14 @@ NS_ASSUME_NONNULL_BEGIN
 @interface DOGlobalAppearance : NSObject
 
 // Shared native layout compatibility flag for older UI units.
++ (CGFloat)interfaceTransparency;
++ (void)setInterfaceTransparency:(CGFloat)percentage;
++ (void)bindSurfaceColor:(SEL)colorSelector toView:(UIView *)view;
++ (void)registerTransparencyEffect:(UIVisualEffectView *)effect;
 + (BOOL)isRoseStyle;
 + (UIUserInterfaceStyle)interfaceStyle;
 + (UIImage *)backgroundImage;
++ (void)registerBackgroundImageView:(UIImageView *)view;
 + (UIColor *)primaryTextColor;
 + (UIColor *)secondaryTextColor;
 + (UIColor *)accentColor;

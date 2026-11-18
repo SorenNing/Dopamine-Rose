@@ -36,6 +36,7 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
         if (fromIndex == NSNotFound || toIndex == NSNotFound) return;
         UIView *front = fromIndex > toIndex ? from : to;
         backdrop = [[UIImageView alloc] initWithImage:background.image];
+        [DOGlobalAppearance registerBackgroundImageView:backdrop];
         backdrop.accessibilityIdentifier = @"DOTransitionBackdrop";
         backdrop.userInteractionEnabled = NO;
         backdrop.backgroundColor = background.superview.backgroundColor;
@@ -95,7 +96,7 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
 {
     self.view.backgroundColor = [DOGlobalAppearance panelColor];
     self.backgroundImageView = [[UIImageView alloc] init];
-    self.backgroundImageView.image = [DOGlobalAppearance backgroundImage];
+    [DOGlobalAppearance registerBackgroundImageView:self.backgroundImageView];
     self.backgroundImageView.contentMode = UIViewContentModeScaleAspectFill;
     self.backgroundImageView.translatesAutoresizingMaskIntoConstraints = NO;
     self.backgroundImageView.userInteractionEnabled = NO;
@@ -262,7 +263,7 @@ static void DOInstallTransitionBackdrop(id<UIViewControllerTransitionCoordinator
         tab.selected = NO;
         UIView *pill = self.secondarySelectionPills[tab.tag];
         pill.hidden = !active;
-        pill.backgroundColor = [DOGlobalAppearance selectedColor];
+        [DOGlobalAppearance bindSurfaceColor:@selector(selectedColor) toView:pill];
         pill.layer.borderWidth = active ? 0.5 : 0;
         pill.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
         tab.accessibilityTraits = UIAccessibilityTraitButton | (active ? UIAccessibilityTraitSelected : 0);

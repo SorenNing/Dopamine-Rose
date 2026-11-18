@@ -17,6 +17,7 @@
 		042479A52B66916B0082581B /* DOCreditsCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 042479732B66916B0082581B /* DOCreditsCell.m */; };
 		042479A62B66916B0082581B /* DOHeaderCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 042479752B66916B0082581B /* DOHeaderCell.m */; };
 		042479A72B66916B0082581B /* DOButtonCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 042479772B66916B0082581B /* DOButtonCell.m */; };
+		D07100000000000000000003 /* DOTransparencyCell.m in Sources */ = {isa = PBXBuildFile; fileRef = D07100000000000000000002 /* DOTransparencyCell.m */; };
 		042479A82B66916B0082581B /* DOPSListController.m in Sources */ = {isa = PBXBuildFile; fileRef = 042479782B66916B0082581B /* DOPSListController.m */; };
 		042479A92B66916B0082581B /* DOModalBackAction.m in Sources */ = {isa = PBXBuildFile; fileRef = 0424797C2B66916B0082581B /* DOModalBackAction.m */; };
 		042479AA2B66916B0082581B /* DOModalTransitionPush.m in Sources */ = {isa = PBXBuildFile; fileRef = 0424797D2B66916B0082581B /* DOModalTransitionPush.m */; };
@@ -703,6 +704,8 @@
 		8CF3E85B2F72D50200931CA8 /* DarkSword.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DarkSword.m; sourceTree = "<group>"; };
 		8CF3E85E2F72D51200931CA8 /* DarkSword.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DarkSword.h; sourceTree = "<group>"; };
 		C075B0CB2B8F2BCE009A26BB /* th */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = th; path = th.lproj/Localizable.strings; sourceTree = "<group>"; };
+		D07100000000000000000001 /* DOTransparencyCell.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DOTransparencyCell.h; sourceTree = "<group>"; };
+		D07100000000000000000002 /* DOTransparencyCell.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DOTransparencyCell.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -911,6 +914,8 @@
 				042479732B66916B0082581B /* DOCreditsCell.m */,
 				042479742B66916B0082581B /* DOButtonCell.h */,
 				042479772B66916B0082581B /* DOButtonCell.m */,
+				D07100000000000000000001 /* DOTransparencyCell.h */,
+				D07100000000000000000002 /* DOTransparencyCell.m */,
 			);
 			path = Specifiers;
 			sourceTree = "<group>";
@@ -2312,6 +2317,7 @@
 				042479A82B66916B0082581B /* DOPSListController.m in Sources */,
 				042479B12B66916B0082581B /* DODoubleHelixIndicator.m in Sources */,
 				042479A72B66916B0082581B /* DOButtonCell.m in Sources */,
+				D07100000000000000000003 /* DOTransparencyCell.m in Sources */,
 				042479B92B66916B0082581B /* DOGlobalAppearance.m in Sources */,
 				8C9E46292ACA1CC700B5456A /* UIImage+Blur.m in Sources */,
 				8C029F462B4DFD910071DE58 /* DOBootstrapper.m in Sources */,

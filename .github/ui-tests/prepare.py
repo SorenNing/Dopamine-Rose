@@ -20,6 +20,7 @@ def prepare(repo, output):
     app.mkdir(parents=True, exist_ok=True)
     sources = [
         ui / "DOGlobalAppearance.m",
+        repo / "Application/Dopamine/Jailbreak/DOPreferenceManager.m",
         ui / "Themes/DOTheme.m",
         ui / "DONavigationController.m",
         ui / "Transition/DOModalTransitionScale.m",
@@ -29,6 +30,7 @@ def prepare(repo, output):
     ]
     headers = [
         ui / "DOGlobalAppearance.h", ui / "Themes/DOTheme.h",
+        repo / "Application/Dopamine/Jailbreak/DOPreferenceManager.h",
         ui / "Transition/DOModalTransitionScale.h",
         ui / "Transition/DOModalTransitionPush.h", ui / "Transition/DOModalBackAction.h",
         repo / "Application/Dopamine/Extensions/UIImage+Blur.h",
@@ -46,7 +48,7 @@ def prepare(repo, output):
         "DOSettingsController.h": '#import <UIKit/UIKit.h>\n@interface DOSettingsController : UIViewController\n@end\n',
         "DOCreditsViewController.h": '#import <UIKit/UIKit.h>\n@interface DOCreditsViewController : UIViewController\n@end\n',
         "DOUIManager.h": '#import <UIKit/UIKit.h>\nFOUNDATION_EXPORT NSString *DOLocalizedString(NSString *key);\n',
-        "DOThemeManager.h": '#import "DOTheme.h"\n@interface DOThemeManager : NSObject\n@property(nonatomic, strong) NSArray<DOTheme *> *themes;\n@property(nonatomic) NSInteger selectedIndex;\n+ (instancetype)sharedInstance;\n- (DOTheme *)enabledTheme;\n@end\n',
+        "DOThemeManager.h": '#import "DOTheme.h"\n@interface DOThemeManager : NSObject\n@property(nonatomic, strong) NSArray<DOTheme *> *themes;\n@property(nonatomic) NSInteger selectedIndex;\n+ (instancetype)sharedInstance;\n- (DOTheme *)enabledTheme;\n- (UIImage *)backgroundImageForTheme:(DOTheme *)theme;\n@end\n',
         "DONavigationController.h": '#import <UIKit/UIKit.h>\n#import "DOMainViewController.h"\n#import "DOGlobalAppearance.h"\n#import "DOModalTransitionScale.h"\n#import "DOModalTransitionPush.h"\n@interface DONavigationController : UINavigationController <UINavigationControllerDelegate>\n- (void)selectTopLevelTab:(NSInteger)index;\n- (void)setNavigationEnabled:(BOOL)enabled;\n@end\n',
     }
     for name, contents in shims.items():

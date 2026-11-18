@@ -164,7 +164,7 @@
         [button setTitle:license[@"name"] forState:UIControlStateNormal];
         [button setTitleColor:[DOGlobalAppearance primaryTextColor] forState:UIControlStateNormal];
         button.titleLabel.font = [UIFont systemFontOfSize:14 weight:UIFontWeightMedium];
-        button.backgroundColor = [DOGlobalAppearance tileColor];
+        [DOGlobalAppearance bindSurfaceColor:@selector(tileColor) toView:button];
         button.tintColor = [DOGlobalAppearance accentColor];
         button.layer.borderWidth = 1;
         button.layer.borderColor = [DOGlobalAppearance glassHighlightColor].CGColor;
@@ -211,7 +211,7 @@
         if (![view isKindOfClass:UIButton.class]) continue;
         UIButton *button = (UIButton *)view;
         button.selected = button.tag == self.selectedLicense;
-        button.backgroundColor = button.selected ? [DOGlobalAppearance selectedColor] : [DOGlobalAppearance tileColor];
+        [DOGlobalAppearance bindSurfaceColor:button.selected ? @selector(selectedColor) : @selector(tileColor) toView:button];
         [button setTitleColor:[DOGlobalAppearance primaryTextColor] forState:UIControlStateNormal];
     }
 }
